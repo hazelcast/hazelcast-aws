@@ -299,6 +299,7 @@
     </profile>
         <profile>
             <id>master</id>
+            
             <properties>
                 <hazelcast.version>3.7-SNAPSHOT</hazelcast.version>
             </properties>
