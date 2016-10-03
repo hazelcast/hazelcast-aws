@@ -20,12 +20,15 @@ import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.util.StringUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -154,6 +157,16 @@ public class DescribeInstances {
     private InputStream callService(String endpoint) throws Exception {
         String query = rs.getCanonicalizedQueryString(attributes);
         URL url = new URL("https", endpoint, -1, "/?" + query);
+        final String username = System.getProperty("https.proxyUser");
+        final String password = System.getProperty("https.proxyPassword");
+        if((!StringUtil.isNullOrEmpty(username)) && (!StringUtil.isNullOrEmpty(password))) {
+            Authenticator.setDefault(new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(username, password.toCharArray());
+                }
+            });
+        }
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         httpConnection.setRequestMethod(Constants.GET);
         httpConnection.setDoOutput(false);
