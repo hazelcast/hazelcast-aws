@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.hazelcast.aws;
+package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.annotation.ParallelTest;
