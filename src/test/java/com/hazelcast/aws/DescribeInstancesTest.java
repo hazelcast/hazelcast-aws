@@ -37,12 +37,12 @@ public class DescribeInstancesTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_whenAccessKeyNull() throws IOException {
+    public void test_whenAccessKeyAndIamRoleNull() throws IOException {
         new DescribeInstances(new AwsConfig(), "endpoint");
     }
 
     @Test
-    public void test_whenProperConfig() throws IOException {
+    public void test_whenAccessKeyExistsInConfig() throws IOException {
         AwsConfig awsConfig = new AwsConfig();
         awsConfig.setAccessKey("accesskey");
         awsConfig.setSecretKey("secretkey");
