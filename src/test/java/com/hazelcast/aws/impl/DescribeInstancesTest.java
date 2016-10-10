@@ -89,4 +89,40 @@ public class DescribeInstancesTest {
         Assert.assertEquals("Could not parse secret key from IAM role", secretAccessKey, awsConfig.getSecretKey());
 
     }
+
+    @Test
+    public void test_when_IamTaskRoleEnvVar_Exists() throws IOException {
+
+        final String accessKeyId = "ASIAJZ6Y3MXO7SRJ1234";
+        final String secretAccessKey = "p00VnhQ//HeT7W7V123f7BgYZaBlPZTxj9mcvSlc";
+        final String token = "FQoDYXdzEKX//////////wEaDDS1irrM7Wkt1VxNUyKoAxdXWEDQJUXpIGmBG4qCCiNLOXkF5mak8ZDVqS2PV+X7nsRF9C4mZwqMkGfRmxpZzGc+QTRfbncdZzEOeHcBea38mM7kJUJyNagWfNpwgzimgJzLqn5tNirs7+MXVw5rfblWCjngzjrovlsl6+q0K9LZM0W5OTRSKmEZQnJFjZh9w+BZHo5pair1ZqrxhfOcW6UaMpfOfRH/VI1n3u+De7YCqdq5jhmaDzWxewxccfH/BI2SRHaC1OEq0L3kMhwj1JrLjrOTJn4nBwjGZAlODFhoMec1cUW0GdIJN6+KZDbt8TuKlqDutKMDe1CNIH/697J0lLPMC8tgbgu3MrLSVxtQkMPdDMzJWNPXNQhQa+Nvw5w7gV7+27s9oat+dJBp3lLmTe4PZ810IQGa2NLZHKrv7kqGncLu5mURj+UVZHlueyYyPBWhVdHn4tCJ/cX2RaeqiVTbMILrduZePw7wTS8+19RnnPxA9wp45OZE5otSvNegJ9XhEJiU7RyJPhdSezMVoGsnzvgbCnBUAzHAe4ZuQZo7iIBWNXkcKBsCAU0MY8ym6NVn5VQohKrOvwU=";
+
+        // Note the below role is different from the regular IAM role, in that it doesn't contain new lines.
+        final String someDummyIamTaskRole =
+          "{" +
+            "  \"RoleArn\":\"arn:aws:iam::123456789012:role/hazelcastIamTaskRole\"," +
+            "  \"AccessKeyId\":\""+accessKeyId+"\"," +
+            "  \"SecretAccessKey\":\""+secretAccessKey+"\"," +
+            "  \"Token\":\""+token+"\"," +
+            "  \"Expiration\":\"2016-10-04T17:39:48Z\"" +
+            "  }";
+
+
+        final String ecsEnvVarCredsUri = "someURL";
+        final String uri = "http://" + DescribeInstances.IAM_TASK_ROLE_ENDPOINT + ecsEnvVarCredsUri;
+
+        Environment mockedEnv = mock(Environment.class);
+        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);
+
+        AwsConfig awsConfig = new AwsConfig();
+
+        DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
+        doReturn(someDummyIamTaskRole).when(descriptor).retrieveRoleFromURI(uri);
+
+        descriptor.checkKeysFromIamRoles(mockedEnv);
+
+        Assert.assertEquals("Could not parse access key from IAM task role", accessKeyId, awsConfig.getAccessKey());
+        Assert.assertEquals("Could not parse secret key from IAM task role", secretAccessKey, awsConfig.getSecretKey());
+
+    }
 }
