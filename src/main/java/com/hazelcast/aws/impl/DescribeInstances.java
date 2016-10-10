@@ -112,7 +112,7 @@ public class DescribeInstances {
      * @return The content of the HTTP response, as a String.
      */
     String retrieveRoleFromURI(String uri) throws IOException {
-        String response = "";
+        StringBuilder response = new StringBuilder();
 
         InputStreamReader is = null;
         BufferedReader reader = null;
@@ -122,9 +122,9 @@ public class DescribeInstances {
             reader = new BufferedReader(is);
             String resp;
             while ((resp = reader.readLine()) != null){
-                response += resp;
+                response = response.append(resp);
             }
-            return response;
+            return response.toString();
         } catch (IOException io) {
             throw new InvalidConfigurationException("Unable to lookup role in URI: " + uri, io);
         } finally {
@@ -141,7 +141,7 @@ public class DescribeInstances {
     private void tryGetDefaultIamRole() throws IOException {
         InputStreamReader is = null;
         BufferedReader reader = null;
-        if (!awsConfig.getIamRole().equals("DEFAULT")) {
+        if (!"DEFAULT".equals(awsConfig.getIamRole())) {
             return;
         }
         try {
@@ -152,7 +152,7 @@ public class DescribeInstances {
             reader = new BufferedReader(is);
             awsConfig.setIamRole(reader.readLine());
         } catch (IOException e) {
-            throw new InvalidConfigurationException("Invalid Aws Configuration");
+            throw new InvalidConfigurationException("Invalid Aws Configuration", e);
         } finally {
             if (is != null) {
                 is.close();
@@ -186,6 +186,12 @@ public class DescribeInstances {
         attributes.put("X-Amz-Security-Token", roleAsJson.getString("Token", null));
     }
 
+    /**
+     * @deprecated Since we moved JSON parsing from manual pattern matching to using `com.hazelcast.com.eclipsesource.json.JsonObject`, this method should be deprecated.
+     * @param reader The reader that gives access to the JSON-formatted content that includes all the role information.
+     * @return A map with all the parsed keys and values from the JSON content.
+     * @throws IOException In case the input from reader cannot be correctly parsed.
+     */
     @Deprecated
     public Map<String, String> parseIamRole(BufferedReader reader) throws IOException {
         Map<String, String> map = new HashMap<String, String>();
