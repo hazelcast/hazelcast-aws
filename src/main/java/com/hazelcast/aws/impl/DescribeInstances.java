@@ -18,13 +18,11 @@ package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
+import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -41,7 +39,8 @@ import static com.hazelcast.nio.IOUtil.closeResource;
 
 public class DescribeInstances {
 
-    private static final String IAM_ROLE_ENDPOINT = "169.254.169.254";
+    public static final String IAM_ROLE_ENDPOINT = "169.254.169.254";
+    public static final String IAM_TASK_ROLE_ENDPOINT = "169.254.170.2";
 
     private EC2RequestSigner rs;
     private AwsConfig awsConfig;
@@ -52,15 +51,11 @@ public class DescribeInstances {
         if (awsConfig == null) {
             throw new IllegalArgumentException("AwsConfig is required!");
         }
-        if (awsConfig.getAccessKey() == null && awsConfig.getIamRole() == null) {
-            throw new IllegalArgumentException("AWS access key or IAM Role is required!");
-        }
         this.awsConfig = awsConfig;
         this.endpoint = endpoint;
-        if (awsConfig.getIamRole() != null) {
-            tryGetDefaultIamRole();
-            getKeysFromIamRole();
-        }
+
+        checkKeysFromIamRoles(new Environment());
+
         String timeStamp = getFormattedTimestamp();
         rs = new EC2RequestSigner(awsConfig, timeStamp, endpoint);
         attributes.put("Action", this.getClass().getSimpleName());
@@ -70,6 +65,72 @@ public class DescribeInstances {
         attributes.put("X-Amz-Date", timeStamp);
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
+    }
+
+    void checkKeysFromIamRoles(Environment env) throws IOException {
+        if (awsConfig.getAccessKey() != null) {
+            return;
+        }
+
+        if (awsConfig.getIamRole() == null) {
+            getKeysFromIamTaskRole(env);
+
+        } else {
+            tryGetDefaultIamRole();
+            getKeysFromIamRole();
+        }
+    }
+
+    private void getKeysFromIamTaskRole(Environment env) throws IOException{
+        // before giving up, attempt to discover whether we're running in an ECS Container, in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
+        String uri = env.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
+        if (uri == null) {
+            throw new IllegalArgumentException("Could not acquire credentials! Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
+        }
+        uri = "http://" + IAM_TASK_ROLE_ENDPOINT + uri;
+
+        String json = "";
+        try{
+            json = retrieveRoleFromURI(uri);
+            parseAndStoreRoleCreds(json);
+
+        } catch (Exception io) {
+            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Task Role. URI: "+uri+". \n HTTP Response content: " + json, io);
+        }
+
+    }
+
+    /**
+     * This is a helper method that simply performs the HTTP request to retrieve the role, from a given URI.
+     * (It allows us to cleanly separate the network calls out of our main code logic, so we can mock in our UT.)
+     * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
+     * @return The content of the HTTP response, as a String.
+     */
+    String retrieveRoleFromURI(String uri) throws IOException {
+        String response = "";
+
+        InputStreamReader is = null;
+        BufferedReader reader = null;
+        try {
+            URL url = new URL(uri);
+            is = new InputStreamReader(url.openStream(), "UTF-8");
+            reader = new BufferedReader(is);
+            String resp;
+            while ((resp = reader.readLine()) != null){
+                response += resp;
+            }
+            return response;
+        } catch (IOException io) {
+            throw new InvalidConfigurationException("Unable to lookup role in URI: " + uri, io);
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+            if (reader != null) {
+                reader.close();
+            }
+        }
+
     }
 
     private void tryGetDefaultIamRole() throws IOException {
