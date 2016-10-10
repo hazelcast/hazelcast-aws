@@ -19,6 +19,7 @@ package com.hazelcast.aws.impl;
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.aws.utility.Environment;
+import com.hazelcast.com.eclipsesource.json.JsonObject;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
@@ -161,18 +162,27 @@ public class DescribeInstances {
     private void getKeysFromIamRole() {
         try {
             String query = "latest/meta-data/iam/security-credentials/" + awsConfig.getIamRole();
-            URL url = new URL("http", IAM_ROLE_ENDPOINT, query);
-            InputStreamReader is = new InputStreamReader(url.openStream(), "UTF-8");
-            BufferedReader reader = new BufferedReader(is);
-            Map<String, String> map = parseIamRole(reader);
-            awsConfig.setAccessKey(map.get("AccessKeyId"));
-            awsConfig.setSecretKey(map.get("SecretAccessKey"));
-            attributes.put("X-Amz-Security-Token", map.get("Token"));
-        } catch (IOException io) {
-            throw new InvalidConfigurationException("Invalid Aws Configuration");
+            String uri = "http://" + IAM_ROLE_ENDPOINT + "/" + query;
+            String json = retrieveRoleFromURI(uri);
+            parseAndStoreRoleCreds(json);
+        } catch (Exception io) {
+            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsConfig.getIamRole(), io);
         }
     }
 
+    /** This helper method is responsible for just parsing the content of the HTTP response and
+     * storing the access keys and token it finds there.
+     *
+     * @param json The JSON representation of the IAM (Task) Role.
+     */
+    private void parseAndStoreRoleCreds(String json) {
+        JsonObject roleAsJson = JsonObject.readFrom(json);
+        awsConfig.setAccessKey(roleAsJson.getString("AccessKeyId", null));
+        awsConfig.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
+        attributes.put("X-Amz-Security-Token", roleAsJson.getString("Token", null));
+    }
+
+    @Deprecated
     public Map<String, String> parseIamRole(BufferedReader reader) throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         Pattern keyPattern = Pattern.compile("\"(.*?)\" : ");
