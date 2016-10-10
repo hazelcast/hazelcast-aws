@@ -16,15 +16,19 @@
 
 package com.hazelcast.aws.impl;
 
+import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.annotation.ParallelTest;
 import com.hazelcast.test.annotation.QuickTest;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(HazelcastParallelClassRunner.class)
 @Category({QuickTest.class, ParallelTest.class})
@@ -36,8 +40,12 @@ public class DescribeInstancesTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_whenAccessKeyAndIamRoleNull() throws IOException {
-        new DescribeInstances(new AwsConfig(), "endpoint");
+    public void test_whenAccessKey_And_IamRole_And_IamTaskRoleEnvVar_Null() throws IOException {
+        Environment mockedEnv = mock(Environment.class);
+        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
+
+        DescribeInstances descriptor = new DescribeInstances(new AwsConfig());
+        descriptor.checkKeysFromIamRoles(mockedEnv);
     }
 
     @Test
