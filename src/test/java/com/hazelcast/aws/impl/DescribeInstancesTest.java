@@ -55,4 +55,38 @@ public class DescribeInstancesTest {
         awsConfig.setSecretKey("secretkey");
         new DescribeInstances(awsConfig, "endpoint");
     }
+
+    @Test
+    public void test_whenIamRoleExistsInConfig() throws IOException {
+        final String someRole = "someRole";
+        final String uri = "http://" + DescribeInstances.IAM_ROLE_ENDPOINT + "/latest/meta-data/iam/security-credentials/"+someRole;
+
+        // some dummy creds. Look real, but they aren't.
+        final String accessKeyId = "ASIAJDOR231233BVE7GQ";
+        final String secretAccessKey = "QU5mTd40xnAbC5Mz2T3Fy7afQVrow+/tYq5GXMf7";
+        final String token = "FQoDYXdzEKX//////////wEaDN2Xh+ekVbV1KJrCqCK3A/Quuw8xCdZZbOPjzKLNc89n72z61BLt96hzlxTV6Vx1hDXLQNWRIx07hZVgmgGzzyr0DzYAcqKq7s2GUznWlaXhGHxhyo4nJUeBFbLyYPjbDAcnl84HItjy5bvtQ6fbDM7h2ZGuJrHi51KAhxWN/uEHyBKAIJd5RdXxVH4UTNxJFiqEw8GdaXDGK07186TfqSFCdlG+rhL35bN7WcJZuykIpynbeQpPeY4rJ0WJGoSJwt/RSkGwP+JRcYmv8Y7L1uSD2spJWO6etFeyyU63y0BL42MXWL38SQypxjLz+s1PozSDrV7zxsp4DQONn+adbSyAoveskD3xtDYsip1Ra0UCSYNKzmmh2XXF4fBBb6EPRixc1fnCIVDp0rfyCGO0VMuIloF5nWP9XsaRcR1mbJ7K/TuWgugduRBgyV2s1KgJuPni5cZ6ptEkPBb2b+92DjxEdQCAi6+WAdWliFiJ/P3T+qSJGLaxAeu0P0yb8E2xfCjEH6qOH3EM0KfgyJM5WJbXlYZTOZZXHaj26rlhe2k3wdL+UXf4geAzczphyOyp4QIGqaxe0xj08BKvSqngQb5X44oVR40oi7fOvwU=";
+
+        final String someDummyIamRole =
+          "        {\n" +
+            "          \"Code\" : \"Success\",\n" +
+            "          \"LastUpdated\" : \"2016-10-04T12:08:24Z\",\n" +
+            "          \"Type\" : \"AWS-HMAC\",\n" +
+            "          \"AccessKeyId\" : \""+accessKeyId+"\",\n" +
+            "          \"SecretAccessKey\" : \""+secretAccessKey+"\",\n" +
+            "          \"Token\" : \""+token+"\",\n" +
+            "          \"Expiration\" : \"2016-10-04T18:19:39Z\"\n" +
+            "        }\n";
+
+
+        AwsConfig awsConfig = new AwsConfig();
+        awsConfig.setIamRole(someRole);
+
+        DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
+        doReturn(someDummyIamRole).when(descriptor).retrieveRoleFromURI(uri);
+        descriptor.checkKeysFromIamRoles(null);
+
+        Assert.assertEquals("Could not parse access key from IAM role", accessKeyId, awsConfig.getAccessKey());
+        Assert.assertEquals("Could not parse secret key from IAM role", secretAccessKey, awsConfig.getSecretKey());
+
+    }
 }
