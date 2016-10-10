@@ -68,6 +68,10 @@ public class DescribeInstances {
         attributes.put("X-Amz-Expires", "30");
     }
 
+    DescribeInstances(AwsConfig awsConfig) {
+        this.awsConfig = awsConfig;
+    }
+
     void checkKeysFromIamRoles(Environment env) throws IOException {
         if (awsConfig.getAccessKey() != null) {
             return;
