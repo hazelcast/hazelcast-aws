@@ -22,6 +22,7 @@ public final class Constants {
     public static final String DOC_VERSION = "2014-06-15";
     public static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     public static final String GET = "GET";
+    public static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
 
     private Constants() {
     }
