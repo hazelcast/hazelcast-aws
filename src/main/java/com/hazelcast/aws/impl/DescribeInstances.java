@@ -69,6 +69,9 @@ public class DescribeInstances {
     }
 
     DescribeInstances(AwsConfig awsConfig) {
+        if (awsConfig == null) {
+            throw new IllegalArgumentException("AwsConfig is required!");
+        }
         this.awsConfig = awsConfig;
     }
 
