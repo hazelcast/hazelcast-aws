@@ -115,7 +115,7 @@ public class DescribeInstances {
      * This is a helper method that simply performs the HTTP request to retrieve the role, from a given URI.
      * (It allows us to cleanly separate the network calls out of our main code logic, so we can mock in our UT.)
      * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
-     * @return The content of the HTTP response, as a String.
+     * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
     String retrieveRoleFromURI(String uri) throws IOException {
         StringBuilder response = new StringBuilder();
