@@ -23,7 +23,10 @@ import com.hazelcast.com.eclipsesource.json.JsonObject;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -95,21 +98,24 @@ public class DescribeInstances {
         }
     }
 
-    private void getKeysFromIamTaskRole(Environment env) throws IOException{
-        // before giving up, attempt to discover whether we're running in an ECS Container, in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
+    private void getKeysFromIamTaskRole(Environment env) throws IOException {
+        // before giving up, attempt to discover whether we're running in an ECS Container,
+        // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
         String uri = env.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
         if (uri == null) {
-            throw new IllegalArgumentException("Could not acquire credentials! Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
+            throw new IllegalArgumentException("Could not acquire credentials! "
+              + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
         }
         uri = "http://" + IAM_TASK_ROLE_ENDPOINT + uri;
 
         String json = "";
-        try{
+        try {
             json = retrieveRoleFromURI(uri);
             parseAndStoreRoleCreds(json);
 
         } catch (Exception io) {
-            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Task Role. URI: "+uri+". \n HTTP Response content: " + json, io);
+            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Task Role. "
+              + "URI: " + uri + ". \n HTTP Response content: " + json, io);
         }
 
     }
@@ -130,7 +136,7 @@ public class DescribeInstances {
             is = new InputStreamReader(url.openStream(), "UTF-8");
             reader = new BufferedReader(is);
             String resp;
-            while ((resp = reader.readLine()) != null){
+            while ((resp = reader.readLine()) != null) {
                 response = response.append(resp);
             }
             return response.toString();
@@ -148,10 +154,11 @@ public class DescribeInstances {
     }
 
     private void tryGetDefaultIamRole() throws IOException {
-        if ( ! ( //none of the below are true
-            awsConfig.getIamRole() == null ||
-            "".equals(awsConfig.getIamRole()) ||
-            "DEFAULT".equals(awsConfig.getIamRole())
+        // if none of the below are true
+        if (!(
+            awsConfig.getIamRole() == null
+            || "".equals(awsConfig.getIamRole())
+            || "DEFAULT".equals(awsConfig.getIamRole())
             )
         ) {
           // stop here. No point looking up the default role.
@@ -174,7 +181,8 @@ public class DescribeInstances {
             String json = retrieveRoleFromURI(uri);
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
-            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsConfig.getIamRole(), io);
+            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: "
+              + awsConfig.getIamRole(), io);
         }
     }
 
@@ -191,7 +199,8 @@ public class DescribeInstances {
     }
 
     /**
-     * @deprecated Since we moved JSON parsing from manual pattern matching to using `com.hazelcast.com.eclipsesource.json.JsonObject`, this method should be deprecated.
+     * @deprecated Since we moved JSON parsing from manual pattern matching to using
+     * `com.hazelcast.com.eclipsesource.json.JsonObject`, this method should be deprecated.
      * @param reader The reader that gives access to the JSON-formatted content that includes all the role information.
      * @return A map with all the parsed keys and values from the JSON content.
      * @throws IOException In case the input from reader cannot be correctly parsed.
