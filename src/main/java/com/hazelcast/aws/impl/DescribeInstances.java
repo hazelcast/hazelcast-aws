@@ -83,11 +83,14 @@ public class DescribeInstances {
             return;
         }
 
-        if (awsConfig.getIamRole() == null) {
+        // in case no IAM role has been defined, this will attempt to retrieve name of default role.
+        tryGetDefaultIamRole();
+
+        // if IAM role is still empty, one last attempt
+        if (awsConfig.getIamRole() == null || "".equals(awsConfig.getIamRole())) {
             getKeysFromIamTaskRole(env);
 
         } else {
-            tryGetDefaultIamRole();
             getKeysFromIamRole();
         }
     }
@@ -145,7 +148,13 @@ public class DescribeInstances {
     }
 
     private void tryGetDefaultIamRole() throws IOException {
-        if (!"DEFAULT".equals(awsConfig.getIamRole())) {
+        if ( ! ( //none of the below are true
+            awsConfig.getIamRole() == null ||
+            "".equals(awsConfig.getIamRole()) ||
+            "DEFAULT".equals(awsConfig.getIamRole())
+            )
+        ) {
+          // stop here. No point looking up the default role.
             return;
         }
         try {
