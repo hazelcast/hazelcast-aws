@@ -145,27 +145,16 @@ public class DescribeInstances {
     }
 
     private void tryGetDefaultIamRole() throws IOException {
-        InputStreamReader is = null;
-        BufferedReader reader = null;
         if (!"DEFAULT".equals(awsConfig.getIamRole())) {
             return;
         }
         try {
             String query = "latest/meta-data/iam/security-credentials/";
-            URL url;
-            url = new URL("http", IAM_ROLE_ENDPOINT, query);
-            is = new InputStreamReader(url.openStream(), "UTF-8");
-            reader = new BufferedReader(is);
-            awsConfig.setIamRole(reader.readLine());
+            String uri = "http://" + IAM_ROLE_ENDPOINT + "/" + query;
+            String roleName = retrieveRoleFromURI(uri);
+            awsConfig.setIamRole(roleName);
         } catch (IOException e) {
             throw new InvalidConfigurationException("Invalid Aws Configuration", e);
-        } finally {
-            if (is != null) {
-                is.close();
-            }
-            if (reader != null) {
-                reader.close();
-            }
         }
     }
 
