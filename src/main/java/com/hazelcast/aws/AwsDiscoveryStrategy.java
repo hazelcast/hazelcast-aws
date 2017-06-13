@@ -16,7 +16,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.logging.ILogger;
@@ -26,6 +25,7 @@ import com.hazelcast.spi.discovery.AbstractDiscoveryStrategy;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
+import com.hazelcast.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,8 +63,8 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
         }
     }
 
-    private AwsConfig getAwsConfig() throws IllegalArgumentException {
-        final AwsConfig config = new AwsConfig()
+    private Configuration getAwsConfig() throws IllegalArgumentException {
+        final Configuration config = new Configuration()
                 .setEnabled(true)
                 .setAccessKey(getOrNull(ACCESS_KEY))
                 .setSecretKey(getOrNull(SECRET_KEY))
@@ -72,6 +72,8 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
                 .setTagKey(getOrNull(TAG_KEY))
                 .setTagValue(getOrNull(TAG_VALUE))
                 .setIamRole(getOrNull(IAM_ROLE));
+
+        validateAuthentication(config);
 
         final Integer timeout = getOrNull(CONNECTION_TIMEOUT_SECONDS.getDefinition());
         if (timeout != null) {
@@ -88,6 +90,22 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
             config.setHostHeader(hostHeader);
         }
         return config;
+    }
+
+    private void validateAuthentication(Configuration config) {
+        if(StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey()) ||
+                StringUtil.isNullOrEmptyAfterTrim(config.getAccessKey())){
+
+            if(!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())){
+                getLogger().info("Describe instances will be queried with iam-role, please make sure EC2 instance have proper rights.");
+                return;
+            }
+            throw new InvalidConfigurationException("AWS Secret/Key must not be null or empty, when given iam-role is also empty.");
+        }else{
+            if(!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())){
+                getLogger().warning("No need to define iam-role, when access and secret keys are configured!");
+            }
+        }
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.hazelcast.aws.security;
 
+import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.test.HazelcastSerialClassRunner;
@@ -52,19 +53,19 @@ public class EC2RequestSignerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void whenTimeStampIsNull() {
-        new EC2RequestSigner(new AwsConfig(), null, "");
+        new EC2RequestSigner(new Configuration(), null, "");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void whenTimeSignServiceIsNull() {
-        EC2RequestSigner signer = new EC2RequestSigner(new AwsConfig(), "", "");
+        EC2RequestSigner signer = new EC2RequestSigner(new Configuration(), "", "");
 
         signer.sign(null, new HashMap<String, String>());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void whenTimeSignAttributeIsNull() {
-        EC2RequestSigner signer = new EC2RequestSigner(new AwsConfig(), "", "");
+        EC2RequestSigner signer = new EC2RequestSigner(new Configuration(), "", "");
 
         signer.sign("", null);
     }
@@ -72,7 +73,7 @@ public class EC2RequestSignerTest {
     @Test
     public void deriveSigningKeyTest() throws Exception {
         // this is from http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html
-        AwsConfig awsConfig = new AwsConfig();
+        Configuration awsConfig = new Configuration();
         awsConfig.setRegion(TEST_REGION).
                 setHostHeader(TEST_HOST).
                 setAccessKey(TEST_ACCESS_KEY).
@@ -103,7 +104,7 @@ public class EC2RequestSignerTest {
 
     @Test
     public void testSigning() throws NoSuchFieldException, IllegalAccessException, IOException {
-        AwsConfig awsConfig = new AwsConfig();
+        Configuration awsConfig = new Configuration();
         awsConfig.setRegion(TEST_REGION).
                 setHostHeader(TEST_HOST).
                 setAccessKey(TEST_ACCESS_KEY).

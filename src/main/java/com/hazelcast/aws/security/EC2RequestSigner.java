@@ -16,9 +16,9 @@
 
 package com.hazelcast.aws.security;
 
+import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.impl.Constants;
 import com.hazelcast.aws.utility.AwsURLEncoder;
-import com.hazelcast.config.AwsConfig;
 import com.hazelcast.util.QuickMath;
 
 import javax.crypto.Mac;
@@ -44,14 +44,14 @@ public class EC2RequestSigner {
     private static final int DATE_LENGTH = 8;
     private static final int LAST_INDEX = 8;
 
-    private final AwsConfig config;
+    private final Configuration config;
     private final String timestamp;
 
     private String service;
     private Map<String, String> attributes;
     private String endpoint;
 
-    public EC2RequestSigner(AwsConfig config, String timeStamp, String endpoint) {
+    public EC2RequestSigner(Configuration config, String timeStamp, String endpoint) {
         if (config == null) {
             throw new IllegalArgumentException("config cannot be null");
         }

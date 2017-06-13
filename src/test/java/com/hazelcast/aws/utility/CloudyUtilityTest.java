@@ -16,6 +16,7 @@
 
 package com.hazelcast.aws.utility;
 
+import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.test.HazelcastSerialClassRunner;
@@ -40,11 +41,11 @@ import static org.junit.Assert.assertEquals;
 public class CloudyUtilityTest extends HazelcastTestSupport {
 
     private final String xml = configXmlString();
-    private AwsConfig awsConfig;
+    private Configuration awsConfig;
 
     @Before
     public void setup() {
-        awsConfig = new AwsConfig();
+        awsConfig = new Configuration();
         awsConfig.setAccessKey("some-access-key");
         awsConfig.setSecretKey("some-secret-key");
         awsConfig.setSecurityGroupName("hazelcast");
@@ -58,11 +59,11 @@ public class CloudyUtilityTest extends HazelcastTestSupport {
     @Test
     public void testUnmarshalling() throws IOException {
         InputStream is = new ByteArrayInputStream(xml.getBytes());
-        AwsConfig awsConfig1 = new AwsConfig();
+        Configuration awsConfig1 = new Configuration();
         awsConfig1.setAccessKey("some-access-key");
         awsConfig1.setSecretKey("some-secret-key");
 
-        Map<String, String> result = CloudyUtility.unmarshalTheResponse(is, awsConfig);
+        Map<String, String> result = CloudyUtility.unmarshalTheResponse(is);
         assertEquals(2, result.size());
     }
 

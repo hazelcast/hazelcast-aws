@@ -16,11 +16,11 @@
 
 package com.hazelcast.aws.impl;
 
+import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.com.eclipsesource.json.JsonObject;
-import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
 import java.io.BufferedReader;
@@ -51,13 +51,13 @@ public class DescribeInstances {
     public static final String IAM_TASK_ROLE_ENDPOINT = "169.254.170.2";
 
     private EC2RequestSigner rs;
-    private AwsConfig awsConfig;
+    private Configuration awsConfig;
     private String endpoint;
     private Map<String, String> attributes = new HashMap<String, String>();
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint) throws IOException {
+    public DescribeInstances(Configuration awsConfig, String endpoint) throws IOException {
         if (awsConfig == null) {
-            throw new IllegalArgumentException("AwsConfig is required!");
+            throw new IllegalArgumentException("Configuration is required!");
         }
         this.awsConfig = awsConfig;
         this.endpoint = endpoint;
@@ -76,9 +76,9 @@ public class DescribeInstances {
         addFilters();
     }
 
-    DescribeInstances(AwsConfig awsConfig) {
+    DescribeInstances(Configuration awsConfig) {
         if (awsConfig == null) {
-            throw new IllegalArgumentException("AwsConfig is required!");
+            throw new IllegalArgumentException("Configuration is required!");
         }
         this.awsConfig = awsConfig;
     }
@@ -271,7 +271,7 @@ public class DescribeInstances {
         attributes.put("X-Amz-Signature", signature);
         try {
             stream = callService(endpoint);
-            response = CloudyUtility.unmarshalTheResponse(stream, awsConfig);
+            response = CloudyUtility.unmarshalTheResponse(stream);
             return response;
         } finally {
             closeResource(stream);
@@ -283,6 +283,7 @@ public class DescribeInstances {
         URL url = new URL("https", endpoint, -1, "/?" + query);
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         httpConnection.setRequestMethod(Constants.GET);
+        httpConnection.setConnectTimeout(awsConfig.getConnectionTimeoutSeconds());
         httpConnection.setDoOutput(false);
         httpConnection.connect();
         return httpConnection.getInputStream();

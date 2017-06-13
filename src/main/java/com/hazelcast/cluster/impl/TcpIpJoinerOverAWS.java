@@ -17,6 +17,7 @@
 package com.hazelcast.cluster.impl;
 
 import com.hazelcast.aws.AWSClient;
+import com.hazelcast.aws.Configuration;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.instance.Node;
 import com.hazelcast.logging.ILogger;
@@ -28,12 +29,26 @@ public class TcpIpJoinerOverAWS extends TcpIpJoiner {
 
     private final AWSClient aws;
     private final ILogger logger;
+    private final Configuration configuration;
 
     public TcpIpJoinerOverAWS(Node node) {
         super(node);
         logger = node.getLogger(getClass());
+
         AwsConfig awsConfig = node.getConfig().getNetworkConfig().getJoin().getAwsConfig();
-        aws = new AWSClient(awsConfig);
+        configuration = new Configuration()
+                .setAccessKey(awsConfig.getAccessKey())
+                .setSecretKey(awsConfig.getSecretKey())
+                .setConnectionTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
+                .setEnabled(awsConfig.isEnabled())
+                .setHostHeader(awsConfig.getHostHeader())
+                .setIamRole(awsConfig.getIamRole())
+                .setRegion(awsConfig.getRegion())
+                .setSecurityGroupName(awsConfig.getSecurityGroupName())
+                .setTagKey(awsConfig.getTagKey())
+                .setTagValue(awsConfig.getTagValue());
+
+        aws = new AWSClient(configuration);
     }
 
     @Override
@@ -60,8 +75,7 @@ public class TcpIpJoinerOverAWS extends TcpIpJoiner {
 
     @Override
     protected int getConnTimeoutSeconds() {
-        AwsConfig awsConfig = node.getConfig().getNetworkConfig().getJoin().getAwsConfig();
-        return awsConfig.getConnectionTimeoutSeconds();
+        return configuration.getConnectionTimeoutSeconds();
     }
 
     @Override
