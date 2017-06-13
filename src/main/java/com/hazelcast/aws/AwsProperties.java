@@ -24,7 +24,6 @@ import com.hazelcast.config.properties.PropertyTypeConverter;
 import com.hazelcast.config.properties.SimplePropertyDefinition;
 import com.hazelcast.config.properties.ValidationException;
 import com.hazelcast.config.properties.ValueValidator;
-import com.hazelcast.util.StringUtil;
 
 import static com.hazelcast.config.properties.PropertyTypeConverter.INTEGER;
 import static com.hazelcast.config.properties.PropertyTypeConverter.STRING;

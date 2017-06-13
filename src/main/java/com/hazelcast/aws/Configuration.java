@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2017, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2016, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,9 +127,9 @@ public class Configuration {
     }
 
     public String toString() {
-        return "Configuration{enabled=" + this.enabled + ", region=\'" + this.region + '\'' + ", securityGroupName=\'" +
-                this.securityGroupName + '\'' + ", tagKey=\'" + this.tagKey + '\'' + ", tagValue=\'" + this.tagValue +
-                '\'' + ", hostHeader=\'" + this.hostHeader + '\'' + ", iamRole=\'" + this.iamRole + '\'' +
-                ", connectionTimeoutSeconds=" + this.connectionTimeoutSeconds + '}';
+        return "Configuration{enabled=" + this.enabled + ", region=\'" + this.region + '\'' + ", securityGroupName=\'"
+                + this.securityGroupName + '\'' + ", tagKey=\'" + this.tagKey + '\'' + ", tagValue=\'" + this.tagValue
+                + '\'' + ", hostHeader=\'" + this.hostHeader + '\'' + ", iamRole=\'" + this.iamRole + '\''
+                + ", connectionTimeoutSeconds=" + this.connectionTimeoutSeconds + '}';
     }
 }

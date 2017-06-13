@@ -94,17 +94,17 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
 
     private void validateAuthentication(Configuration config) {
         if (StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey())
-                || StringUtil.isNullOrEmptyAfterTrim(config.getAccessKey())){
+                || StringUtil.isNullOrEmptyAfterTrim(config.getAccessKey())) {
 
-            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())){
-                getLogger().info("Describe instances will be queried with iam-role, " +
-                        "please make sure EC2 instance have proper rights.");
+            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
+                getLogger().info("Describe instances will be queried with iam-role, "
+                        + "please make sure EC2 instance have proper rights.");
                 return;
             }
-            throw new InvalidConfigurationException("AWS Secret/Key must not be null or empty, " +
-                    "when given iam-role is also empty.");
+            throw new InvalidConfigurationException("AWS Secret/Key must not be null or empty, "
+                    + "when given iam-role is also empty.");
         } else {
-            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())){
+            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
                 getLogger().warning("No need to define iam-role, when access and secret keys are configured!");
             }
         }
