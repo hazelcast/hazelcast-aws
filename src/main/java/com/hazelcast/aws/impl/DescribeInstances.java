@@ -16,11 +16,11 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.com.eclipsesource.json.JsonObject;
+import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
 import java.io.BufferedReader;
@@ -51,11 +51,11 @@ public class DescribeInstances {
     public static final String IAM_TASK_ROLE_ENDPOINT = "169.254.170.2";
 
     private EC2RequestSigner rs;
-    private Configuration awsConfig;
+    private AwsConfig awsConfig;
     private String endpoint;
     private Map<String, String> attributes = new HashMap<String, String>();
 
-    public DescribeInstances(Configuration awsConfig, String endpoint) throws IOException {
+    public DescribeInstances(AwsConfig awsConfig, String endpoint) throws IOException {
         if (awsConfig == null) {
             throw new IllegalArgumentException("Configuration is required!");
         }
@@ -76,7 +76,7 @@ public class DescribeInstances {
         addFilters();
     }
 
-    DescribeInstances(Configuration awsConfig) {
+    DescribeInstances(AwsConfig awsConfig) {
         if (awsConfig == null) {
             throw new IllegalArgumentException("Configuration is required!");
         }

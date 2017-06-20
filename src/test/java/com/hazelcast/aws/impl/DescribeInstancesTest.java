@@ -16,7 +16,6 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.Configuration;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.config.AwsConfig;
 import com.hazelcast.test.HazelcastParallelClassRunner;
@@ -51,7 +50,7 @@ public class DescribeInstancesTest {
 
         final String uri = "http://" + DescribeInstances.IAM_ROLE_ENDPOINT + "/latest/meta-data/iam/security-credentials/";
 
-        DescribeInstances descriptor = spy(new DescribeInstances(new Configuration()));
+        DescribeInstances descriptor = spy(new DescribeInstances(new AwsConfig()));
         doReturn("").when(descriptor).retrieveRoleFromURI(uri);
         descriptor.checkKeysFromIamRoles(mockedEnv);
     }
@@ -83,7 +82,7 @@ public class DescribeInstancesTest {
 
 
         // test when <iam-role>DEFAULT</iam-role>
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setIamRole("DEFAULT");
 
         DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
@@ -95,7 +94,7 @@ public class DescribeInstancesTest {
         Assert.assertEquals("Could not parse secret key from IAM role", secretAccessKey, awsConfig.getSecretKey());
 
         // test when <iam-role></iam-role>
-        awsConfig = new Configuration();
+        awsConfig = new AwsConfig();
         awsConfig.setIamRole("");
 
         descriptor = spy(new DescribeInstances(awsConfig));
@@ -107,7 +106,7 @@ public class DescribeInstancesTest {
         Assert.assertEquals("Could not parse secret key from IAM role", secretAccessKey, awsConfig.getSecretKey());
 
         // test when no <iam-role></iam-role> defined, BUT default IAM role has been assigned
-        awsConfig = new Configuration();
+        awsConfig = new AwsConfig();
 
         descriptor = spy(new DescribeInstances(awsConfig));
         doReturn(defaultIamRoleName).when(descriptor).retrieveRoleFromURI(uri);
@@ -122,7 +121,7 @@ public class DescribeInstancesTest {
 
     @Test
     public void test_whenAccessKeyExistsInConfig() throws IOException {
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setAccessKey("accesskey");
         awsConfig.setSecretKey("secretkey");
         new DescribeInstances(awsConfig, "endpoint");
@@ -150,7 +149,7 @@ public class DescribeInstancesTest {
             "        }\n";
 
 
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setIamRole(someRole);
 
         DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
@@ -187,7 +186,7 @@ public class DescribeInstancesTest {
         Environment mockedEnv = mock(Environment.class);
         when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);
 
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
 
         // test when default role is null
         DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
@@ -204,7 +203,7 @@ public class DescribeInstancesTest {
     @Test
     public void test_DescribeInstances_SecurityGroup()
             throws Exception {
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setEnabled(true).setAccessKey(System.getenv("AWS_ACCESS_KEY_ID"))
                  .setSecretKey(System.getenv("AWS_SECRET_ACCESS_KEY")).setSecurityGroupName("launch-wizard-147");
 
@@ -214,7 +213,7 @@ public class DescribeInstancesTest {
     @Test
     public void test_DescribeInstances_when_Tag_and_Value_Set()
             throws Exception {
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setEnabled(true).setAccessKey(System.getenv("AWS_ACCESS_KEY_ID"))
                  .setSecretKey(System.getenv("AWS_SECRET_ACCESS_KEY")).setTagKey("aws-test-tag").setTagValue("aws-tag-value-1");
 
@@ -224,7 +223,7 @@ public class DescribeInstancesTest {
     @Test
     public void test_DescribeInstances_when_Only_TagKey_Set()
             throws Exception {
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setEnabled(true).setAccessKey(System.getenv("AWS_ACCESS_KEY_ID"))
                  .setSecretKey(System.getenv("AWS_SECRET_ACCESS_KEY")).setTagKey("aws-test-tag");
 
@@ -234,14 +233,14 @@ public class DescribeInstancesTest {
     @Test
     public void test_DescribeInstances_when_Only_TagValue_Set()
             throws Exception {
-        Configuration awsConfig = new Configuration();
+        AwsConfig awsConfig = new AwsConfig();
         awsConfig.setEnabled(true).setAccessKey(System.getenv("AWS_ACCESS_KEY_ID"))
                  .setSecretKey(System.getenv("AWS_SECRET_ACCESS_KEY")).setTagValue("aws-tag-value-1");
 
         getInstancesAndVerify(awsConfig);
     }
 
-    private void getInstancesAndVerify(Configuration awsConfig)
+    private void getInstancesAndVerify(AwsConfig awsConfig)
             throws Exception {
         DescribeInstances describeInstances = new DescribeInstances(awsConfig, awsConfig.getHostHeader());
         Map<String, String> result = describeInstances.execute();

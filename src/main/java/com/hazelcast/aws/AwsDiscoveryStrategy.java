@@ -16,6 +16,7 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.logging.ILogger;
@@ -63,15 +64,23 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
         }
     }
 
-    private Configuration getAwsConfig() throws IllegalArgumentException {
-        final Configuration config = new Configuration()
+    private AwsConfig getAwsConfig() throws IllegalArgumentException {
+        final AwsConfig config = new AwsConfig()
                 .setEnabled(true)
-                .setAccessKey(getOrNull(ACCESS_KEY))
-                .setSecretKey(getOrNull(SECRET_KEY))
                 .setSecurityGroupName(getOrNull(SECURITY_GROUP_NAME))
                 .setTagKey(getOrNull(TAG_KEY))
                 .setTagValue(getOrNull(TAG_VALUE))
                 .setIamRole(getOrNull(IAM_ROLE));
+
+        String property = getOrNull(ACCESS_KEY);
+        if (property != null) {
+            config.setAccessKey(property);
+        }
+
+        property = getOrNull(SECRET_KEY);
+        if (property != null) {
+            config.setSecretKey(property);
+        }
 
         validateAuthentication(config);
 
@@ -92,7 +101,7 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
         return config;
     }
 
-    private void validateAuthentication(Configuration config) {
+    private void validateAuthentication(AwsConfig config) {
         if (StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey())
                 || StringUtil.isNullOrEmptyAfterTrim(config.getAccessKey())) {
 

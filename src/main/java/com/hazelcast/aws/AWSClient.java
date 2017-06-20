@@ -17,6 +17,7 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.config.AwsConfig;
 import com.hazelcast.config.InvalidConfigurationException;
 
 import java.util.Collection;
@@ -24,11 +25,11 @@ import java.util.Map;
 
 public class AWSClient {
 
-    private final Configuration awsConfig;
+    private final AwsConfig awsConfig;
 
     private String endpoint;
 
-    public AWSClient(Configuration awsConfig) {
+    public AWSClient(AwsConfig awsConfig) {
         if (awsConfig == null) {
             throw new IllegalArgumentException("Configuration is required!");
         }
