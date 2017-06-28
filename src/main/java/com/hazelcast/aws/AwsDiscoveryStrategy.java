@@ -82,10 +82,8 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
             config.setSecretKey(property);
         }
 
-        final Integer timeout = getOrNull(CONNECTION_TIMEOUT_SECONDS.getDefinition());
-        if (timeout != null) {
-            config.setConnectionTimeoutSeconds(timeout);
-        }
+        final Integer timeout = getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(), 10);
+        config.setConnectionTimeoutSeconds(timeout);
 
         final String region = getOrNull(REGION);
         if (region != null) {
