@@ -47,19 +47,6 @@ import static org.junit.Assert.assertTrue;
 @Category(QuickTest.class)
 public class AwsDiscoveryStrategyFactoryTest extends HazelcastTestSupport {
 
-    @Test(expected = InvalidConfigurationException.class)
-    public void missingAccessKey() throws Exception {
-        final Map<String, Comparable> props = new HashMap<String, Comparable>();
-        props.put("secret-key", "test-value");
-        createStrategy(props);
-    }
-
-    @Test(expected = InvalidConfigurationException.class)
-    public void missingSecretKey() throws Exception {
-        final Map<String, Comparable> props = new HashMap<String, Comparable>();
-        props.put("access-key", "test-value");
-        createStrategy(props);
-    }
 
     @Test(expected = InvalidConfigurationException.class)
     public void hostHeaderMalformed() throws Exception {
@@ -73,8 +60,6 @@ public class AwsDiscoveryStrategyFactoryTest extends HazelcastTestSupport {
     @Test
     public void testMinimalOk() throws Exception {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
-        props.put("access-key", "test-value");
-        props.put("secret-key", "test-value");
         createStrategy(props);
     }
 
@@ -86,10 +71,10 @@ public class AwsDiscoveryStrategyFactoryTest extends HazelcastTestSupport {
     }
 
     @Test
-    public void testMissingAccessKeyGivenRoleOk(){
+    public void testOnlyAccessAndSecretKeyOk(){
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("secret-key", "test-value");
-        props.put("iam-role", "test-value");
+        props.put("access-key", "test-value");
         createStrategy(props);
     }
 
@@ -111,8 +96,17 @@ public class AwsDiscoveryStrategyFactoryTest extends HazelcastTestSupport {
 
     @Test
     public void parseAndCreateDiscoveryStrategyPasses() {
-        final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
         final Config config = createConfig("test-aws-config.xml");
+        validateConfig(config);
+    }
+
+    @Test
+    public void parseMissingCredentialsConfigPasses(){
+        final Config config = createConfig("missing-creds-aws-config.xml");
+        validateConfig(config);
+    }
+
+    private void validateConfig(final Config config){
         final DiscoveryConfig discoveryConfig = config.getNetworkConfig().getJoin().getDiscoveryConfig();
         final DiscoveryServiceSettings settings = new DiscoveryServiceSettings().setDiscoveryConfig(discoveryConfig);
         final DefaultDiscoveryService service = new DefaultDiscoveryService(settings);
@@ -161,18 +155,7 @@ public class AwsDiscoveryStrategyFactoryTest extends HazelcastTestSupport {
         assertEquals("5702", providerProperties.get("hz-port"));
     }
 
-    @Test(expected = InvalidConfigurationException.class)
-    public void parseMissingCredentialsConfigFails(){
-        final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
-        final Config config = createConfig("missing-creds-aws-config.xml");
-        final DiscoveryConfig discoveryConfig = config.getNetworkConfig().getJoin().getDiscoveryConfig();
 
-        final DiscoveryStrategyConfig providerConfig = discoveryConfig.getDiscoveryStrategyConfigs().iterator().next();
-        final Map<String, Comparable> providerProperties = providerConfig.getProperties();
-
-        createStrategy(providerProperties);
-
-    }
     private static DiscoveryStrategy createStrategy(Map<String, Comparable> props) {
         final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
         return factory.newDiscoveryStrategy(null, null, props);

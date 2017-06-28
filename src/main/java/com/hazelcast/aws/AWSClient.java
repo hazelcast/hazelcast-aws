@@ -31,7 +31,7 @@ public class AWSClient {
 
     public AWSClient(AwsConfig awsConfig) {
         if (awsConfig == null) {
-            throw new IllegalArgumentException("Configuration is required!");
+            throw new IllegalArgumentException("AwsConfig is required!");
         }
         this.awsConfig = awsConfig;
         this.endpoint = awsConfig.getHostHeader();

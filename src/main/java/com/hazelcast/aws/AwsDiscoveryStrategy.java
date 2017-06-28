@@ -82,8 +82,6 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
             config.setSecretKey(property);
         }
 
-        validateAuthentication(config);
-
         final Integer timeout = getOrNull(CONNECTION_TIMEOUT_SECONDS.getDefinition());
         if (timeout != null) {
             config.setConnectionTimeoutSeconds(timeout);
@@ -98,23 +96,25 @@ public class AwsDiscoveryStrategy extends AbstractDiscoveryStrategy {
         if (hostHeader != null) {
             config.setHostHeader(hostHeader);
         }
+
+        reviewConfiguration(config);
         return config;
     }
 
-    private void validateAuthentication(AwsConfig config) {
+    private void reviewConfiguration(AwsConfig config) {
         if (StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey())
                 || StringUtil.isNullOrEmptyAfterTrim(config.getAccessKey())) {
 
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
                 getLogger().info("Describe instances will be queried with iam-role, "
-                        + "please make sure EC2 instance have proper rights.");
-                return;
+                        + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
+            } else {
+                getLogger().warning("Describe instances will be queried with iam-role assigned to EC2 instance, "
+                        + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
             }
-            throw new InvalidConfigurationException("AWS Secret/Key must not be null or empty, "
-                    + "when given iam-role is also empty.");
         } else {
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
-                getLogger().warning("No need to define iam-role, when access and secret keys are configured!");
+                getLogger().info("No need to define iam-role, when access and secret keys are configured!");
             }
         }
     }
