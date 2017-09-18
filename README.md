@@ -5,6 +5,7 @@
 
   * [Supported Hazelcast Versions](#supported-hazelcast-versions)
   * [Discovering Members within EC2 Cloud](#discovering-members-within-ec2-cloud)
+    * [Zone Aware Support](#zone-aware)
   * [IAM Roles](#iam-roles)
     * [IAM Roles in ECS Environment](#iam-roles-in-ecs-environment)
     * [Policy for IAM User](#policy-for-iam-user)
@@ -35,6 +36,29 @@ You can either choose to configure your cluster with `AwsConfig` (or `aws` eleme
 or you can choose configuring AWS discovery using [Discovery SPI](http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#discovery-spi) implementation.
 Starting with hazelcast-aws-1.2, it's strongly recommended to use Discovery SPI implementation as
 the former one will be deprecated.
+
+### Zone Aware Support
+
+Supported Hazelcast client version is `>= 3.8.6`
+
+As discovery services, these plugins put zone information to the Hazelcast member attributes map during the discovery process. 
+Hazelcast creates the partition groups with respect to member attributes map entries that include AWS Availability Zone (AZ) information.
+
+When using `ZONE_AWARE` configuration, backups are created in the other AZ(s). 
+Each zone will be accepted as one partition group.
+
+Following are declarative and programmatic configuration snippets that show how to enable `ZONE_AWARE` grouping.
+
+```xml
+<partition-group enabled="true" group-type="ZONE_AWARE" />
+```
+
+```java
+Config config = ...;
+PartitionGroupConfig partitionGroupConfig = config.getPartitionGroupConfig();
+partitionGroupConfig.setEnabled( true )
+    .setGroupType( MemberGroupType.ZONE_AWARE );
+```
 
 ### Configuring AWS Discovery using Discovery SPI for Hazelcast Cluster Members
 
