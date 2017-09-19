@@ -39,12 +39,13 @@ the former one will be deprecated.
 
 ### Zone Aware Support
 
-Supported Hazelcast client version is `>= 3.8.6`
+This support is available for Hazelcast Client 3.8.6 and newer releases.
 
-As discovery services, these plugins put zone information to the Hazelcast member attributes map during the discovery process. 
-Hazelcast creates the partition groups with respect to member attributes map entries that include AWS Availability Zone (AZ) information.
+As a discovery service, Hazelcast AWS plugin put the zone information into the Hazelcast's member attributes map during the discovery process. 
+Please see the [Defining Member Attributes section](http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#defining-member-attributes) 
+to learn about the member attributes.
 
-When using `ZONE_AWARE` configuration, backups are created in the other AZ(s). 
+When using `ZONE_AWARE` configuration, backups are created in the other AZs. 
 Each zone will be accepted as one partition group.
 
 Following are declarative and programmatic configuration snippets that show how to enable `ZONE_AWARE` grouping.
