@@ -246,39 +246,23 @@ public class DescribeInstancesTest {
         getInstancesAndVerify(awsConfig);
     }
 
-    @Test(timeout = TIMEOUT_FACTOR * CALL_SERVICE_TIMEOUT)
-    public void test_CallService_Timeout() {
+    @Test(timeout = TIMEOUT_FACTOR * CALL_SERVICE_TIMEOUT, expected = SocketTimeoutException.class)
+    public void test_CallService_Timeout() throws Exception {
         final String nonRoutable = "10.255.255.254";
         AwsConfig awsConfig = new AwsConfig();
         awsConfig.setConnectionTimeoutSeconds((int) TimeUnit.MILLISECONDS.toSeconds(CALL_SERVICE_TIMEOUT));
         DescribeInstances describeInstances = new DescribeInstances(awsConfig);
-
-        try {
-            describeInstances.callService(nonRoutable);
-        } catch (Exception e) {
-            Assert.assertTrue(e instanceof SocketTimeoutException);
-            return;
-        }
-
-        Assert.fail("Timeout setting failure in call service operation");
+        describeInstances.callService(nonRoutable);
     }
 
-    @Test(timeout = TIMEOUT_FACTOR * CALL_SERVICE_TIMEOUT)
+    @Test(timeout = TIMEOUT_FACTOR * CALL_SERVICE_TIMEOUT, expected = InvalidConfigurationException.class)
     public void test_RetrieveMetaData_Timeout() {
         final String nonRoutable = "http://10.255.255.254";
         AwsConfig awsConfig = new AwsConfig();
         awsConfig.setConnectionTimeoutSeconds((int) TimeUnit.MILLISECONDS.toSeconds(CALL_SERVICE_TIMEOUT));
 
         DescribeInstances describeInstances = new DescribeInstances(awsConfig);
-
-        try {
-            describeInstances.retrieveRoleFromURI(nonRoutable);
-        } catch (Exception e) {
-            Assert.assertTrue(e instanceof InvalidConfigurationException);
-            return;
-        }
-
-        Assert.fail("Timeout setting failure in meta data retrieval operation");
+        describeInstances.retrieveRoleFromURI(nonRoutable);
     }
 
     private void getInstancesAndVerify(AwsConfig awsConfig)
