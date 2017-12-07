@@ -1,4 +1,4 @@
-***NOTE:*** 
+***NOTE:***
 *hazelcast-cloud module has been renamed as hazelcast-aws module (starting with Hazelcast 3.7.3). If you want to use AWS Discovery, you should add the library hazelcast-aws JAR to your environment.*
 
 # Table of Contents
@@ -29,7 +29,7 @@
 
 ## Discovering Members within EC2 Cloud
 
-Hazelcast supports EC2 auto-discovery. It is useful when you do not want to provide or you cannot provide the list of possible IP addresses. 
+Hazelcast supports EC2 auto-discovery. It is useful when you do not want to provide or you cannot provide the list of possible IP addresses.
 
 There are two possible ways to configure your cluster to use EC2 auto-discovery.
 You can either choose to configure your cluster with `AwsConfig` (or `aws` element in your XML config)
@@ -39,16 +39,16 @@ the former one will be deprecated.
 
 ### Zone Aware Support
 
-***NOTE:*** 
+***NOTE:***
 ZONE_AWARE configuration is only valid when you use Hazelcast Discovery SPI based configuration with `<discovery-strategies>`. `<aws>` based configuration is still using old implemenation and does not support ZONE_AWARE feature
 
 Zone Aware Support is available for Hazelcast Client 3.8.6 and newer releases.
 
-As a discovery service, Hazelcast AWS plugin put the zone information into the Hazelcast's member attributes map during the discovery process. 
-Please see the [Defining Member Attributes section](http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#defining-member-attributes) 
+As a discovery service, Hazelcast AWS plugin put the zone information into the Hazelcast's member attributes map during the discovery process.
+Please see the [Defining Member Attributes section](http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#defining-member-attributes)
 to learn about the member attributes.
 
-When using `ZONE_AWARE` configuration, backups are created in the other AZs. 
+When using `ZONE_AWARE` configuration, backups are created in the other AZs.
 Each zone will be accepted as one partition group.
 
 Following are declarative and programmatic configuration snippets that show how to enable `ZONE_AWARE` grouping.
@@ -116,7 +116,7 @@ Here are the definitions of the properties
 * `connection-timeout-seconds`: The maximum amount of time Hazelcast will try to connect to a well known member before giving up. Setting this value too low could mean that a member is not able to connect to a cluster. Setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up). Increasing this value is recommended if you have many IPs listed and the members cannot properly build up the cluster. Its default value is 5.
 * `hz-port`: You can set searching for other ports rather than 5701 if you've members on different ports. It is optional.
 
-### Configuring Hazelcast Cluster Members for AWS ECS 
+### Configuring Hazelcast Cluster Members for AWS ECS
 
 In order to enable discovery within AWS ECS Cluster, within `taskdef.json` or container settings, Hazelcast member should be bind to `host` network. Therefore, proper json representation for task should contain below segment:
 ```
@@ -130,7 +130,7 @@ Also, cluster member should have below interface binding in `hazelcast.xml` conf
 </interfaces>
 ```
 Please note that `10.0.*.*` value depends on your CIDR block definition.
-If more than one `subnet` or `custom VPC` is used for cluster, it should be checked that `container instances` within cluster have newtork connectivity or have `tracepath` to each other. 
+If more than one `subnet` or `custom VPC` is used for cluster, it should be checked that `container instances` within cluster have newtork connectivity or have `tracepath` to each other.
 
 ### Configuring AWS Discovery using Discovery SPI for Hazelcast Client
 
@@ -252,8 +252,8 @@ If you are using IAM role configuration (`iam-role`) for EC2 discovery, you need
 To make sure EC2 instances are found correctly, you can use the AWSClient class. It determines the private IP addresses of EC2 instances to be connected. Give the AWSClient class the values for the parameters that you specified in the aws element, as shown below. You will see whether your EC2 instances are found.
 
 ```java
-public static void main( String[] args )throws Exception{ 
-  AwsConfig config = new AwsConfig(); 
+public static void main( String[] args )throws Exception{
+  AwsConfig config = new AwsConfig();
   config.setAccessKey( ... ) ;
   config.setSecretKey( ... );
   config.setRegion( ... );
@@ -263,9 +263,9 @@ public static void main( String[] args )throws Exception{
   config.setEnabled( true );
   AWSClient client = new AWSClient( config );
   List<String> ipAddresses = client.getPrivateIpAddresses();
-  System.out.println( "addresses found:" + ipAddresses ); 
+  System.out.println( "addresses found:" + ipAddresses );
   for ( String ip: ipAddresses ) {
-    System.out.println( ip ); 
+    System.out.println( ip );
   }
 }
 ```
@@ -281,17 +281,10 @@ Amazon Web Services (AWS) platform can be an unpredictable environment compared 
 
 ### Selecting EC2 Instance Type
 
-Hazelcast is an in-memory data grid that distributes the data and computation to the members that are connected with a network, making Hazelcast very sensitive to the network. Not all EC2 Instance types are the same in terms of the network performance. It is recommended that you choose instances that have **10 Gigabit** or **High** network performance for Hazelcast deployments. Please see the below list for the recommended instances.
+Hazelcast is an in-memory data grid that distributes the data and computation to the members that are connected with a network, making Hazelcast very sensitive to the network. Not all EC2 Instance types are the same in terms of the network performance. It is recommended that you choose instances that have **10 Gigabit** or **High** network performance for Hazelcast deployments.
 
-* m3.2xlarge - High
-* m1.xlarge - High
-* c3.2xlarge - High
-* c3.4xlarge - High
-* c3.8xlarge - 10 Gigabit
-* c1.xlarge - High
-* cc2.8xlarge - 10 Gigabit
-* m2.4xlarge - High
-* cr1.8xlarge - 10 Gigabit
+You can check latest Instance Types on <a href="https://aws.amazon.com/ec2/instance-types/" target="_blank">
+Amazon EC2 Instance Types </a>
 
 ### Dealing with Network Latency
 
@@ -316,10 +309,3 @@ AWS uses two virtualization types to launch the EC2 instances: Para-Virtualizati
 ***RELATED INFORMATION***
 
 *You can download the white paper "Amazon EC2 Deployment Guide for Hazelcast IMDG" <a href="https://hazelcast.com/resources/amazon-ec2-deployment-guide/" target="_blank">here</a>.*
-
-
-
-
-
-
-
