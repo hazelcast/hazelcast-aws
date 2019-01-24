@@ -51,6 +51,7 @@
         <jsr107.api.version>1.0.0</jsr107.api.version>
         <bytebuddy.version>1.6.12</bytebuddy.version>
     </properties>
+    
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
