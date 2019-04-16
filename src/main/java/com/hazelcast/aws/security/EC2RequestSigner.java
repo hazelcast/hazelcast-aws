@@ -192,8 +192,8 @@ public class EC2RequestSigner {
         return payloadHash;
     }
 
-    public String createFormattedCredential() {
+    public String createFormattedCredential(String service) {
         return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
-                + "ec2/aws4_request";
+                + service + "/aws4_request";
     }
 }

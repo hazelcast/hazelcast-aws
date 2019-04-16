@@ -26,9 +26,13 @@ import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.json.JsonObject;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -49,6 +53,7 @@ import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static com.hazelcast.nio.IOUtil.closeResource;
+import static com.hazelcast.nio.IOUtil.writeObject;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
@@ -106,13 +111,20 @@ public class DescribeInstances {
     void fillKeysFromIamRoles()
             throws IOException {
         if (isEmpty(awsConfig.getIamRole()) || "DEFAULT".equals(awsConfig.getIamRole())) {
-            String defaultIAMRole = getDefaultIamRole();
+            String defaultIAMRole = null;
+            try {
+                defaultIAMRole = getDefaultIamRole();
+            } catch (Throwable e) {
+                System.out.println("Cannot get DEFAULT IAM role... CONTINUING! Exception was: " + e.getMessage());
+            }
             awsConfig.setIamRole(defaultIAMRole);
         }
 
         if (isNotEmpty(awsConfig.getIamRole())) {
+            System.out.println("Using getIamRole() -- BAD");
             fillKeysFromIamRole();
         } else {
+            System.out.println("Using fillKeysFromIamTaskRole(...) -- GOOD!");
             fillKeysFromIamTaskRole(getEnvironment());
         }
 
@@ -147,9 +159,12 @@ public class DescribeInstances {
         }
         uri = IAM_TASK_ROLE_ENDPOINT + uri;
 
+        System.out.println("Getting creds from " + uri);
+
         String json = "";
         try {
             json = retrieveRoleFromURI(uri);
+            System.out.println("JSON:\n" + json + "\n");
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
             throw new InvalidConfigurationException(
@@ -181,6 +196,7 @@ public class DescribeInstances {
         awsConfig.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsConfig.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
         attributes.put("X-Amz-Security-Token", roleAsJson.getString("Token", null));
+        System.out.println("In parseAndStoreRoleCreds: attributes are: " + attributes.toString());
     }
 
     /**
@@ -254,11 +270,14 @@ public class DescribeInstances {
             fillKeysFromIamRoles();
         }
 
-        String signature = getRequestSigner().sign("ec2", attributes);
+        System.out.println("OK we have credentials, signing request...");
+
+        String signature = getRequestSigner().sign("ecs", attributes); // FIXME ec2 OR ecs
         Map<String, String> response;
         InputStream stream = null;
         attributes.put("X-Amz-Signature", signature);
         try {
+            System.out.println("Calling service at " + endpoint);
             stream = callServiceWithRetries(endpoint);
             response = CloudyUtility.unmarshalTheResponse(stream);
             return response;
@@ -284,12 +303,23 @@ public class DescribeInstances {
         String query = getRequestSigner().getCanonicalizedQueryString(attributes);
         URL url = new URL("https", endpoint, -1, "/?" + query);
 
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.GET);
-        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(false);
-        httpConnection.connect();
+        System.out.println("HTTP POST for URL: " + url.toString()); // FIXME get/post
 
+        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        httpConnection.setRequestMethod(Constants.POST);
+        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
+        httpConnection.setDoOutput(true); // FIXME
+        httpConnection.setRequestProperty("Content-Type", "application/x-amz-json-1.1"); // FIXME for ecs post
+        httpConnection.setRequestProperty("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks"); // FIXME for ecs post
+        httpConnection.setRequestProperty("Accept-Encoding", "identity"); // FIXME for ecs post
+
+        //X-Amz-Target: AmazonEC2ContainerServiceV20141113.ListTasks
+        httpConnection.connect();
+        OutputStream outputStream = httpConnection.getOutputStream();
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        writer.write("{}");
+        writer.flush();
+        writer.close();
         checkNoAwsErrors(httpConnection);
 
         return httpConnection.getInputStream();
@@ -312,7 +342,7 @@ public class DescribeInstances {
             attributes.put("Action", this.getClass().getSimpleName());
             attributes.put("Version", DOC_VERSION);
             attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-            attributes.put("X-Amz-Credential", rs.createFormattedCredential());
+            attributes.put("X-Amz-Credential", rs.createFormattedCredential("ec2")); // FIXME ecs ec2
             attributes.put("X-Amz-Date", timeStamp);
             attributes.put("X-Amz-SignedHeaders", "host");
             attributes.put("X-Amz-Expires", "30");

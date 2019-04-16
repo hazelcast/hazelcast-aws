@@ -24,7 +24,16 @@ import org.w3c.dom.Node;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -74,11 +83,33 @@ public final class CloudyUtility {
                     addresses.putAll(instancesSet.getAddresses());
                 }
             }
+
+            System.out.println("This is the returned document:");
+            System.out.println(getNicelyFormattedXMLDocument(doc));
+
             return addresses;
         } catch (Exception e) {
             LOGGER.warning(e);
         }
         return new LinkedHashMap<String, String>();
+    }
+
+
+    public static String getNicelyFormattedXMLDocument(Document doc) throws IOException, TransformerException {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = tf.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+        Writer stringWriter = new StringWriter();
+        StreamResult streamResult = new StreamResult(stringWriter);
+        transformer.transform(new DOMSource(doc), streamResult);
+        String result = stringWriter.toString();
+
+        return result;
     }
 
     private static class NodeHolder {

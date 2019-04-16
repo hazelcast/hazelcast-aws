@@ -93,7 +93,7 @@ public class EC2RequestSignerTest {
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
 
         EC2RequestSigner actual = new EC2RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
+        attributes.put("X-Amz-Credential", actual.createFormattedCredential("ec2"));
         String signature = actual.sign(TEST_SERVICE, attributes);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);

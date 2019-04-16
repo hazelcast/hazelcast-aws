@@ -37,12 +37,14 @@ public class AWSClient {
             throw new IllegalArgumentException("AwsConfig is required!");
         }
         this.awsConfig = awsConfig;
-        this.endpoint = awsConfig.getHostHeader();
+        String hostHeader = awsConfig.getHostHeader();
+        this.endpoint = hostHeader;
         if (awsConfig.getRegion() != null && awsConfig.getRegion().length() > 0) {
-            if (!awsConfig.getHostHeader().startsWith("ec2.")) {
-                throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" prefix");
+            if (!(hostHeader.startsWith("ec2.") || hostHeader.startsWith("ecs."))) {
+                throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" or \"ecs.\" prefix, found: " + hostHeader);
             }
-            setEndpoint(awsConfig.getHostHeader().replace("ec2.", "ec2." + awsConfig.getRegion() + "."));
+            String host = hostHeader.substring(0, 4);
+            setEndpoint(hostHeader.replace(host, host + awsConfig.getRegion() + "."));
         }
     }
 
