@@ -17,7 +17,6 @@
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.AwsOperation;
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
@@ -34,11 +33,11 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
 @Category(QuickTest.class)
-public class EC2RequestSignerTest {
+public class EcsRequestSignerTest {
 
     private final static String TEST_REGION = "eu-central-1";
-    private final static String TEST_HOST = "ec2.eu-central-1.amazonaws.com";
-    private final static String TEST_SERVICE = "ec2";
+    private final static String TEST_HOST = "ecs.eu-central-1.amazonaws.com";
+    private final static String TEST_SERVICE = "ecs";
     private final static String TEST_ACCESS_KEY = "AKIDEXAMPLE";
     private final static String TEST_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
     private final static String TEST_REQUEST_DATE = "20141106T111126Z";
@@ -54,7 +53,7 @@ public class EC2RequestSignerTest {
                                                setAccessKey(TEST_ACCESS_KEY).
                                                setSecretKey(TEST_SECRET_KEY).build();
 
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
+        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST); // FIXME
         // Override the attributes map. We need to change values. Not pretty, but
         // no real alternative, and in this case : testing only
 
@@ -94,7 +93,7 @@ public class EC2RequestSignerTest {
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
 
         Aws4RequestSigner actual = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential("ec2"));
+        attributes.put("X-Amz-Credential", actual.createFormattedCredential("ecs"));
         String signature = actual.sign(TEST_SERVICE, attributes);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);

@@ -31,16 +31,16 @@ import java.util.concurrent.TimeUnit;
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class DescribeInstances extends AwsOperation {
+public class ListTasks extends AwsOperation {
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint)
+    public ListTasks(AwsConfig awsConfig, String endpoint)
             throws IOException {
         this.awsConfig = awsConfig;
         this.endpoint = endpoint;
     }
 
     //Just for testing purposes
-    DescribeInstances(AwsConfig awsConfig) {
+    ListTasks(AwsConfig awsConfig) {
         this.awsConfig = awsConfig;
     }
 
@@ -52,11 +52,20 @@ public class DescribeInstances extends AwsOperation {
         URL url = new URL("https", endpoint, -1, "/?" + query);
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.GET);
+        httpConnection.setRequestMethod(Constants.POST);
         httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(false);
-        httpConnection.connect();
+        httpConnection.setDoOutput(true); // FIXME
+        httpConnection.setRequestProperty("Content-Type", "application/x-amz-json-1.1"); // FIXME for ecs post
+        httpConnection.setRequestProperty("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks"); // FIXME for ecs post
+        //httpConnection.setRequestProperty("Accept-Encoding", "identity"); // FIXME for ecs post
 
+        //X-Amz-Target: AmazonEC2ContainerServiceV20141113.ListTasks
+        httpConnection.connect();
+        OutputStream outputStream = httpConnection.getOutputStream();
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        writer.write("{}");
+        writer.flush();
+        writer.close();
         checkNoAwsErrors(httpConnection);
 
         return httpConnection.getInputStream();

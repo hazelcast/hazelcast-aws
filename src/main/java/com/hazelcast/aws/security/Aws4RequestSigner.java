@@ -35,7 +35,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 
-public class EC2RequestSigner {
+public class Aws4RequestSigner {
 
     private static final String NEW_LINE = "\n";
     private static final String API_TERMINATOR = "aws4_request";
@@ -51,7 +51,7 @@ public class EC2RequestSigner {
     private Map<String, String> attributes;
     private String endpoint;
 
-    public EC2RequestSigner(AwsConfig config, String timeStamp, String endpoint) {
+    public Aws4RequestSigner(AwsConfig config, String timeStamp, String endpoint) {
         this.config = config;
         this.timestamp = timeStamp;
         this.service = null;
