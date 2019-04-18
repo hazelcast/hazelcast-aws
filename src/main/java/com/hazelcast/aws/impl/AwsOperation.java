@@ -35,7 +35,7 @@ import static com.hazelcast.nio.IOUtil.closeResource;
 /**
  *
  */
-public abstract class AwsOperation {
+public abstract class AwsOperation<E> {
     /**
      * URI to fetch container credentials (when IAM role is enabled)
      * <p>
@@ -238,7 +238,7 @@ public abstract class AwsOperation {
      * @return map from private to public IP or empty map in case of failed response unmarshalling
      * @throws Exception if there is an exception invoking the service
      */
-    public Map<String, String> execute()
+    public E execute()
             throws Exception {
         if (isNotEmpty(awsConfig.getIamRole()) || isEmpty(awsConfig.getAccessKey())) {
             fillKeysFromIamRoles();
@@ -247,13 +247,13 @@ public abstract class AwsOperation {
         System.out.println("OK we have credentials, signing request...");
 
         String signature = getRequestSigner().sign(attributes);
-        Map<String, String> response;
+        E response;
         InputStream stream = null;
         attributes.put("X-Amz-Signature", signature);
         try {
             System.out.println("Calling service at " + endpoint);
             stream = callServiceWithRetries();
-            response = CloudyUtility.unmarshalTheResponse(stream);
+            response = unmarshal(stream);
             return response;
         } finally {
             closeResource(stream);
@@ -272,6 +272,8 @@ public abstract class AwsOperation {
 
     // visible for testing
     abstract InputStream callService() throws Exception;
+
+    abstract E unmarshal(InputStream stream);
 
     // visible for testing
     void checkNoAwsErrors(HttpURLConnection httpConnection)

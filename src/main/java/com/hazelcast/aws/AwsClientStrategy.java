@@ -1,6 +1,9 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.impl.DescribeTasks;
+import com.hazelcast.aws.impl.ListTasks;
+import com.hazelcast.aws.impl.TaskMetadata;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,12 +40,15 @@ public abstract class AwsClientStrategy {
 
         @Override
         public Collection<String> getPrivateIpAddresses() throws Exception {
-            return null;
+            return getAddresses().keySet();
         }
 
         @Override
         public Map<String, String> getAddresses() throws Exception {
-            return null;
+            String clusterName = new TaskMetadata(awsConfig, endpoint).execute();
+            Collection<String> taskArns = new ListTasks(awsConfig, endpoint).execute();
+            Map<String, String> addresses = new DescribeTasks(awsConfig, endpoint).execute(taskArns);
+            return addresses;
         }
     }
 
@@ -54,8 +60,7 @@ public abstract class AwsClientStrategy {
 
         @Override
         public Collection<String> getPrivateIpAddresses() throws Exception {
-            Map<String, String> result = new DescribeInstances(awsConfig, endpoint).execute();
-            return result.keySet();
+            return getAddresses().keySet();
         }
 
         public Map<String, String> getAddresses() throws Exception {

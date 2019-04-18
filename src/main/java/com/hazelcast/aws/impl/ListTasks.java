@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
@@ -34,12 +35,11 @@ import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class ListTasks extends AwsOperation {
+public class ListTasks extends AwsOperation<Collection<String>> {
 
     public ListTasks(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint, "ecs", ECS_DOC_VERSION);
     }
-
 
     //Just for testing purposes
     ListTasks(AwsConfig awsConfig) {
@@ -61,7 +61,6 @@ public class ListTasks extends AwsOperation {
         httpConnection.setRequestProperty("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
         httpConnection.setRequestProperty("Accept-Encoding", "identity");
 
-        //X-Amz-Target: AmazonEC2ContainerServiceV20141113.ListTasks
         httpConnection.connect();
         OutputStream outputStream = httpConnection.getOutputStream();
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
@@ -71,6 +70,12 @@ public class ListTasks extends AwsOperation {
         checkNoAwsErrors(httpConnection);
 
         return httpConnection.getInputStream();
+    }
+
+    @Override
+    Collection<String> unmarshal(InputStream stream) {
+        // TODO
+        return null;
     }
 
 }

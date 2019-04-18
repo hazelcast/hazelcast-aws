@@ -32,7 +32,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore // FIXME
 @RunWith(HazelcastSerialClassRunner.class)
 @Category(QuickTest.class)
 public class EcsRequestSignerTest {
@@ -43,8 +42,8 @@ public class EcsRequestSignerTest {
     private final static String TEST_ACCESS_KEY = "AKIDEXAMPLE";
     private final static String TEST_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
     private final static String TEST_REQUEST_DATE = "20141106T111126Z";
-    private final static String TEST_DERIVED_EXPECTED = "7038265e40236063ebcd2e201908ad6e9f64e533439bfa7a5faa07ba419329bc";
-    private final static String TEST_SIGNATURE_EXPECTED = "79f7a4d346ee69ca22ba5f9bc3dd1efc13ac7509936afc5ec21cac37de071eef";
+    private final static String TEST_DERIVED_EXPECTED = "ac8d19964fcea9428c6cf191526249112adf5547331898b190239b834fbb7c9e";
+    private final static String TEST_SIGNATURE_EXPECTED = "c353b91c8885aeec8c67b90d22c00e18546b8000c744689ae25fe52bef13b0e6";
 
     @Test
     public void deriveSigningKeyTest()

@@ -17,10 +17,12 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
+import com.hazelcast.aws.utility.CloudyUtility;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
@@ -29,7 +31,7 @@ import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class DescribeInstances extends AwsOperation {
+public class DescribeInstances extends AwsOperation<Map<String, String>> {
 
     public DescribeInstances(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint, "ec2", DOC_VERSION);
@@ -55,6 +57,11 @@ public class DescribeInstances extends AwsOperation {
         checkNoAwsErrors(httpConnection);
 
         return httpConnection.getInputStream();
+    }
+
+    @Override
+    Map<String, String> unmarshal(InputStream stream) {
+        return CloudyUtility.unmarshalTheResponse(stream);
     }
 
 }
