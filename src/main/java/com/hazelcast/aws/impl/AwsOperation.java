@@ -50,7 +50,16 @@ public abstract class AwsOperation {
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
     private static final String UTF8_ENCODING = "UTF-8";
-    private Aws4RequestSigner rs;
+
+    protected final String service;
+    protected final String docVersion;
+
+    protected AwsOperation(AwsConfig awsConfig, String endpoint, String service, String docVersion) {
+        this.awsConfig = awsConfig;
+        this.endpoint = endpoint;
+        this.service = service;
+        this.docVersion = docVersion;
+    }
 
     /**
      * AWS response codes for client and server errors are specified here:
@@ -237,13 +246,13 @@ public abstract class AwsOperation {
 
         System.out.println("OK we have credentials, signing request...");
 
-        String signature = getRequestSigner().sign("ecs", attributes); // FIXME ec2 OR ecs
+        String signature = getRequestSigner().sign(attributes);
         Map<String, String> response;
         InputStream stream = null;
         attributes.put("X-Amz-Signature", signature);
         try {
             System.out.println("Calling service at " + endpoint);
-            stream = callServiceWithRetries(endpoint);
+            stream = callServiceWithRetries();
             response = CloudyUtility.unmarshalTheResponse(stream);
             return response;
         } finally {
@@ -251,20 +260,18 @@ public abstract class AwsOperation {
         }
     }
 
-    private InputStream callServiceWithRetries(final String endpoint)
+    private InputStream callServiceWithRetries()
             throws Exception {
         return RetryUtils.retry(new Callable<InputStream>() {
             @Override
-            public InputStream call()
-                    throws Exception {
-                return callService(endpoint);
+            public InputStream call() throws Exception {
+                return callService();
             }
         }, awsConfig.getConnectionRetries());
     }
 
     // visible for testing
-    abstract InputStream callService(String endpoint)
-            throws Exception;
+    abstract InputStream callService() throws Exception;
 
     // visible for testing
     void checkNoAwsErrors(HttpURLConnection httpConnection)
@@ -277,18 +284,16 @@ public abstract class AwsOperation {
     }
 
     public Aws4RequestSigner getRequestSigner() {
-        if (null == rs) {
-            String timeStamp = getFormattedTimestamp();
-            rs = new Aws4RequestSigner(awsConfig, timeStamp, endpoint);
-            attributes.put("Action", this.getClass().getSimpleName());
-            attributes.put("Version", DOC_VERSION);
-            attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-            attributes.put("X-Amz-Credential", rs.createFormattedCredential("ec2")); // FIXME ecs ec2
-            attributes.put("X-Amz-Date", timeStamp);
-            attributes.put("X-Amz-SignedHeaders", "host");
-            attributes.put("X-Amz-Expires", "30");
-            addFilters();
-        }
+        String timeStamp = getFormattedTimestamp();
+        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, timeStamp, service, endpoint);
+        attributes.put("Action", this.getClass().getSimpleName());
+        attributes.put("Version", docVersion);
+        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
+        attributes.put("X-Amz-Credential", rs.createFormattedCredential());
+        attributes.put("X-Amz-Date", timeStamp);
+        attributes.put("X-Amz-SignedHeaders", "host");
+        attributes.put("X-Amz-Expires", "30");
+        addFilters();
         return rs;
     }
 

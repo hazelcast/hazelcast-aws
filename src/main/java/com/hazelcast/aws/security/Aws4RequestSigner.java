@@ -51,10 +51,10 @@ public class Aws4RequestSigner {
     private Map<String, String> attributes;
     private String endpoint;
 
-    public Aws4RequestSigner(AwsConfig config, String timeStamp, String endpoint) {
+    public Aws4RequestSigner(AwsConfig config, String timeStamp, String service, String endpoint) {
         this.config = config;
         this.timestamp = timeStamp;
-        this.service = null;
+        this.service = service;
         this.endpoint = endpoint;
     }
 
@@ -68,8 +68,7 @@ public class Aws4RequestSigner {
         return "host";
     }
 
-    public String sign(String service, Map<String, String> attributes) {
-        this.service = service;
+    public String sign(Map<String, String> attributes) {
         this.attributes = attributes;
 
         String canonicalRequest = getCanonicalizedRequest();
@@ -192,7 +191,7 @@ public class Aws4RequestSigner {
         return payloadHash;
     }
 
-    public String createFormattedCredential(String service) {
+    public String createFormattedCredential() {
         return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
                 + service + "/aws4_request";
     }

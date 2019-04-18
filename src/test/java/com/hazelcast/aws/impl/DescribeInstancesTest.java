@@ -247,7 +247,7 @@ public class DescribeInstancesTest {
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setAccessKey("dummyAccessKey").setSecretKey("dummySecretKey").build();
 
         DescribeInstances describeInstances = spy(new DescribeInstances(awsConfig, awsConfig.getHostHeader()));
-        doReturn(stubDescribeInstancesResponse()).when(describeInstances).callService(HOST_HEADER);
+        doReturn(stubDescribeInstancesResponse()).when(describeInstances).callService();
 
         // when
         Map<String, String> result = describeInstances.execute();

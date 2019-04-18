@@ -18,14 +18,12 @@ package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+
+import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
@@ -33,21 +31,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class DescribeInstances extends AwsOperation {
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint)
-            throws IOException {
-        this.awsConfig = awsConfig;
-        this.endpoint = endpoint;
+    public DescribeInstances(AwsConfig awsConfig, String endpoint) {
+        super(awsConfig, endpoint, "ec2", DOC_VERSION);
     }
 
     //Just for testing purposes
     DescribeInstances(AwsConfig awsConfig) {
-        this.awsConfig = awsConfig;
+        this(awsConfig, null);
     }
 
     // visible for testing
     @Override
-    InputStream callService(String endpoint)
-            throws Exception {
+    InputStream callService() throws Exception {
         String query = getRequestSigner().getCanonicalizedQueryString(attributes);
         URL url = new URL("https", endpoint, -1, "/?" + query);
 

@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
 @Category(QuickTest.class)
-public class EC2RequestSignerTest {
+public class Ec2RequestSignerTest {
 
     private final static String TEST_REGION = "eu-central-1";
     private final static String TEST_HOST = "ec2.eu-central-1.amazonaws.com";
@@ -65,10 +65,10 @@ public class EC2RequestSignerTest {
         field.set(di, attributes);
 
         // Override private method
-        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
-        field = rs.getClass().getDeclaredField("service");
-        field.setAccessible(true);
-        field.set(rs, "ec2");
+        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+//        field = rs.getClass().getDeclaredField("service");
+//        field.setAccessible(true);
+//        field.set(rs, TEST_SERVICE);
 
         Method method = rs.getClass().getDeclaredMethod("deriveSigningKey", null);
         method.setAccessible(true);
@@ -93,9 +93,9 @@ public class EC2RequestSignerTest {
         Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-        Aws4RequestSigner actual = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential("ec2"));
-        String signature = actual.sign(TEST_SERVICE, attributes);
+        Aws4RequestSigner actual = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
+        String signature = actual.sign(attributes);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
     }

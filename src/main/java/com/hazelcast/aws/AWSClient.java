@@ -16,7 +16,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.config.InvalidConfigurationException;
 
 import java.util.Collection;
@@ -29,7 +28,7 @@ import static com.hazelcast.aws.utility.MetadataUtil.retrieveMetadataFromURI;
 public class AWSClient {
 
     private final AwsConfig awsConfig;
-
+    private final AwsClientStrategy clientStrategy;
     private String endpoint;
 
     public AWSClient(AwsConfig awsConfig) {
@@ -44,19 +43,17 @@ public class AWSClient {
                 throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" or \"ecs.\" prefix, found: " + hostHeader);
             }
             String host = hostHeader.substring(0, 4);
-            setEndpoint(hostHeader.replace(host, host + awsConfig.getRegion() + "."));
+            this.endpoint = hostHeader.replace(host, host + awsConfig.getRegion() + ".");
         }
+        clientStrategy = AwsClientStrategy.create(awsConfig, endpoint);
     }
 
-    public Collection<String> getPrivateIpAddresses()
-            throws Exception {
-        Map<String, String> result = new DescribeInstances(awsConfig, endpoint).execute();
-        return result.keySet();
+    public Collection<String> getPrivateIpAddresses() throws Exception {
+        return clientStrategy.getPrivateIpAddresses();
     }
 
-    public Map<String, String> getAddresses()
-            throws Exception {
-        return new DescribeInstances(awsConfig, endpoint).execute();
+    public Map<String, String> getAddresses() throws Exception {
+        return clientStrategy.getAddresses();
     }
 
     public String getAvailabilityZone() {
@@ -68,6 +65,7 @@ public class AWSClient {
         return this.endpoint;
     }
 
+    @Deprecated
     public void setEndpoint(String s) {
         this.endpoint = s;
     }
