@@ -119,15 +119,15 @@ public class AwsDiscoveryStrategy
                 .isNullOrEmptyAfterTrim(config.getAccessKey())) {
 
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
-                getLogger().info("Describe instances will be queried with iam-role, "
+                LOGGER.info("Describe instances will be queried with iam-role, "
                         + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
             } else {
-                getLogger().warning("Describe instances will be queried with iam-role assigned to EC2 instance, "
+                LOGGER.warning("Describe instances will be queried with iam-role assigned to EC2 instance, "
                         + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
             }
         } else {
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
-                getLogger().info("No need to define iam-role, when access and secret keys are configured!");
+                LOGGER.info("No need to define iam-role, when access and secret keys are configured!");
             }
         }
     }
@@ -145,16 +145,16 @@ public class AwsDiscoveryStrategy
         try {
             final Map<String, String> privatePublicIpAddressPairs = awsClient.getAddresses();
             if (privatePublicIpAddressPairs.isEmpty()) {
-                getLogger().warning("No EC2 instances found!");
+                LOGGER.warning("No IP addresses found!");
                 return Collections.emptyList();
             }
 
-            if (getLogger().isFinestEnabled()) {
-                final StringBuilder sb = new StringBuilder("Found the following EC2 instances:\n");
+            if (LOGGER.isFinestEnabled()) {
+                final StringBuilder sb = new StringBuilder("Found the following IP addresses:\n");
                 for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
                     sb.append("    ").append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
                 }
-                getLogger().finest(sb.toString());
+                LOGGER.finest(sb.toString());
             }
 
             final ArrayList<DiscoveryNode> nodes = new ArrayList<DiscoveryNode>(privatePublicIpAddressPairs.size());

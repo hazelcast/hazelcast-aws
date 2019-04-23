@@ -17,15 +17,16 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.utility.CloudyUtility;
+import com.hazelcast.aws.utility.Ec2XmlUtils;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
+import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
@@ -33,20 +34,25 @@ import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
  */
 public class DescribeInstances extends AwsOperation<Map<String, String>> {
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint) {
-        super(awsConfig, endpoint, "ec2", DOC_VERSION);
+    public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
+        super(awsConfig, endpointURL, "ec2", EC2_DOC_VERSION);
+    }
+
+    //Just for testing purposes
+    public DescribeInstances(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
+        super(awsConfig, new URL("https", endpoint, -1, "/"), "ec2", EC2_DOC_VERSION);
     }
 
     //Just for testing purposes
     DescribeInstances(AwsConfig awsConfig) {
-        this(awsConfig, null);
+        this(awsConfig, (URL) null);
     }
 
     // visible for testing
     @Override
     InputStream callService() throws Exception {
         String query = getRequestSigner().getCanonicalizedQueryString(attributes);
-        URL url = new URL("https", endpoint, -1, "/?" + query);
+        URL url = new URL(endpointURL, "/?" + query);
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         httpConnection.setRequestMethod(Constants.GET);
@@ -61,7 +67,7 @@ public class DescribeInstances extends AwsOperation<Map<String, String>> {
 
     @Override
     Map<String, String> unmarshal(InputStream stream) {
-        return CloudyUtility.unmarshalTheResponse(stream);
+        return Ec2XmlUtils.unmarshalTheResponse(stream);
     }
 
 }

@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -54,7 +55,7 @@ public class EcsRequestSignerTest {
                                                setAccessKey(TEST_ACCESS_KEY).
                                                setSecretKey(TEST_SECRET_KEY).build();
 
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST); // FIXME
+        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
         // Override the attributes map. We need to change values. Not pretty, but
         // no real alternative, and in this case : testing only
 
@@ -66,11 +67,8 @@ public class EcsRequestSignerTest {
 
         // Override private method
         Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-//        field = rs.getClass().getDeclaredField("service");
-//        field.setAccessible(true);
-//        field.set(rs, "ec2");
 
-        Method method = rs.getClass().getDeclaredMethod("deriveSigningKey", null);
+        Method method = rs.getClass().getDeclaredMethod("deriveSigningKey");
         method.setAccessible(true);
         byte[] derivedKey = (byte[]) method.invoke(rs);
 

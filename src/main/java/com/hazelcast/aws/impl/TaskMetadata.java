@@ -3,14 +3,16 @@ package com.hazelcast.aws.impl;
 import com.hazelcast.aws.AwsConfig;
 
 import java.io.InputStream;
+import java.net.URL;
 
 /**
  *
  */
 public class TaskMetadata extends AwsOperation<String> {
-    public TaskMetadata(AwsConfig awsConfig, String endpoint) {
+
+    public TaskMetadata(AwsConfig awsConfig, URL endpointURL) {
         // TODO
-        super(awsConfig, endpoint, "", "");
+        super(awsConfig, endpointURL, "", "");
     }
 
     @Override

@@ -27,11 +27,17 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
 import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
@@ -349,5 +355,54 @@ public class DescribeInstancesTest {
                 + "                </item>\n" + "            </instancesSet>\n" + "        </item>\n" + "    </reservationSet>\n"
                 + "</DescribeInstancesResponse>", DUMMY_PRIVATE_IP, DUMMY_PRIVATE_IP, DUMMY_PRIVATE_IP);
         return new ByteArrayInputStream(response.getBytes());
+    }
+
+    @Test
+    public void testIamRole()
+            throws IOException {
+        String s = "{\n" + "  \"Code\" : \"Success\",\n" + "  \"LastUpdated\" : \"2015-09-06T21:17:26Z\",\n"
+                + "  \"Type\" : \"AWS-HMAC\",\n" + "  \"AccessKeyId\" : \"ASIAIEXAMPLEOXYDA\",\n"
+                + "  \"SecretAccessKey\" : \"hOCVge3EXAMPLExSJ+B\",\n"
+                + "  \"Token\" : \"AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR\",\n"
+                + "  \"Expiration\" : \"2015-09-07T03:19:56Z\"\n}";
+        StringReader sr = new StringReader(s);
+        BufferedReader br = new BufferedReader(sr);
+        AwsConfig awsConfig = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
+                .setSecurityGroupName("hazelcast").build();
+        DescribeInstances describeInstances = new DescribeInstances(awsConfig);
+
+        Map map = parseIamRole(br);
+
+        assertEquals("Success", map.get("Code"));
+        assertEquals("2015-09-06T21:17:26Z", map.get("LastUpdated"));
+        assertEquals("AWS-HMAC", map.get("Type"));
+        assertEquals("ASIAIEXAMPLEOXYDA", map.get("AccessKeyId"));
+        assertEquals("hOCVge3EXAMPLExSJ+B", map.get("SecretAccessKey"));
+        assertEquals("AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR", map.get("Token"));
+    }
+
+    /**
+     * @param reader The reader that gives access to the JSON-formatted content that includes all the role information.
+     * @return A map with all the parsed keys and values from the JSON content.
+     * @throws IOException In case the input from reader cannot be correctly parsed.
+     */
+    public Map<String, String> parseIamRole(BufferedReader reader) throws IOException {
+        // TODO Since we moved JSON parsing from manual pattern matching to using `com.hazelcast.com.eclipsesource.json.JsonObject`, this method should be updated.
+        Map<String, String> map = new HashMap<String, String>();
+        Pattern keyPattern = Pattern.compile("\"(.*?)\" : ");
+        Pattern valuePattern = Pattern.compile(" : \"(.*?)\",");
+        String line;
+        for (line = reader.readLine(); line != null; line = reader.readLine()) {
+            if (line.contains(":")) {
+                Matcher keyMatcher = keyPattern.matcher(line);
+                Matcher valueMatcher = valuePattern.matcher(line);
+                if (keyMatcher.find() && valueMatcher.find()) {
+                    String key = keyMatcher.group(1);
+                    String value = valueMatcher.group(1);
+                    map.put(key, value);
+                }
+            }
+        }
+        return map;
     }
 }

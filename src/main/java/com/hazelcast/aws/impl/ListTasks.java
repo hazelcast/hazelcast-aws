@@ -17,18 +17,22 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
+import com.hazelcast.internal.json.Json;
+import com.hazelcast.internal.json.JsonArray;
+import com.hazelcast.internal.json.JsonValue;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 
 /**
@@ -37,8 +41,8 @@ import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
  */
 public class ListTasks extends AwsOperation<Collection<String>> {
 
-    public ListTasks(AwsConfig awsConfig, String endpoint) {
-        super(awsConfig, endpoint, "ecs", ECS_DOC_VERSION);
+    public ListTasks(AwsConfig awsConfig, URL endpointURL) {
+        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION);
     }
 
     //Just for testing purposes
@@ -51,7 +55,7 @@ public class ListTasks extends AwsOperation<Collection<String>> {
     InputStream callService()
             throws Exception {
         String query = getRequestSigner().getCanonicalizedQueryString(attributes);
-        URL url = new URL("https", endpoint, -1, "/?" + query);
+        URL url = new URL(endpointURL, "/?" + query);
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         httpConnection.setRequestMethod(Constants.POST);
@@ -74,8 +78,18 @@ public class ListTasks extends AwsOperation<Collection<String>> {
 
     @Override
     Collection<String> unmarshal(InputStream stream) {
-        // TODO
-        return null;
+        ArrayList<String> response = new ArrayList<String>();
+
+        try {
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream)).asObject().get("taskArns").asArray();
+            for (JsonValue value : jsonValues) {
+                response.add(value.asString());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Malformed response", e);
+        }
+
+        return response;
     }
 
 }

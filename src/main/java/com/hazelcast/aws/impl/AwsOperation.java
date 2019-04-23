@@ -3,17 +3,20 @@ package com.hazelcast.aws.impl;
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.Aws4RequestSigner;
-import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtil;
 import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,7 +27,6 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
 import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
@@ -43,8 +45,10 @@ public abstract class AwsOperation<E> {
      */
     public static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
 
+    private static final ILogger LOGGER = Logger.getLogger(AwsOperation.class);
+
     protected AwsConfig awsConfig;
-    protected String endpoint;
+    protected URL endpointURL;
     protected Map<String, String> attributes = new HashMap<String, String>();
 
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
@@ -54,9 +58,9 @@ public abstract class AwsOperation<E> {
     protected final String service;
     protected final String docVersion;
 
-    protected AwsOperation(AwsConfig awsConfig, String endpoint, String service, String docVersion) {
+    protected AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion) {
         this.awsConfig = awsConfig;
-        this.endpoint = endpoint;
+        this.endpointURL = endpointURL;
         this.service = service;
         this.docVersion = docVersion;
     }
@@ -89,16 +93,16 @@ public abstract class AwsOperation<E> {
             try {
                 defaultIAMRole = getDefaultIamRole();
             } catch (Throwable e) {
-                System.out.println("Cannot get DEFAULT IAM role... CONTINUING! Exception was: " + e.getMessage());
+                LOGGER.finest("Cannot get DEFAULT IAM role... CONTINUING! Exception was: " + e.getMessage());
             }
             awsConfig.setIamRole(defaultIAMRole);
         }
 
         if (isNotEmpty(awsConfig.getIamRole())) {
-            System.out.println("Using getIamRole() -- BAD");
+            LOGGER.finest("Using getIamRole() -- BAD");
             fillKeysFromIamRole();
         } else {
-            System.out.println("Using fillKeysFromIamTaskRole(...) -- GOOD!");
+            LOGGER.finest("Using fillKeysFromIamTaskRole(...) -- GOOD!");
             fillKeysFromIamTaskRole(getEnvironment());
         }
 
@@ -133,12 +137,12 @@ public abstract class AwsOperation<E> {
         }
         uri = IAM_TASK_ROLE_ENDPOINT + uri;
 
-        System.out.println("Getting creds from " + uri);
+        LOGGER.finest("Getting creds from " + uri);
 
         String json = "";
         try {
             json = retrieveRoleFromURI(uri);
-            System.out.println("JSON:\n" + json + "\n");
+            LOGGER.finest("JSON:\n" + json + "\n");
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
             throw new InvalidConfigurationException(
@@ -166,39 +170,13 @@ public abstract class AwsOperation<E> {
      * @param json The JSON representation of the IAM (Task) Role.
      */
     private void parseAndStoreRoleCreds(String json) {
-        JsonObject roleAsJson = JsonObject.readFrom(json);
+        JsonObject roleAsJson = Json.parse(json).asObject();
         awsConfig.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsConfig.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
         attributes.put("X-Amz-Security-Token", roleAsJson.getString("Token", null));
-        System.out.println("In parseAndStoreRoleCreds: attributes are: " + attributes.toString());
-    }
-
-    /**
-     * @param reader The reader that gives access to the JSON-formatted content that includes all the role information.
-     * @return A map with all the parsed keys and values from the JSON content.
-     * @throws IOException In case the input from reader cannot be correctly parsed.
-     * @deprecated Since we moved JSON parsing from manual pattern matching to using
-     * `com.hazelcast.com.eclipsesource.json.JsonObject`, this method should be deprecated.
-     */
-    @Deprecated
-    public Map<String, String> parseIamRole(BufferedReader reader)
-            throws IOException {
-        Map<String, String> map = new HashMap<String, String>();
-        Pattern keyPattern = Pattern.compile("\"(.*?)\" : ");
-        Pattern valuePattern = Pattern.compile(" : \"(.*?)\",");
-        String line;
-        for (line = reader.readLine(); line != null; line = reader.readLine()) {
-            if (line.contains(":")) {
-                Matcher keyMatcher = keyPattern.matcher(line);
-                Matcher valueMatcher = valuePattern.matcher(line);
-                if (keyMatcher.find() && valueMatcher.find()) {
-                    String key = keyMatcher.group(1);
-                    String value = valueMatcher.group(1);
-                    map.put(key, value);
-                }
-            }
+        if (LOGGER.isFinestEnabled()) {
+            LOGGER.finest("In parseAndStoreRoleCreds: attributes are: " + attributes.toString());
         }
-        return map;
     }
 
     private String getFormattedTimestamp() {
@@ -244,14 +222,14 @@ public abstract class AwsOperation<E> {
             fillKeysFromIamRoles();
         }
 
-        System.out.println("OK we have credentials, signing request...");
+        LOGGER.finest("OK we have credentials, signing request...");
 
         String signature = getRequestSigner().sign(attributes);
         E response;
         InputStream stream = null;
         attributes.put("X-Amz-Signature", signature);
         try {
-            System.out.println("Calling service at " + endpoint);
+            LOGGER.finest("Calling service at " + endpointURL.toExternalForm());
             stream = callServiceWithRetries();
             response = unmarshal(stream);
             return response;
@@ -287,7 +265,7 @@ public abstract class AwsOperation<E> {
 
     public Aws4RequestSigner getRequestSigner() {
         String timeStamp = getFormattedTimestamp();
-        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, timeStamp, service, endpoint);
+        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, timeStamp, service, endpointURL.getHost());
         attributes.put("Action", this.getClass().getSimpleName());
         attributes.put("Version", docVersion);
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);

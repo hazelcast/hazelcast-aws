@@ -43,15 +43,15 @@ import static com.hazelcast.config.DomConfigHelper.childElements;
 import static com.hazelcast.config.DomConfigHelper.cleanNodeName;
 import static java.lang.String.format;
 
-public final class CloudyUtility {
+public final class Ec2XmlUtils {
 
     private static final String NODE_ITEM = "item";
     private static final String NODE_VALUE = "value";
     private static final String NODE_KEY = "key";
 
-    private static final ILogger LOGGER = Logger.getLogger(CloudyUtility.class);
+    private static final ILogger LOGGER = Logger.getLogger(Ec2XmlUtils.class);
 
-    private CloudyUtility() {
+    private Ec2XmlUtils() {
     }
 
     /**
@@ -84,9 +84,10 @@ public final class CloudyUtility {
                 }
             }
 
-            System.out.println("This is the returned document:");
-            System.out.println(getNicelyFormattedXMLDocument(doc));
-
+            if (LOGGER.isFinestEnabled()) {
+                LOGGER.finest("Returned document:");
+                LOGGER.finest(getNicelyFormattedXMLDocument(doc));
+            }
             return addresses;
         } catch (Exception e) {
             LOGGER.warning(e);

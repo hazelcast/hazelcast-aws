@@ -31,13 +31,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
 @Category(QuickTest.class)
-public class CloudyUtilityTest
+public class Ec2XmlUtilsTest
         extends HazelcastTestSupport {
 
     private final String xml = configXmlString();
@@ -140,7 +143,7 @@ public class CloudyUtilityTest
 
     @Test
     public void testConstructor() {
-        assertUtilityConstructor(CloudyUtility.class);
+        assertUtilityConstructor(Ec2XmlUtils.class);
     }
 
     @Test
@@ -149,30 +152,7 @@ public class CloudyUtilityTest
         InputStream is = new ByteArrayInputStream(xml.getBytes());
         AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key").build();
 
-        Map<String, String> result = CloudyUtility.unmarshalTheResponse(is);
+        Map<String, String> result = Ec2XmlUtils.unmarshalTheResponse(is);
         assertEquals(2, result.size());
-    }
-
-    @Test
-    public void testIamRole()
-            throws IOException {
-        String s = "{\n" + "  \"Code\" : \"Success\",\n" + "  \"LastUpdated\" : \"2015-09-06T21:17:26Z\",\n"
-                + "  \"Type\" : \"AWS-HMAC\",\n" + "  \"AccessKeyId\" : \"ASIAIEXAMPLEOXYDA\",\n"
-                + "  \"SecretAccessKey\" : \"hOCVge3EXAMPLExSJ+B\",\n"
-                + "  \"Token\" : \"AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR\",\n"
-                + "  \"Expiration\" : \"2015-09-07T03:19:56Z\"\n}";
-        StringReader sr = new StringReader(s);
-        BufferedReader br = new BufferedReader(sr);
-        AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
-                                        .setSecurityGroupName("hazelcast").build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig, "");
-
-        Map map = describeInstances.parseIamRole(br);
-        assertEquals("Success", map.get("Code"));
-        assertEquals("2015-09-06T21:17:26Z", map.get("LastUpdated"));
-        assertEquals("AWS-HMAC", map.get("Type"));
-        assertEquals("ASIAIEXAMPLEOXYDA", map.get("AccessKeyId"));
-        assertEquals("hOCVge3EXAMPLExSJ+B", map.get("SecretAccessKey"));
-        assertEquals("AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR", map.get("Token"));
     }
 }
