@@ -20,13 +20,13 @@ import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.utility.Ec2XmlUtils;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
+import static com.hazelcast.aws.impl.Constants.GET;
+import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
@@ -35,39 +35,46 @@ import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 public class DescribeInstances extends AwsOperation<Map<String, String>> {
 
     public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, "ec2", EC2_DOC_VERSION);
+        super(awsConfig, endpointURL, "ec2", EC2_DOC_VERSION, GET);
     }
 
     //Just for testing purposes
     public DescribeInstances(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
-        super(awsConfig, new URL("https", endpoint, -1, "/"), "ec2", EC2_DOC_VERSION);
+        super(awsConfig, new URL("https", endpoint, -1, "/"), "ec2", EC2_DOC_VERSION, GET);
     }
 
     //Just for testing purposes
-    DescribeInstances(AwsConfig awsConfig) {
-        this(awsConfig, (URL) null);
+    DescribeInstances(AwsConfig awsConfig) throws MalformedURLException {
+        this(awsConfig, awsConfig.getHostHeader());
     }
 
     // visible for testing
     @Override
-    InputStream callService() throws Exception {
-        String query = getRequestSigner().getCanonicalizedQueryString(attributes);
-        URL url = new URL(endpointURL, "/?" + query);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.GET);
-        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(false);
-        httpConnection.connect();
-
-        checkNoAwsErrors(httpConnection);
-
-        return httpConnection.getInputStream();
-    }
-
-    @Override
     Map<String, String> unmarshal(InputStream stream) {
-        return Ec2XmlUtils.unmarshalTheResponse(stream);
+        return Ec2XmlUtils.unmarshalDescribeInstancesResponse(stream);
     }
 
+    /**
+     * Add available filters to narrow down the scope of the query
+     */
+    @Override
+    protected void addFilters() {
+        Filter filter = new Filter();
+        if (isNotEmpty(awsConfig.getTagKey())) {
+            if (isNotEmpty(awsConfig.getTagValue())) {
+                filter.addFilter("tag:" + awsConfig.getTagKey(), awsConfig.getTagValue());
+            } else {
+                filter.addFilter("tag-key", awsConfig.getTagKey());
+            }
+        } else if (isNotEmpty(awsConfig.getTagValue())) {
+            filter.addFilter("tag-value", awsConfig.getTagValue());
+        }
+
+        if (isNotEmpty(awsConfig.getSecurityGroupName())) {
+            filter.addFilter("instance.group-name", awsConfig.getSecurityGroupName());
+        }
+
+        filter.addFilter("instance-state-name", "running");
+        attributes.putAll(filter.getFilters());
+    }
 }

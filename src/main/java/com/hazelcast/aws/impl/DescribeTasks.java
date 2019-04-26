@@ -3,6 +3,7 @@ package com.hazelcast.aws.impl;
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonArray;
+import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.internal.json.JsonValue;
 
 import java.io.BufferedWriter;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
+import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
  *
@@ -28,36 +30,25 @@ public class DescribeTasks extends AwsOperation<Map<String, String>> {
     private Collection<String> taskArns;
 
     public DescribeTasks(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION);
+        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION, POST);
     }
 
     public Map<String, String> execute(Collection<String> taskArns) throws Exception {
         this.taskArns = taskArns;
-        return super.execute();
+        return super.execute(taskArns);
     }
 
     @Override
-    InputStream callService() throws Exception {
-        String query = getRequestSigner().getCanonicalizedQueryString(attributes);
-        URL url = new URL(endpointURL, "/?" + query);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.POST);
-        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(true);
-        httpConnection.setRequestProperty("Content-Type", "application/x-amz-json-1.1");
-        httpConnection.setRequestProperty("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.DescribeTasks");
-        httpConnection.setRequestProperty("Accept-Encoding", "identity");
-
-        httpConnection.connect();
-        OutputStream outputStream = httpConnection.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-        writer.write("{}");
-        writer.flush();
-        writer.close();
-        checkNoAwsErrors(httpConnection);
-
-        return httpConnection.getInputStream();
+    protected void prepareHttpRequest(Object... args) {
+        headers.put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.DescribeTasks");
+        headers.put("Content-Type", "application/x-amz-json-1.1");
+        headers.put("Accept-Encoding", "identity");
+        JsonArray jsonArray = new JsonArray();
+        if (args.length == 1)
+        for (Object arg : (Collection<String>) args[0]) {
+            jsonArray.add(Json.value(String.valueOf(arg)));
+        }
+        body = new JsonObject().add("tasks", jsonArray).toString();
     }
 
     @Override

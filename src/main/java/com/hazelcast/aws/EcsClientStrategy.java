@@ -5,6 +5,7 @@ import com.hazelcast.aws.impl.ListTasks;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -22,10 +23,15 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     @Override
     public Map<String, String> getAddresses() throws Exception {
-        // FIXME taskMetada URL
+        // FIXME taskMetadata URL
         // String clusterName = new TaskMetadata(awsConfig, new URL("https", endpoint, -1, "/")).execute();
-        Collection<String> taskArns = new ListTasks(awsConfig, new URL("https", endpoint, -1, "/")).execute(/*clusterName*/);
-        Map<String, String> addresses = new DescribeTasks(awsConfig, new URL("https", endpoint, -1, "/")).execute(taskArns);
-        return addresses;
+        ListTasks listTasks = new ListTasks(awsConfig, new URL("https", endpoint, -1, "/"));
+        Collection<String> taskArns = listTasks.execute(/*clusterName*/);
+        if (!taskArns.isEmpty()) {
+            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL("https", endpoint, -1, "/"));
+//            describeTasks.setSecurityToken(listTasks.getSecurityToken());
+            return describeTasks.execute(taskArns);
+        }
+        return Collections.EMPTY_MAP;
     }
 }

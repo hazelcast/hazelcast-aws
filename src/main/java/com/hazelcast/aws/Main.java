@@ -3,7 +3,6 @@ package com.hazelcast.aws;
 import com.hazelcast.logging.ILogger;
 
 import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +20,7 @@ public class Main {
         parent.setLevel(Level.FINEST);
 
         ILogger LOGGER = com.hazelcast.logging.Logger.getLogger(Main.class);
-        LOGGER.finest("Version 22");
+        LOGGER.finest("Version 48");
 
         System.setProperty("java.net.preferIPv4Stack","true");
 

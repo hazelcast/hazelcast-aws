@@ -63,7 +63,7 @@ public final class Ec2XmlUtils {
      * @param stream the response XML stream
      * @return map from private to public IP or empty map in case of exceptions
      */
-    public static Map<String, String> unmarshalTheResponse(InputStream stream) {
+    public static Map<String, String> unmarshalDescribeInstancesResponse(InputStream stream) {
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

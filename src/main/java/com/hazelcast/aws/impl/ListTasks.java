@@ -31,9 +31,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
+import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
@@ -42,38 +45,15 @@ import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 public class ListTasks extends AwsOperation<Collection<String>> {
 
     public ListTasks(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION);
+        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION, POST);
     }
 
-    //Just for testing purposes
-    ListTasks(AwsConfig awsConfig) {
-        this(awsConfig, null);
-    }
-
-    // visible for testing
     @Override
-    InputStream callService()
-            throws Exception {
-        String query = getRequestSigner().getCanonicalizedQueryString(attributes);
-        URL url = new URL(endpointURL, "/?" + query);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.POST);
-        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(true); // FIXME
-        httpConnection.setRequestProperty("Content-Type", "application/x-amz-json-1.1");
-        httpConnection.setRequestProperty("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
-        httpConnection.setRequestProperty("Accept-Encoding", "identity");
-
-        httpConnection.connect();
-        OutputStream outputStream = httpConnection.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-        writer.write("{}");
-        writer.flush();
-        writer.close();
-        checkNoAwsErrors(httpConnection);
-
-        return httpConnection.getInputStream();
+    protected void prepareHttpRequest(Object... args) {
+        headers.put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
+        headers.put("Content-Type", "application/x-amz-json-1.1");
+        headers.put("Accept-Encoding", "identity");
+        body = "{}";
     }
 
     @Override
@@ -91,5 +71,4 @@ public class ListTasks extends AwsOperation<Collection<String>> {
 
         return response;
     }
-
 }

@@ -75,13 +75,19 @@ public class ListTasksTest {
     @Test
     public void listTasks() throws Exception {
         // given
-        stubListTasks("/.*Action=ListTasks.*", listTasksResponse());
+        stubListTasks("/.*", listTasksResponse());
 
         // when
         Collection<String> taskArns = listTasks.execute();
 
         // then
         MatcherAssert.assertThat("list of 2 tasks", taskArns.size() == 2);
+    }
+
+    private void stubListTasks(String urlRegex, String response) {
+        stubFor(post(urlMatching(urlRegex))
+                .withHeader("X-Amz-Target", new EqualToPattern("AmazonEC2ContainerServiceV20141113.ListTasks"))
+                .willReturn(aResponse().withStatus(200).withBody(response)));
     }
 
     private String listTaskEmptyResponse() {
@@ -98,11 +104,5 @@ public class ListTasksTest {
                 "        \"arn:aws:ecs:eu-central-1:665466731577:task/default/bf2687a5187b46ac8edf541bac799d52\"\n" +
                 "    ]\n" +
                 "}\n";
-    }
-
-    private void stubListTasks(String urlRegex, String response) {
-        stubFor(post(urlMatching(urlRegex))
-                .withHeader("X-Amz-Target", new EqualToPattern("AmazonEC2ContainerServiceV20141113.ListTasks"))
-                .willReturn(aResponse().withStatus(200).withBody(response)));
     }
 }

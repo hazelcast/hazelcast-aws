@@ -226,6 +226,11 @@
             <!--<scope>provided</scope>-->
         </dependency>
         <dependency>
+            <groupId>uk.co.lucasweb</groupId>
+            <artifactId>aws-v4-signer-java</artifactId>
+            <version>1.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
             <scope>test</scope>

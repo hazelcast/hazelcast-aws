@@ -17,7 +17,6 @@
 package com.hazelcast.aws.utility;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.QuickTest;
@@ -26,15 +25,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
@@ -152,7 +146,7 @@ public class Ec2XmlUtilsTest
         InputStream is = new ByteArrayInputStream(xml.getBytes());
         AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key").build();
 
-        Map<String, String> result = Ec2XmlUtils.unmarshalTheResponse(is);
+        Map<String, String> result = Ec2XmlUtils.unmarshalDescribeInstancesResponse(is);
         assertEquals(2, result.size());
     }
 }

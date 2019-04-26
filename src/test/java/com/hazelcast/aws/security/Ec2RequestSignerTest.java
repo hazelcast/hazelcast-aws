@@ -17,20 +17,24 @@
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.AwsOperation;
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import uk.co.lucasweb.aws.v4.signer.HttpRequest;
+import uk.co.lucasweb.aws.v4.signer.Signer;
+import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
+import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
@@ -66,7 +70,7 @@ public class Ec2RequestSignerTest {
         field.set(di, attributes);
 
         // Override private method
-        Aws4RequestSigner rs = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        Aws4RequestSignerImpl rs = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
 
         Method method = rs.getClass().getDeclaredMethod("deriveSigningKey");
         method.setAccessible(true);
@@ -77,23 +81,50 @@ public class Ec2RequestSignerTest {
 
     @Test
     public void testSigning()
-            throws NoSuchFieldException, IllegalAccessException, IOException {
-        AwsConfig awsConfig = AwsConfig.builder().setRegion(TEST_REGION).
-                setHostHeader(TEST_HOST).
-                                               setAccessKey(TEST_ACCESS_KEY).
-                                               setSecretKey(TEST_SECRET_KEY).build();
+            throws NoSuchFieldException, IllegalAccessException, IOException, URISyntaxException {
+        AwsConfig awsConfig = AwsConfig.builder()
+                .setRegion(TEST_REGION)
+                .setHostHeader(TEST_HOST)
+                .setAccessKey(TEST_ACCESS_KEY)
+                .setSecretKey(TEST_SECRET_KEY)
+                .build();
 
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
-        di.getRequestSigner();
+        Aws4RequestSigner requestSigner = di.getRequestSigner();
 
         Field attributesField = di.getClass().getSuperclass().getDeclaredField("attributes");
         attributesField.setAccessible(true);
         Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
-        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-        Aws4RequestSigner actual = new Aws4RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
+        headersField.setAccessible(true);
+        Map<String, String> headers = (Map<String, String>) headersField.get(di);
+//        headers.put("Host", TEST_HOST);
+//        headers.put("X-Amz-Date", TEST_REQUEST_DATE);
+
+//        Aws4RequestSignerImpl actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+//        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
+//        attributes.put("X-Amz-SignedHeaders", "host");
+//        String signature = actual.sign(attributes, headers);
+
+//        Aws4RequestSignerReference signer2 = new Aws4RequestSignerReference(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+//        attributes.put("X-Amz-Credential", signer2.createFormattedCredential());
+//        String signature = signer2.sign(attributes, headers);
+//        attributes.put("X-Amz-SignedHeaders", signer2.getSignedHeaders());
+
+//        attributes.put("X-Amz-Credential", requestSigner.createFormattedCredential());
+//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+//        String signature = requestSigner.sign(attributes, headers);
+//        attributes.put("X-Amz-SignedHeaders", requestSigner.getSignedHeaders());
+
+        Aws4RequestSigner actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+        headers.put("Host", TEST_HOST);
         attributes.put("X-Amz-Credential", actual.createFormattedCredential());
-        String signature = actual.sign(attributes);
+        String signature = actual.sign(attributes, headers);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
     }
