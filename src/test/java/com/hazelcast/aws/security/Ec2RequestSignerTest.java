@@ -48,7 +48,7 @@ public class Ec2RequestSignerTest {
     private final static String TEST_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
     private final static String TEST_REQUEST_DATE = "20141106T111126Z";
     private final static String TEST_DERIVED_EXPECTED = "7038265e40236063ebcd2e201908ad6e9f64e533439bfa7a5faa07ba419329bc";
-    private final static String TEST_SIGNATURE_EXPECTED = "79f7a4d346ee69ca22ba5f9bc3dd1efc13ac7509936afc5ec21cac37de071eef";
+    private final static String TEST_SIGNATURE_EXPECTED = "86c89b683a7147e734702cad8ceaf00b1d000c29b8dea86be57db6a7c7156c38";
 
     @Test
     public void deriveSigningKeyTest()
@@ -100,8 +100,8 @@ public class Ec2RequestSignerTest {
         Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
         headersField.setAccessible(true);
         Map<String, String> headers = (Map<String, String>) headersField.get(di);
-//        headers.put("Host", TEST_HOST);
-//        headers.put("X-Amz-Date", TEST_REQUEST_DATE);
+        headers.put("Host", TEST_HOST);
+        headers.put("X-Amz-Date", TEST_REQUEST_DATE);
 
 //        Aws4RequestSignerImpl actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
 //        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);

@@ -108,8 +108,8 @@ public class DescribeInstancesTest {
         doReturn(mockedEnv).when(descriptor).getEnvironment();
         descriptor.fillKeysFromIamRoles();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, awsConfig.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, awsConfig.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
 
         // test when <iam-role></iam-role>
         awsConfig = predefinedAwsConfigBuilder().setIamRole("").build();
@@ -119,8 +119,8 @@ public class DescribeInstancesTest {
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(roleUri);
         descriptor.fillKeysFromIamRoles();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, awsConfig.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, awsConfig.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
 
         // test when no <iam-role></iam-role> defined, BUT default IAM role has been assigned
         awsConfig = predefinedAwsConfigBuilder().build();
@@ -130,8 +130,8 @@ public class DescribeInstancesTest {
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(roleUri);
         descriptor.fillKeysFromIamRoles();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, awsConfig.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, awsConfig.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
 
     }
 
@@ -147,8 +147,8 @@ public class DescribeInstancesTest {
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(uri);
         descriptor.fillKeysFromIamRoles();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, awsConfig.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, awsConfig.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
 
     }
 
@@ -172,8 +172,8 @@ public class DescribeInstancesTest {
 
         descriptor.fillKeysFromIamRoles();
 
-        assertEquals("Could not parse access key from IAM task role", DUMMY_ACCESS_KEY, awsConfig.getAccessKey());
-        assertEquals("Could not parse secret key from IAM task role", DUMMY_SECRET_KEY, awsConfig.getSecretKey());
+        assertEquals("Could not parse access key from IAM task role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
+        assertEquals("Could not parse secret key from IAM task role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
     }
 
     @Test

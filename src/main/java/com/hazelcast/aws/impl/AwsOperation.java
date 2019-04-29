@@ -270,7 +270,7 @@ public abstract class AwsOperation<E> {
         LOGGER.finest(String.format("URL:%s", url.toExternalForm()));
         LOGGER.finest(String.format("Attributes:%s", attributes.toString()));
         LOGGER.finest(String.format("Headers:%s", headers.toString()));
-        LOGGER.finest(String.format("Body:[%s]", body));
+        LOGGER.finest(String.format("Body:%s", body));
         LOGGER.finest(String.format("Body-length:%d", body.length()));
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());

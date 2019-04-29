@@ -44,7 +44,7 @@ public class EcsRequestSignerTest {
     private final static String TEST_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
     private final static String TEST_REQUEST_DATE = "20141106T111126Z";
     private final static String TEST_DERIVED_EXPECTED = "ac8d19964fcea9428c6cf191526249112adf5547331898b190239b834fbb7c9e";
-    private final static String TEST_SIGNATURE_EXPECTED = "9f8e4f9304b97f9c67f7f7c9c0c3d3b4a530e084437633b8b9bd6001c0416502"; // FIXME
+    private final static String TEST_SIGNATURE_EXPECTED = "b0e93ee3108fdb85c7ad29eca28646d2b3c0b1218c527fec6cba3580ab806733";
 
     @Test
     public void deriveSigningKeyTest()
@@ -77,7 +77,6 @@ public class EcsRequestSignerTest {
         assertEquals(TEST_DERIVED_EXPECTED, bytesToHex(derivedKey));
     }
 
-    @Ignore
     @Test
     public void testSigning()
             throws NoSuchFieldException, IllegalAccessException, IOException {
@@ -89,14 +88,15 @@ public class EcsRequestSignerTest {
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
         di.getRequestSigner();
 
-        Field attributesField = di.getClass().getSuperclass().getDeclaredField("attributes");
-        attributesField.setAccessible(true);
-        Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
-        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+        Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
+        headersField.setAccessible(true);
+        Map<String, String> headers = (Map<String, String>) headersField.get(di);
+        headers.put("X-Amz-Date", TEST_REQUEST_DATE);
+        headers.put("Host", TEST_HOST);
 
         Aws4RequestSignerImpl actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
-        String signature = actual.sign(attributes, new HashMap<String, String>());
+        headers.put("X-Amz-Credential", actual.createFormattedCredential());
+        String signature = actual.sign(headers, new HashMap<String, String>());
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
     }
