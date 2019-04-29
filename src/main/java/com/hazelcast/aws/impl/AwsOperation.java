@@ -4,7 +4,7 @@ import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.Aws4RequestSigner;
 import com.hazelcast.aws.security.Aws4RequestSignerReference;
-import com.hazelcast.aws.security.Aws4RequestSignerImpl;
+import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.aws.security.AwsCredentials;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtil;
@@ -263,7 +263,7 @@ public abstract class AwsOperation<E> {
     // visible for testing
 
     InputStream callService() throws Exception {
-        String query = Aws4RequestSignerImpl.getCanonicalizedQueryString(attributes);
+        String query = Aws4RequestSignerUtils.getCanonicalizedQueryString(attributes);
         String spec = "/" + (isNotEmpty(query) ? "?" + query : "");
         URL url = new URL(endpointURL, spec);
 

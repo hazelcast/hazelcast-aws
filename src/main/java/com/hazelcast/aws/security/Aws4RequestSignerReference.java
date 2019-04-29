@@ -2,6 +2,7 @@ package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.impl.Constants;
+import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import uk.co.lucasweb.aws.v4.signer.Header;
 import uk.co.lucasweb.aws.v4.signer.HttpRequest;
 import uk.co.lucasweb.aws.v4.signer.Signer;
@@ -46,7 +47,7 @@ public class Aws4RequestSignerReference implements Aws4RequestSigner {
 
     @Override
     public String sign(Map<String, String> attributes, Map<String, String> headers, String body, String httpMethod) {
-        String query = Aws4RequestSignerImpl.getCanonicalizedQueryString(attributes);
+        String query = Aws4RequestSignerUtils.getCanonicalizedQueryString(attributes);
         String spec = "/" + (isNotEmpty(query) ? "?" + query : "");
         URL url = null;
         HttpRequest request = null;
@@ -70,7 +71,7 @@ public class Aws4RequestSignerReference implements Aws4RequestSigner {
                 .date(timestamp)
                 .region(awsConfig.getRegion())
                 .headers(headerList.toArray(new Header[0]))
-                .build(request, service, Aws4RequestSignerImpl.sha256Hashhex(body));
+                .build(request, service, Aws4RequestSignerUtils.sha256Hashhex(body));
         String xAmzSignature = signer.getXAmzSignature();
         this.signedHeaders = signer.getXAmzSignedHeaders();
         this.authorization = signer.getSignature();

@@ -18,7 +18,7 @@ package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.impl.Constants;
-import com.hazelcast.aws.utility.AwsURLEncoder;
+import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import com.hazelcast.util.QuickMath;
@@ -27,17 +27,11 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import static java.lang.String.format;
-import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
 
 public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
@@ -93,13 +87,13 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     }
     /* Task 1 */
     String getCanonicalizedRequest(String httpMethod) {
-        return httpMethod + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(this.attributes) + NEW_LINE
-                + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex(body);
+        return httpMethod + NEW_LINE + '/' + NEW_LINE + Aws4RequestSignerUtils.getCanonicalizedQueryString(this.attributes) + NEW_LINE
+                + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + Aws4RequestSignerUtils.sha256Hashhex(body);
     }
 
     /* Task 2 */
     String createStringToSign(String canonicalRequest) {
-        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE + sha256Hashhex(
+        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE + Aws4RequestSignerUtils.sha256Hashhex(
                 canonicalRequest);
     }
 
@@ -185,7 +179,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     @Override
     public String getAuthorizationHeader() {
-        return buildAuthHeader(config.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
+        return Aws4RequestSignerUtils.buildAuthHeader(config.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
     }
 
     Map<String, String> getSortedLowercaseHeaders() {
@@ -197,59 +191,10 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         return sortedHeaders;
     }
 
-    public static String getCanonicalizedQueryString(Map<String, String> attributes) {
-        List<String> components = getListOfEntries(attributes);
-        Collections.sort(components);
-        return getCanonicalizedQueryString(components);
-    }
-
-    static String getCanonicalizedQueryString(List<String> list) {
-        Iterator<String> it = list.iterator();
-        StringBuilder result = new StringBuilder();
-        if (it.hasNext()) {
-            result.append(it.next());
-        }
-        while (it.hasNext()) {
-            result.append('&').append(it.next());
-        }
-        return result.toString();
-    }
-
-    static void addComponents(List<String> components, Map<String, String> attributes, String key) {
-        components.add(AwsURLEncoder.urlEncode(key) + '=' + AwsURLEncoder.urlEncode(attributes.get(key)));
-    }
-
-    static List<String> getListOfEntries(Map<String, String> entries) {
-        List<String> components = new ArrayList<String>();
-        for (String key : entries.keySet()) {
-            addComponents(components, entries, key);
-        }
-        return components;
-    }
-
-    public static String sha256Hashhex(String in) {
-        String payloadHash;
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(in.getBytes(UTF_8));
-            byte[] digest = md.digest();
-            payloadHash = QuickMath.bytesToHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
-        return payloadHash;
-    }
-
     @Override
     public String createFormattedCredential() {
         return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
                 + service + "/aws4_request";
-    }
-
-    private static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
-        return ALGORITHM + " " + "Credential=" + accessKey + "/" + credentialScope + ", " + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
     }
 
 }
