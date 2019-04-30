@@ -3,7 +3,7 @@ package com.hazelcast.aws.impl;
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.Aws4RequestSigner;
-import com.hazelcast.aws.security.Aws4RequestSignerReference;
+import com.hazelcast.aws.security.Aws4RequestSignerImpl;
 import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.aws.security.AwsCredentials;
 import com.hazelcast.aws.utility.Environment;
@@ -310,7 +310,7 @@ public abstract class AwsOperation<E> {
 
     public Aws4RequestSigner getRequestSigner() {
         String timeStamp = getFormattedTimestamp();
-        Aws4RequestSigner rs = new Aws4RequestSignerReference(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
+        Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
 //        attributes.put("Action", this.getClass().getSimpleName());
 //        attributes.put("Version", docVersion);
 //        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);

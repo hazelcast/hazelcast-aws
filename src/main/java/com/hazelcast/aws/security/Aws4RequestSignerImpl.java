@@ -46,6 +46,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     private final AwsConfig config;
     private final String timestamp;
+    private final AwsCredentials awsCredentials;
 
     private String service;
     private String endpoint;
@@ -54,8 +55,9 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     private String body;
     private String signature;
 
-    public Aws4RequestSignerImpl(AwsConfig config, String timeStamp, String service, String endpoint) {
+    public Aws4RequestSignerImpl(AwsConfig config, AwsCredentials awsCredentials, String timeStamp, String service, String endpoint) {
         this.config = config;
+        this.awsCredentials = awsCredentials;
         this.timestamp = timeStamp;
         this.service = service;
         this.endpoint = endpoint;
@@ -99,7 +101,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     /* Task 3 */
     byte[] deriveSigningKey() {
-        String signKey = config.getSecretKey();
+        String signKey = awsCredentials.getSecretKey();
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
         // this is derived from
         // http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-python
@@ -179,7 +181,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     @Override
     public String getAuthorizationHeader() {
-        return Aws4RequestSignerUtils.buildAuthHeader(config.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
+        return Aws4RequestSignerUtils.buildAuthHeader(awsCredentials.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
     }
 
     Map<String, String> getSortedLowercaseHeaders() {
@@ -193,7 +195,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     @Override
     public String createFormattedCredential() {
-        return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
+        return awsCredentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
                 + service + "/aws4_request";
     }
 

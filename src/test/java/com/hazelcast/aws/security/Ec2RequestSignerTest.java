@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import uk.co.lucasweb.aws.v4.signer.HttpRequest;
 import uk.co.lucasweb.aws.v4.signer.Signer;
-import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,6 +57,7 @@ public class Ec2RequestSignerTest {
                 setHostHeader(TEST_HOST).
                                                setAccessKey(TEST_ACCESS_KEY).
                                                setSecretKey(TEST_SECRET_KEY).build();
+        AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
 
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
         // Override the attributes map. We need to change values. Not pretty, but
@@ -70,7 +70,7 @@ public class Ec2RequestSignerTest {
         field.set(di, attributes);
 
         // Override private method
-        Aws4RequestSignerImpl rs = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        Aws4RequestSignerImpl rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
 
         Method method = rs.getClass().getDeclaredMethod("deriveSigningKey");
         method.setAccessible(true);
@@ -88,6 +88,7 @@ public class Ec2RequestSignerTest {
                 .setAccessKey(TEST_ACCESS_KEY)
                 .setSecretKey(TEST_SECRET_KEY)
                 .build();
+        AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
 
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
         Aws4RequestSigner requestSigner = di.getRequestSigner();
@@ -120,7 +121,7 @@ public class Ec2RequestSignerTest {
 //        String signature = requestSigner.sign(attributes, headers);
 //        attributes.put("X-Amz-SignedHeaders", requestSigner.getSignedHeaders());
 
-        Aws4RequestSigner actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        Aws4RequestSigner actual = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
         headers.put("Host", TEST_HOST);
         attributes.put("X-Amz-Credential", actual.createFormattedCredential());
