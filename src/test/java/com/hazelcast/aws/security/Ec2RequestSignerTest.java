@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static org.junit.Assert.assertEquals;
 
@@ -47,7 +48,7 @@ public class Ec2RequestSignerTest {
     private final static String TEST_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
     private final static String TEST_REQUEST_DATE = "20141106T111126Z";
     private final static String TEST_DERIVED_EXPECTED = "7038265e40236063ebcd2e201908ad6e9f64e533439bfa7a5faa07ba419329bc";
-    private final static String TEST_SIGNATURE_EXPECTED = "86c89b683a7147e734702cad8ceaf00b1d000c29b8dea86be57db6a7c7156c38";
+    private final static String TEST_SIGNATURE_EXPECTED = "8e4f83fe919390f53fa71ea0ea8a25a09e7d10e1740b238fc6969a1410e06c57";
 
     @Test
     public void deriveSigningKeyTest()
@@ -96,7 +97,8 @@ public class Ec2RequestSignerTest {
         Field attributesField = di.getClass().getSuperclass().getDeclaredField("attributes");
         attributesField.setAccessible(true);
         Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
-//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
+        attributes.put("Action", di.getClass().getSimpleName());
+        attributes.put("Version", EC2_DOC_VERSION);
 
         Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
         headersField.setAccessible(true);
@@ -104,27 +106,7 @@ public class Ec2RequestSignerTest {
         headers.put("Host", TEST_HOST);
         headers.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-//        Aws4RequestSignerImpl actual = new Aws4RequestSignerImpl(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
-//        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
-//        attributes.put("X-Amz-SignedHeaders", "host");
-//        String signature = actual.sign(attributes, headers);
-
-//        Aws4RequestSignerReference signer2 = new Aws4RequestSignerReference(awsConfig, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
-//        attributes.put("X-Amz-Credential", signer2.createFormattedCredential());
-//        String signature = signer2.sign(attributes, headers);
-//        attributes.put("X-Amz-SignedHeaders", signer2.getSignedHeaders());
-
-//        attributes.put("X-Amz-Credential", requestSigner.createFormattedCredential());
-//        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
-//        String signature = requestSigner.sign(attributes, headers);
-//        attributes.put("X-Amz-SignedHeaders", requestSigner.getSignedHeaders());
-
         Aws4RequestSigner actual = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
-        headers.put("Host", TEST_HOST);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
         String signature = actual.sign(attributes, headers);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
