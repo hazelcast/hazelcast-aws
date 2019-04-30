@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
@@ -61,6 +63,9 @@ public class Aws4RequestSignerReference implements Aws4RequestSigner {
         }
 
         List<Header> headerList = new ArrayList<Header>();
+        if (!headers.containsKey("X-Amz-Date")) {
+            headerList.add(new Header("X-Amz-Date", timestamp));
+        }
         Set<Map.Entry<String, String>> entries = headers.entrySet();
         for (Map.Entry<String, String> e : entries) {
             headerList.add(new Header(e.getKey(), e.getValue()));
@@ -68,14 +73,33 @@ public class Aws4RequestSignerReference implements Aws4RequestSigner {
 
         Signer signer = Signer.builder()
                 .awsCredentials(new uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials(awsCredentials.getAccessKey(), awsCredentials.getSecretKey()))
-                .date(timestamp)
                 .region(awsConfig.getRegion())
                 .headers(headerList.toArray(new Header[0]))
                 .build(request, service, Aws4RequestSignerUtils.sha256Hashhex(body));
-        String xAmzSignature = signer.getXAmzSignature();
-        this.signedHeaders = signer.getXAmzSignedHeaders();
         this.authorization = signer.getSignature();
+        String xAmzSignature = getXAmzSignature(authorization);
+        this.signedHeaders = getXAmzSignedHeaders(authorization);
         return xAmzSignature;
+    }
+
+    private String getXAmzSignedHeaders(String authorization) {
+        Pattern pattern = Pattern.compile("SignedHeaders=([^,]*),");
+        Matcher matcher = pattern.matcher(authorization);
+        if (matcher.find())
+        {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private String getXAmzSignature(String authorization) {
+        Pattern pattern = Pattern.compile("Signature=(.*)$");
+        Matcher matcher = pattern.matcher(authorization);
+        if (matcher.find())
+        {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     @Override
@@ -93,5 +117,4 @@ public class Aws4RequestSignerReference implements Aws4RequestSigner {
         return awsCredentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + awsConfig.getRegion() + '/'
                 + service + "/aws4_request";
     }
-
 }
