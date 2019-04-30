@@ -1,6 +1,5 @@
 package com.hazelcast.aws.utility;
 
-import com.hazelcast.aws.utility.AwsURLEncoder;
 import com.hazelcast.util.QuickMath;
 
 import java.io.UnsupportedEncodingException;
@@ -12,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
+import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
 
 /**
  *
@@ -70,6 +69,6 @@ public class Aws4RequestSignerUtils {
     }
 
     public static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
-        return ALGORITHM + " " + "Credential=" + accessKey + "/" + credentialScope + ", " + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
+        return SIGNATURE_METHOD_V4 + " " + "Credential=" + accessKey + "/" + credentialScope + ", " + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
     }
 }
