@@ -28,4 +28,5 @@ public abstract class AwsClientStrategy {
 
     public abstract Map<String, String> getAddresses() throws Exception;
 
+    public abstract String getAvailabilityZone();
 }

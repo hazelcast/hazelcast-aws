@@ -34,4 +34,9 @@ class EcsClientStrategy extends AwsClientStrategy {
         }
         return Collections.EMPTY_MAP;
     }
+
+    @Override
+    public String getAvailabilityZone() {
+        return "ecs";
+    }
 }
