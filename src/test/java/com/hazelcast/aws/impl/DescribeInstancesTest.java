@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -78,21 +77,21 @@ public class DescribeInstancesTest {
     public void test_whenAccessKey_And_IamRole_And_IamTaskRoleEnvVar_Null_With_No_DefaultRole()
             throws IOException {
         Environment mockedEnv = mock(Environment.class);
-        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
+        when(mockedEnv.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 
         final String uri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
 
         DescribeInstances descriptor = spy(new DescribeInstances(predefinedAwsConfigBuilder().build()));
         doReturn("").when(descriptor).retrieveRoleFromURI(uri);
         doReturn(mockedEnv).when(descriptor).getEnvironment();
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
     }
 
     @Test
     public void test_whenAccessKey_And_IamTaskRoleEnvVar_Null_With_DefaultRole_Assigned()
             throws IOException {
         Environment mockedEnv = mock(Environment.class);
-        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
+        when(mockedEnv.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 
         final String defaultIamRoleName = "defaultIamRole";
         final String uri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
@@ -106,7 +105,7 @@ public class DescribeInstancesTest {
         doReturn(defaultIamRoleName).when(descriptor).retrieveRoleFromURI(uri);
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(roleUri);
         doReturn(mockedEnv).when(descriptor).getEnvironment();
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
 
         assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
         assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
@@ -117,7 +116,7 @@ public class DescribeInstancesTest {
         descriptor = spy(new DescribeInstances(awsConfig));
         doReturn(defaultIamRoleName).when(descriptor).retrieveRoleFromURI(uri);
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(roleUri);
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
 
         assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
         assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
@@ -128,7 +127,7 @@ public class DescribeInstancesTest {
         descriptor = spy(new DescribeInstances(awsConfig));
         doReturn(defaultIamRoleName).when(descriptor).retrieveRoleFromURI(uri);
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(roleUri);
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
 
         assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
         assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
@@ -145,7 +144,7 @@ public class DescribeInstancesTest {
 
         DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(uri);
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
 
         assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
         assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
@@ -160,7 +159,7 @@ public class DescribeInstancesTest {
         final String defaultRoleUri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
 
         Environment mockedEnv = mock(Environment.class);
-        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);
+        when(mockedEnv.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
 
@@ -170,7 +169,7 @@ public class DescribeInstancesTest {
         doReturn("").when(descriptor).retrieveRoleFromURI(defaultRoleUri);
         doReturn(mockedEnv).when(descriptor).getEnvironment();
 
-        descriptor.fillKeysFromIamRoles();
+        descriptor.retrieveCredentials();
 
         assertEquals("Could not parse access key from IAM task role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
         assertEquals("Could not parse secret key from IAM task role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());

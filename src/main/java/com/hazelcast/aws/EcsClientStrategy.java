@@ -12,6 +12,7 @@ import java.util.Map;
  *
  */
 class EcsClientStrategy extends AwsClientStrategy {
+
     EcsClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);
     }

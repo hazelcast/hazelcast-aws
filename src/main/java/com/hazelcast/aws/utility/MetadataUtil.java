@@ -75,7 +75,7 @@ public final class MetadataUtil {
             }
             return response.toString();
         } catch (IOException io) {
-            throw new InvalidConfigurationException("Unable to lookup role in URI: " + uri, io);
+            throw new InvalidConfigurationException("Unable to retrieve metadata from URI: " + uri, io);
         } finally {
             if (is != null) {
                 try {

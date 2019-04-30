@@ -36,11 +36,13 @@ public class DescribeInstances extends AwsOperation<Map<String, String>> {
 
     public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
         super(awsConfig, endpointURL, "ec2", EC2_DOC_VERSION, GET);
+        attributes.put("Action", this.getClass().getSimpleName());
+        attributes.put("Version", EC2_DOC_VERSION);
     }
 
     //Just for testing purposes
     public DescribeInstances(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
-        super(awsConfig, new URL("https", endpoint, -1, "/"), "ec2", EC2_DOC_VERSION, GET);
+        this(awsConfig, new URL("https", endpoint, -1, "/"));
     }
 
     //Just for testing purposes

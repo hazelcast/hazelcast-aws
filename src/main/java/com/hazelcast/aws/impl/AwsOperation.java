@@ -74,6 +74,10 @@ public abstract class AwsOperation<E> {
         this.httpMethod = httpMethod;
     }
 
+    protected boolean isEcsEndpoint() {
+        return endpointURL.getAuthority().startsWith("ecs.");
+    }
+
     /**
      * Invokes this service, unmarshal the response and return it.
      *
@@ -82,7 +86,7 @@ public abstract class AwsOperation<E> {
      */
     public E execute(Object... args) throws Exception {
         if (isNotEmpty(awsCredentials.getIamRole()) || isEmpty(awsCredentials.getAccessKey())) {
-            fillKeysFromIamRoles();
+            retrieveCredentials();
         }
 
         LOGGER.finest("OK we have credentials, signing request...");
@@ -90,9 +94,7 @@ public abstract class AwsOperation<E> {
         prepareHttpRequest(args);
 
         Aws4RequestSigner requestSigner = getRequestSigner();
-        String signature = requestSigner.sign(attributes, headers, body, httpMethod);
-//        attributes.put("X-Amz-Signature", signature);
-//        attributes.put("X-Amz-SignedHeaders", requestSigner.getSignedHeaders());
+        requestSigner.sign(attributes, headers, body, httpMethod);
         headers.put("Authorization", requestSigner.getAuthorizationHeader());
         String securityToken = awsCredentials.getSecurityToken();
         if (StringUtil.isNotEmpty(securityToken)) {
@@ -150,27 +152,35 @@ public abstract class AwsOperation<E> {
         Scanner scanner = new Scanner(stream, UTF8_ENCODING).useDelimiter("\\A");
         return scanner.hasNext() ? scanner.next() : "";
     }
-    // Visible for testing
 
-    void fillKeysFromIamRoles()
+    // Visible for testing
+    void retrieveCredentials()
             throws IOException {
+        if (isEcsEndpoint()) {
+            retrieveContainerCredentials(getEnvironment());
+        }
+        else {
+            retrieveIamRole();
+            if (isNotEmpty(awsCredentials.getIamRole())) {
+                retrieveIamRoleCredentials();
+            } else {
+                // legacy ECS mode
+                retrieveContainerCredentials(getEnvironment());
+            }
+        }
+    }
+
+
+    private void retrieveIamRole() {
         if (isEmpty(awsCredentials.getIamRole()) || "DEFAULT".equals(awsCredentials.getIamRole())) {
             String defaultIAMRole = null;
             try {
                 defaultIAMRole = getDefaultIamRole();
             } catch (Throwable e) {
-                LOGGER.finest("Cannot get DEFAULT IAM role... CONTINUING! Exception was: " + e.getMessage());
+                LOGGER.finest("Cannot get DEFAULT IAM role. CONTINUING. Exception was: " + e.getMessage());
             }
             awsCredentials.setIamRole(defaultIAMRole);
         }
-
-        if (isNotEmpty(awsCredentials.getIamRole())) {
-            fillKeysFromIamRole();
-        } else {
-            LOGGER.finest("Using fillKeysFromIamTaskRole(...) -- GOOD!");
-            fillKeysFromIamTaskRole(getEnvironment());
-        }
-
     }
 
     private String getDefaultIamRole()
@@ -179,7 +189,7 @@ public abstract class AwsOperation<E> {
         return retrieveRoleFromURI(uri);
     }
 
-    private void fillKeysFromIamRole() {
+    private void retrieveIamRoleCredentials() {
         try {
             String query = IAM_SECURITY_CREDENTIALS_URI.concat(awsCredentials.getIamRole());
             String uri = INSTANCE_METADATA_URI.concat(query);
@@ -191,23 +201,20 @@ public abstract class AwsOperation<E> {
         }
     }
 
-    private void fillKeysFromIamTaskRole(Environment env)
+    private void retrieveContainerCredentials(Environment env)
             throws IOException {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
-        String uri = env.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
+        String uri = env.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
         if (uri == null) {
             throw new IllegalArgumentException("Could not acquire credentials! "
                     + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
         }
         uri = IAM_TASK_ROLE_ENDPOINT + uri;
 
-        LOGGER.finest("Getting creds from " + uri);
-
         String json = "";
         try {
             json = retrieveRoleFromURI(uri);
-            LOGGER.finest("JSON:\n" + json + "\n");
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
             throw new InvalidConfigurationException(
@@ -274,7 +281,7 @@ public abstract class AwsOperation<E> {
         LOGGER.finest(String.format("Body-length:%d", body.length()));
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.POST);
+        httpConnection.setRequestMethod(httpMethod);
         httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             httpConnection.setRequestProperty(entry.getKey(), entry.getValue());
@@ -311,11 +318,6 @@ public abstract class AwsOperation<E> {
     public Aws4RequestSigner getRequestSigner() {
         String timeStamp = getFormattedTimestamp();
         Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
-//        attributes.put("Action", this.getClass().getSimpleName());
-//        attributes.put("Version", docVersion);
-//        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-//        attributes.put("X-Amz-Credential", rs.createFormattedCredential());
-//        attributes.put("X-Amz-Expires", "30");
         headers.put("X-Amz-Date", timeStamp);
         headers.put("Host", endpointURL.getHost());
         addFilters();

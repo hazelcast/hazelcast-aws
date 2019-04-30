@@ -42,7 +42,7 @@ public class TaskMetadataTest {
 
     @Ignore
     @Test
-    public void execute() throws Exception {
+    public void testExecute() throws Exception {
         String execute = taskMetadata.execute();
     }
 }
