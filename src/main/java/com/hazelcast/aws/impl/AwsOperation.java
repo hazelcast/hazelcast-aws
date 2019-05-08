@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
@@ -32,8 +48,6 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static com.hazelcast.nio.IOUtil.closeResource;
@@ -49,17 +63,17 @@ public abstract class AwsOperation<E> {
      * see http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
      */
     static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
+    static final String UTF8_ENCODING = "UTF-8";
     private static final ILogger LOGGER = Logger.getLogger(AwsOperation.class);
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
-    private static final String UTF8_ENCODING = "UTF-8";
 
     protected AwsConfig awsConfig;
     protected AwsCredentials awsCredentials;
     protected URL endpointURL;
     protected Map<String, String> attributes = new HashMap<String, String>();
     protected Map<String, String> headers = new HashMap<String, String>();
-    protected String body;
+    protected String body = "";
 
     protected final String service;
     protected final String docVersion;
@@ -72,10 +86,6 @@ public abstract class AwsOperation<E> {
         this.service = service;
         this.docVersion = docVersion;
         this.httpMethod = httpMethod;
-    }
-
-    protected boolean isEcsEndpoint() {
-        return endpointURL.getAuthority().startsWith("ecs.");
     }
 
     /**
@@ -126,13 +136,6 @@ public abstract class AwsOperation<E> {
     }
 
     /**
-     * Add available filters to narrow down the scope of the query
-     * Override where appropriate.
-     */
-    protected void addFilters() {
-    }
-
-    /**
      * AWS response codes for client and server errors are specified here:
      * {@see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html}.
      */
@@ -153,55 +156,13 @@ public abstract class AwsOperation<E> {
         return scanner.hasNext() ? scanner.next() : "";
     }
 
-    // Visible for testing
-    void retrieveCredentials()
-            throws IOException {
-        if (isEcsEndpoint()) {
-            retrieveContainerCredentials(getEnvironment());
-        }
-        else {
-            retrieveIamRole();
-            if (isNotEmpty(awsCredentials.getIamRole())) {
-                retrieveIamRoleCredentials();
-            } else {
-                // legacy ECS mode
-                retrieveContainerCredentials(getEnvironment());
-            }
-        }
-    }
+    /**
+     *
+     */
+    protected abstract void retrieveCredentials() throws IOException;
 
 
-    private void retrieveIamRole() {
-        if (isEmpty(awsCredentials.getIamRole()) || "DEFAULT".equals(awsCredentials.getIamRole())) {
-            String defaultIAMRole = null;
-            try {
-                defaultIAMRole = getDefaultIamRole();
-            } catch (Throwable e) {
-                LOGGER.finest("Cannot get DEFAULT IAM role. CONTINUING. Exception was: " + e.getMessage());
-            }
-            awsCredentials.setIamRole(defaultIAMRole);
-        }
-    }
-
-    private String getDefaultIamRole()
-            throws IOException {
-        String uri = INSTANCE_METADATA_URI.concat(IAM_SECURITY_CREDENTIALS_URI);
-        return retrieveRoleFromURI(uri);
-    }
-
-    private void retrieveIamRoleCredentials() {
-        try {
-            String query = IAM_SECURITY_CREDENTIALS_URI.concat(awsCredentials.getIamRole());
-            String uri = INSTANCE_METADATA_URI.concat(query);
-            String json = retrieveRoleFromURI(uri);
-            parseAndStoreRoleCreds(json);
-        } catch (Exception io) {
-            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsCredentials.getIamRole(),
-                    io);
-        }
-    }
-
-    private void retrieveContainerCredentials(Environment env)
+    protected void retrieveContainerCredentials(Environment env)
             throws IOException {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
@@ -212,26 +173,27 @@ public abstract class AwsOperation<E> {
         }
         uri = IAM_TASK_ROLE_ENDPOINT + uri;
 
-        String json = "";
+        String json = null;
         try {
             json = retrieveRoleFromURI(uri);
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
             throw new InvalidConfigurationException(
-                    "Unable to retrieve credentials from IAM Task Role. " + "URI: " + uri + ". \n HTTP Response content: " + json,
-                    io);
+                    "Unable to retrieve credentials from IAM Task Role. " + "URI: " + uri
+                            + ". \nHTTP Response content: " + json, io);
         }
     }
 
     /**
      * This is a helper method that simply performs the HTTP request to retrieve the role, from a given URI.
      * (It allows us to cleanly separate the network calls out of our main code logic, so we can mock in our UT.)
+     *
      * Visible for testing.
      *
      * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    String retrieveRoleFromURI(String uri) {
+    protected String retrieveRoleFromURI(String uri) {
         return MetadataUtil
                 .retrieveMetadataFromURI(uri, awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
@@ -242,7 +204,7 @@ public abstract class AwsOperation<E> {
      *
      * @param json The JSON representation of the IAM (Task) Role.
      */
-    private void parseAndStoreRoleCreds(String json) {
+    protected void parseAndStoreRoleCreds(String json) {
         JsonObject roleAsJson = Json.parse(json).asObject();
         awsCredentials.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsCredentials.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
@@ -295,7 +257,7 @@ public abstract class AwsOperation<E> {
 
         if (isNotEmpty(body)) {
             OutputStream outputStream = httpConnection.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF8_ENCODING));
             writer.write(body);
             writer.flush();
             writer.close();
@@ -320,7 +282,6 @@ public abstract class AwsOperation<E> {
         Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
         headers.put("X-Amz-Date", timeStamp);
         headers.put("Host", endpointURL.getHost());
-        addFilters();
         return rs;
     }
 

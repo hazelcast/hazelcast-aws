@@ -2,6 +2,8 @@ package com.hazelcast.aws.impl;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.hazelcast.aws.AwsConfig;
+import com.hazelcast.aws.utility.Environment;
+import com.hazelcast.aws.utility.MetadataUtil;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -18,11 +20,9 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 /**
  *
  */
-public class TaskMetadataTest {
+public class ContainerMetadataTest {
 
     private static final String ENDPOINT = "localhost";
-
-    private TaskMetadata taskMetadata;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
@@ -34,15 +34,14 @@ public class TaskMetadataTest {
         AwsConfig awsConfig = AwsConfig.builder()
                 .setHostHeader("ecs.localhost")
                 .build();
-        taskMetadata = new TaskMetadata(awsConfig, new URL(testEndpoint));
         stubFor(get(urlMatching("/.*")).atPriority(5)
                 .willReturn(aResponse().withStatus(401).withBody("\"reason\":\"Forbidden\"")));
 
     }
 
-    @Ignore
     @Test
     public void testExecute() throws Exception {
-        String execute = taskMetadata.execute();
+        // TODO stub Environment
+        // taskMetadata = MetadataUtil.retrieveContainerMetadata();
     }
 }

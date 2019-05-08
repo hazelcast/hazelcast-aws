@@ -55,7 +55,8 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     private String body;
     private String signature;
 
-    public Aws4RequestSignerImpl(AwsConfig config, AwsCredentials awsCredentials, String timeStamp, String service, String endpoint) {
+    public Aws4RequestSignerImpl(AwsConfig config, AwsCredentials awsCredentials, String timeStamp, String service,
+                                 String endpoint) {
         this.config = config;
         this.awsCredentials = awsCredentials;
         this.timestamp = timeStamp;
@@ -89,14 +90,16 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     }
     /* Task 1 */
     String getCanonicalizedRequest(String httpMethod) {
-        return httpMethod + NEW_LINE + '/' + NEW_LINE + Aws4RequestSignerUtils.getCanonicalizedQueryString(this.attributes) + NEW_LINE
-                + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + Aws4RequestSignerUtils.sha256Hashhex(body);
+        return httpMethod + NEW_LINE + '/' + NEW_LINE
+                + Aws4RequestSignerUtils.getCanonicalizedQueryString(this.attributes) + NEW_LINE
+                + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE
+                + Aws4RequestSignerUtils.sha256Hashhex(body);
     }
 
     /* Task 2 */
     String createStringToSign(String canonicalRequest) {
-        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE + Aws4RequestSignerUtils.sha256Hashhex(
-                canonicalRequest);
+        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE
+                + Aws4RequestSignerUtils.sha256Hashhex(canonicalRequest);
     }
 
     /* Task 3 */
@@ -157,10 +160,10 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     String getCanonicalHeaders() {
         StringBuffer canonical = new StringBuffer();
         Map<String, String> sortedHeaders = getSortedLowercaseHeaders();
-        for (String k : sortedHeaders.keySet()) {
-            canonical.append(format("%s:%s%s", k.toLowerCase(), sortedHeaders.get(k), NEW_LINE));
+        for (Map.Entry<String, String> entry : sortedHeaders.entrySet()) {
+            canonical.append(format("%s:%s%s", entry.getKey().toLowerCase(), entry.getValue(), NEW_LINE));
         }
-        LOGGER.finest("Canonical Headers:\n"+canonical.toString());
+        LOGGER.finest("Canonical Headers:\n" + canonical.toString());
         return canonical.toString();
     }
 
@@ -175,13 +178,14 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
             }
             signed.append(k);
         }
-        LOGGER.finest("Signed Headers:\n"+signed.toString());
+        LOGGER.finest("Signed Headers:\n" + signed.toString());
         return signed.toString();
     }
 
     @Override
     public String getAuthorizationHeader() {
-        return Aws4RequestSignerUtils.buildAuthHeader(awsCredentials.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
+        return Aws4RequestSignerUtils.buildAuthHeader(awsCredentials.getAccessKey(), getCredentialScope(),
+                getSignedHeaders(), signature);
     }
 
     Map<String, String> getSortedLowercaseHeaders() {

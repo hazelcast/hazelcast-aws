@@ -21,11 +21,9 @@ import com.hazelcast.config.InvalidConfigurationException;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.hazelcast.aws.utility.MetadataUtil.AVAILABILITY_ZONE_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.retrieveMetadataFromURI;
-
 public class AWSClient {
+
+    private static final int HOSTNAME_PREFIX_LENGTH = 4;
 
     private final AwsConfig awsConfig;
     private final AwsClientStrategy clientStrategy;
@@ -40,9 +38,10 @@ public class AWSClient {
         this.endpoint = hostHeader;
         if (awsConfig.getRegion() != null && awsConfig.getRegion().length() > 0) {
             if (!(hostHeader.startsWith("ec2.") || hostHeader.startsWith("ecs."))) {
-                throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" or \"ecs.\" prefix, found: " + hostHeader);
+                throw new InvalidConfigurationException(
+                        "HostHeader should start with \"ec2.\" or \"ecs.\" prefix, found: " + hostHeader);
             }
-            String host = hostHeader.substring(0, 4);
+            String host = hostHeader.substring(0, HOSTNAME_PREFIX_LENGTH);
             this.endpoint = hostHeader.replace(host, host + awsConfig.getRegion() + ".");
         }
         clientStrategy = AwsClientStrategy.create(awsConfig, endpoint);

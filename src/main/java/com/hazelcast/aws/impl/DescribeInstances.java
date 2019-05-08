@@ -32,7 +32,7 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class DescribeInstances extends AwsOperation<Map<String, String>> {
+public class DescribeInstances extends Ec2Operation<Map<String, String>> {
 
     public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
         super(awsConfig, endpointURL, "ec2", EC2_DOC_VERSION, GET);
@@ -56,11 +56,12 @@ public class DescribeInstances extends AwsOperation<Map<String, String>> {
         return Ec2XmlUtils.unmarshalDescribeInstancesResponse(stream);
     }
 
+
     /**
      * Add available filters to narrow down the scope of the query
      */
     @Override
-    protected void addFilters() {
+    public void prepareHttpRequest(Object... args) {
         Filter filter = new Filter();
         if (isNotEmpty(awsConfig.getTagKey())) {
             if (isNotEmpty(awsConfig.getTagValue())) {

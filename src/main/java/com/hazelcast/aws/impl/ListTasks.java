@@ -21,19 +21,12 @@ import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonArray;
 import com.hazelcast.internal.json.JsonValue;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.POST;
@@ -42,7 +35,7 @@ import static com.hazelcast.aws.impl.Constants.POST;
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class ListTasks extends AwsOperation<Collection<String>> {
+public class ListTasks extends EcsOperation<Collection<String>> {
 
     public ListTasks(AwsConfig awsConfig, URL endpointURL) {
         super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION, POST);
@@ -53,6 +46,9 @@ public class ListTasks extends AwsOperation<Collection<String>> {
         headers.put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
         headers.put("Content-Type", "application/x-amz-json-1.1");
         headers.put("Accept-Encoding", "identity");
+//        TODO:
+//          String clusterName = (String) args[0];
+//          String familyName = (String) args[1];
         body = "{}";
     }
 
@@ -61,7 +57,7 @@ public class ListTasks extends AwsOperation<Collection<String>> {
         ArrayList<String> response = new ArrayList<String>();
 
         try {
-            JsonArray jsonValues = Json.parse(new InputStreamReader(stream)).asObject().get("taskArns").asArray();
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING)).asObject().get("taskArns").asArray();
             for (JsonValue value : jsonValues) {
                 response.add(value.asString());
             }

@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
@@ -6,13 +22,10 @@ import com.hazelcast.aws.AwsConfig;
  * Effective Credentials to be used for AWS operations
  */
 public class AwsCredentials {
-    private String iamRole = null;
-    private String accessKey = null;
-    private String secretKey = null;
-    private String securityToken = null;
-
-    public AwsCredentials() {
-    }
+    private String iamRole;
+    private String accessKey;
+    private String secretKey;
+    private String securityToken;
 
     public AwsCredentials(AwsConfig config) {
         this.iamRole = config.getIamRole();
@@ -54,10 +67,10 @@ public class AwsCredentials {
 
     @Override
     public String toString() {
-        return "AwsCredentials{" +
-                "accessKey='" + accessKey + '\'' +
-                ", secretKey='" + secretKey + '\'' +
-                ", securityToken='" + securityToken + '\'' +
-                '}';
+        return "AwsCredentials{"
+                + "accessKey='" + accessKey + '\''
+                + ", secretKey='" + secretKey + '\''
+                + ", securityToken='" + securityToken + '\''
+                + '}';
     }
 }

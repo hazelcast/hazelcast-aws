@@ -18,24 +18,20 @@ package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URL;
-
-import static com.hazelcast.aws.impl.Constants.GET;
 
 /**
  *
  */
-public class TaskMetadata extends EcsOperation<String> {
+public abstract class EcsOperation<E> extends AwsOperation<E> {
 
-    public TaskMetadata(AwsConfig awsConfig, URL endpointURL) {
-        // TODO
-        super(awsConfig, endpointURL, "", "", GET);
+    protected EcsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
+        super(awsConfig, endpointURL, service, docVersion, httpMethod);
     }
 
     @Override
-    String unmarshal(InputStream stream) {
-        // TODO
-        return null;
+    protected void retrieveCredentials() throws IOException {
+        retrieveContainerCredentials(getEnvironment());
     }
 }

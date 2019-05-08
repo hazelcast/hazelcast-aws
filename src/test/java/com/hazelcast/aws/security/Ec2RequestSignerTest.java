@@ -18,23 +18,19 @@ package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.impl.Filter;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import uk.co.lucasweb.aws.v4.signer.HttpRequest;
-import uk.co.lucasweb.aws.v4.signer.Signer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Map;
 
-import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
@@ -64,7 +60,7 @@ public class Ec2RequestSignerTest {
         // Override the attributes map. We need to change values. Not pretty, but
         // no real alternative, and in this case : testing only
 
-        Field field = di.getClass().getSuperclass().getDeclaredField("attributes");
+        Field field = di.getClass().getSuperclass().getSuperclass().getDeclaredField("attributes");
         field.setAccessible(true);
         Map<String, String> attributes = (Map<String, String>) field.get(di);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
@@ -92,15 +88,16 @@ public class Ec2RequestSignerTest {
         AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
 
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
-        Aws4RequestSigner requestSigner = di.getRequestSigner();
+        di.getRequestSigner();
 
-        Field attributesField = di.getClass().getSuperclass().getDeclaredField("attributes");
+        Field attributesField = di.getClass().getSuperclass().getSuperclass().getDeclaredField("attributes");
         attributesField.setAccessible(true);
         Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
-        attributes.put("Action", di.getClass().getSimpleName());
-        attributes.put("Version", EC2_DOC_VERSION);
+        Filter filter = new Filter();
+        filter.addFilter("instance-state-name", "running");
+        attributes.putAll(filter.getFilters());
 
-        Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
+        Field headersField = di.getClass().getSuperclass().getSuperclass().getDeclaredField("headers");
         headersField.setAccessible(true);
         Map<String, String> headers = (Map<String, String>) headersField.get(di);
         headers.put("Host", TEST_HOST);

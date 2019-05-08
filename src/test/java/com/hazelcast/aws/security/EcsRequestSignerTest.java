@@ -20,7 +20,6 @@ import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -62,7 +61,7 @@ public class EcsRequestSignerTest {
         // Override the attributes map. We need to change values. Not pretty, but
         // no real alternative, and in this case : testing only
 
-        Field field = di.getClass().getSuperclass().getDeclaredField("attributes");
+        Field field = di.getClass().getSuperclass().getSuperclass().getDeclaredField("attributes");
         field.setAccessible(true);
         Map<String, String> attributes = (Map<String, String>) field.get(di);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
@@ -90,7 +89,7 @@ public class EcsRequestSignerTest {
         DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
         di.getRequestSigner();
 
-        Field headersField = di.getClass().getSuperclass().getDeclaredField("headers");
+        Field headersField = di.getClass().getSuperclass().getSuperclass().getDeclaredField("headers");
         headersField.setAccessible(true);
         Map<String, String> headers = (Map<String, String>) headersField.get(di);
         headers.put("X-Amz-Date", TEST_REQUEST_DATE);
