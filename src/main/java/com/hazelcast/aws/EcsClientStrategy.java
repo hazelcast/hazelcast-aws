@@ -42,8 +42,9 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
  */
 class EcsClientStrategy extends AwsClientStrategy {
 
-    private static final ILogger LOGGER = Logger.getLogger(AwsClientStrategy.class);
     public static final String UPPER_ECS = "ECS";
+
+    private static final ILogger LOGGER = Logger.getLogger(AwsClientStrategy.class);
 
     private String metadataClusterName;
     private String metadataFamilyName;
@@ -67,9 +68,11 @@ class EcsClientStrategy extends AwsClientStrategy {
         if (!taskArns.isEmpty()) {
             DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
             Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
-            DescribeNetworkInterfaces describeNetworks = new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
+            DescribeNetworkInterfaces describeNetworks =
+                    new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
             Map<String, String> networks = describeNetworks.execute(taskAddresses);
-            LOGGER.fine(String.format("%s", networks)); // FIXME TODO
+            // FIXME TODO
+            LOGGER.fine(String.format("%s", networks));
             return taskAddresses;
         }
         return Collections.EMPTY_MAP;

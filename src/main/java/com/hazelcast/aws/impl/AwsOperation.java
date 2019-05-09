@@ -131,9 +131,7 @@ public abstract class AwsOperation<E> {
     /**
      * @param args
      */
-    protected void prepareHttpRequest(Object... args) {
-        body = "";
-    }
+    abstract void prepareHttpRequest(Object... args);
 
     /**
      * AWS response codes for client and server errors are specified here:

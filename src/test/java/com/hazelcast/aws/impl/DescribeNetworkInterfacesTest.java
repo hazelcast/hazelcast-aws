@@ -11,7 +11,7 @@ import java.net.URL;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -58,7 +58,7 @@ public class DescribeNetworkInterfacesTest {
     }
 
     private void stubDescribeTasks(String urlRegex, String response) {
-        stubFor(post(urlMatching(urlRegex))
+        stubFor(get(urlMatching(urlRegex))
                 .withQueryParam("Action", new EqualToPattern("DescribeNetworkInterfaces"))
                 .willReturn(aResponse().withStatus(200).withBody(response)));
 

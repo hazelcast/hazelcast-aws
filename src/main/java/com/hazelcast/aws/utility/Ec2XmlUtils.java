@@ -114,12 +114,15 @@ public final class Ec2XmlUtils {
                 List<NodeHolder> items = networkInterface.getSubNodes(NODE_ITEM);
                 for (NodeHolder item : items) {
                     try {
-                        String privateIp = item.getSubNodes("privateipaddress").get(0).getNode().getFirstChild().getNodeValue();
+                        String privateIp = item.getSubNodes("privateipaddress").get(0)
+                                .getNode().getFirstChild().getNodeValue();
                         String publicIp =
-                                item.getSubNodes("association").get(0).getSubNodes("publicip").get(0).getNode().getFirstChild().getNodeValue();
+                                item.getSubNodes("association").get(0).getSubNodes("publicip").get(0)
+                                        .getNode().getFirstChild().getNodeValue();
                         addresses.put(privateIp, publicIp);
                     } catch (DOMException e) {
                         // ignore
+                        LOGGER.fine(e);
                     }
                 }
             }
