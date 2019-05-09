@@ -19,15 +19,12 @@ package com.hazelcast.aws;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
+
 /**
  *
  */
 public abstract class AwsClientStrategy {
-
-    protected static final String AWS_EXECUTION_ENV_VAR_NAME = "AWS_EXECUTION_ENV";
-    protected static final String EC2 = "EC2";
-    protected static final String ECS = "ECS";
-    protected static final String ECS_PREFIX = "ecs.";
 
     protected final AwsConfig awsConfig;
     protected final String endpoint;

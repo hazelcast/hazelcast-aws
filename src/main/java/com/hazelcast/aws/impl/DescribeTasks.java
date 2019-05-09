@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.ECS;
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.POST;
 
@@ -40,7 +41,7 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
 //    private Collection<String> taskArns;
 
     public DescribeTasks(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION, POST);
+        super(awsConfig, endpointURL, ECS, ECS_DOC_VERSION, POST);
     }
 
     public Map<String, String> execute(Collection<String> taskArns) throws Exception {

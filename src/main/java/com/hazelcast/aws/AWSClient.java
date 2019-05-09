@@ -16,16 +16,18 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.utility.StringUtil;
 import com.hazelcast.config.InvalidConfigurationException;
 
 import java.util.Collection;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
+import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
+import static com.hazelcast.aws.impl.Constants.HOSTNAME_PREFIX_LENGTH;
+
 public class AWSClient {
 
-    private static final int HOSTNAME_PREFIX_LENGTH = 4;
-
-    private final AwsConfig awsConfig;
     private final AwsClientStrategy clientStrategy;
     private String endpoint;
 
@@ -33,16 +35,16 @@ public class AWSClient {
         if (awsConfig == null) {
             throw new IllegalArgumentException("AwsConfig is required!");
         }
-        this.awsConfig = awsConfig;
         String hostHeader = awsConfig.getHostHeader();
         this.endpoint = hostHeader;
-        if (awsConfig.getRegion() != null && awsConfig.getRegion().length() > 0) {
-            if (!(hostHeader.startsWith("ec2.") || hostHeader.startsWith("ecs."))) {
+        if (StringUtil.isNotEmpty(awsConfig.getRegion())) {
+            if (!(hostHeader.startsWith(EC2_PREFIX) || hostHeader.startsWith(ECS_PREFIX))) {
                 throw new InvalidConfigurationException(
-                        "HostHeader should start with \"ec2.\" or \"ecs.\" prefix, found: " + hostHeader);
+                        String.format("HostHeader should start with \"%s\" or \"%s\" prefix, found: %s",
+                                EC2_PREFIX, ECS_PREFIX, hostHeader));
             }
             String host = hostHeader.substring(0, HOSTNAME_PREFIX_LENGTH);
-            this.endpoint = hostHeader.replace(host, host + awsConfig.getRegion() + ".");
+            this.endpoint = host + awsConfig.getRegion() + "." + hostHeader.substring(HOSTNAME_PREFIX_LENGTH);
         }
         clientStrategy = AwsClientStrategy.create(awsConfig, endpoint);
     }
@@ -61,10 +63,5 @@ public class AWSClient {
 
     public String getEndpoint() {
         return this.endpoint;
-    }
-
-    @Deprecated
-    public void setEndpoint(String s) {
-        this.endpoint = s;
     }
 }

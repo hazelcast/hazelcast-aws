@@ -59,28 +59,8 @@ public final class AwsConfig {
         return accessKey;
     }
 
-    /**
-     * Sets {@code accessKey}.
-     *
-     * @deprecated It violates the immutability of {@link AwsConfig}.
-     */
-    @Deprecated
-    public void setAccessKey(String accessKey) {
-        this.accessKey = accessKey;
-    }
-
     public String getSecretKey() {
         return secretKey;
-    }
-
-    /**
-     * Sets {@code secretKey}.
-     *
-     * @deprecated It violates the immutability of {@link AwsConfig}.
-     */
-    @Deprecated
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
     }
 
     public String getRegion() {
@@ -89,16 +69,6 @@ public final class AwsConfig {
 
     public String getIamRole() {
         return iamRole;
-    }
-
-    /**
-     * Sets {@code iamRole}.
-     *
-     * @deprecated It violates the immutability of {@link AwsConfig}.
-     */
-    @Deprecated
-    public void setIamRole(String iamRole) {
-        this.iamRole = iamRole;
     }
 
     public String getHostHeader() {

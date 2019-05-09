@@ -18,6 +18,7 @@ package com.hazelcast.aws.utility;
 
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -95,6 +96,44 @@ public final class Ec2XmlUtils {
         return new LinkedHashMap<String, String>();
     }
 
+    public static Map<String, String> unmarshalDescribeNetworkInterfacesResponse(InputStream stream) {
+        DocumentBuilder builder;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            builder = dbf.newDocumentBuilder();
+            Document doc = builder.parse(stream);
+
+            Map<String, String> addresses = new LinkedHashMap<String, String>();
+            Element element = doc.getDocumentElement();
+
+            NodeHolder elementNodeHolder = new NodeHolder(element);
+            List<NodeHolder> networkInterfaceSet = elementNodeHolder.getSubNodes("networkinterfaceset");
+            for (NodeHolder networkInterface : networkInterfaceSet) {
+                List<NodeHolder> items = networkInterface.getSubNodes(NODE_ITEM);
+                for (NodeHolder item : items) {
+                    try {
+                        String privateIp = item.getSubNodes("privateipaddress").get(0).getNode().getFirstChild().getNodeValue();
+                        String publicIp =
+                                item.getSubNodes("association").get(0).getSubNodes("publicip").get(0).getNode().getFirstChild().getNodeValue();
+                        addresses.put(privateIp, publicIp);
+                    } catch (DOMException e) {
+                        // ignore
+                    }
+                }
+            }
+
+            if (LOGGER.isFinestEnabled()) {
+                LOGGER.finest("Returned document:");
+                LOGGER.finest(getNicelyFormattedXMLDocument(doc));
+            }
+            return addresses;
+        } catch (Exception e) {
+            LOGGER.warning(e);
+        }
+        return new LinkedHashMap<String, String>();
+    }
 
     public static String getNicelyFormattedXMLDocument(Document doc) throws IOException, TransformerException {
         TransformerFactory tf = TransformerFactory.newInstance();

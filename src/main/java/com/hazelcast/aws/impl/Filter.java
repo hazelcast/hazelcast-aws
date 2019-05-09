@@ -16,6 +16,7 @@
 
 package com.hazelcast.aws.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +42,23 @@ public class Filter {
         filters.put("Filter." + index + ".Name", name);
         filters.put("Filter." + index + ".Value.1", value);
         ++index;
+    }
+
+    /**
+     * Add a new filter with the given name and multiple values to the query.
+     *
+     * @param name  Filter name
+     * @param values Filter values
+     */
+    public void addFilter(String name, Collection<String> values) {
+        if (values.size() > 0) {
+            filters.put("Filter." + index + ".Name", name);
+            int valueIndex = 1;
+            for (String value : values) {
+                filters.put(String.format("Filter.%d.Value.%d", index, valueIndex++), value);
+            }
+            ++index;
+        }
     }
 
     public Map<String, String> getFilters() {

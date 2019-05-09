@@ -16,18 +16,25 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.impl.Constants;
+import com.hazelcast.aws.impl.DescribeNetworkInterfaces;
 import com.hazelcast.aws.impl.DescribeTasks;
 import com.hazelcast.aws.impl.ListTasks;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtil;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
+import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
+import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
 /**
@@ -35,11 +42,16 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
  */
 class EcsClientStrategy extends AwsClientStrategy {
 
+    private static final ILogger LOGGER = Logger.getLogger(AwsClientStrategy.class);
+    public static final String UPPER_ECS = "ECS";
+
     private String metadataClusterName;
     private String metadataFamilyName;
+    private String endpointDomain;
 
     EcsClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);
+        this.endpointDomain = endpoint.substring(Constants.HOSTNAME_PREFIX_LENGTH);
     }
 
     @Override
@@ -49,13 +61,16 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     @Override
     public Map<String, String> getAddresses() throws Exception {
-        // FIXME taskMetadata URL
         retrieveAndParseMetadata();
-        ListTasks listTasks = new ListTasks(awsConfig, new URL("https", endpoint, -1, "/"));
+        ListTasks listTasks = new ListTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
         Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
         if (!taskArns.isEmpty()) {
-            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL("https", endpoint, -1, "/"));
-            return describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
+            Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            DescribeNetworkInterfaces describeNetworks = new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
+            Map<String, String> networks = describeNetworks.execute(taskAddresses);
+            LOGGER.fine(String.format("%s", networks)); // FIXME TODO
+            return taskAddresses;
         }
         return Collections.EMPTY_MAP;
     }
@@ -75,13 +90,13 @@ class EcsClientStrategy extends AwsClientStrategy {
         metadataFamilyName = labels.getString("com.amazonaws.ecs.task-definition-family", null);
     }
 
-    private boolean runningOnEcs() {
-        String execEnv = new Environment().getEnvVar(AWS_EXECUTION_ENV_VAR_NAME);
-        return isNotEmpty(execEnv) && execEnv.contains(ECS);
-    }
-
     @Override
     public String getAvailabilityZone() {
-        return ECS;
+        return UPPER_ECS;
+    }
+
+    private boolean runningOnEcs() {
+        String execEnv = new Environment().getEnvVar(AWS_EXECUTION_ENV_VAR_NAME);
+        return isNotEmpty(execEnv) && execEnv.contains(UPPER_ECS);
     }
 }

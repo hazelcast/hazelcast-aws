@@ -24,12 +24,16 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
+import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
 /**
  *
  */
 class Ec2ClientStrategy extends AwsClientStrategy {
+
+    public static final String UPPER_EC2 = "EC2";
 
     public Ec2ClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);
@@ -41,7 +45,7 @@ class Ec2ClientStrategy extends AwsClientStrategy {
     }
 
     public Map<String, String> getAddresses() throws Exception {
-        return new DescribeInstances(awsConfig, new URL("https", endpoint, -1, "/")).execute();
+        return new DescribeInstances(awsConfig, new URL(HTTPS, endpoint, -1, "/")).execute();
     }
 
     @Override
@@ -49,13 +53,11 @@ class Ec2ClientStrategy extends AwsClientStrategy {
         if (runningOnEc2()) {
             return MetadataUtil.getEc2AvailabilityZone(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
         }
-        return EC2;
+        return UPPER_EC2;
     }
 
     private boolean runningOnEc2() {
         String execEnv = new Environment().getEnvVar(AWS_EXECUTION_ENV_VAR_NAME);
-        return isNotEmpty(execEnv) && execEnv.contains(EC2);
+        return isNotEmpty(execEnv) && execEnv.contains(UPPER_EC2);
     }
-
-
 }

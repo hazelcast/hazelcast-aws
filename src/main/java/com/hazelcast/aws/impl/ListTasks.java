@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.hazelcast.aws.impl.Constants.ECS;
 import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.POST;
 
@@ -38,7 +39,7 @@ import static com.hazelcast.aws.impl.Constants.POST;
 public class ListTasks extends EcsOperation<Collection<String>> {
 
     public ListTasks(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, "ecs", ECS_DOC_VERSION, POST);
+        super(awsConfig, endpointURL, ECS, ECS_DOC_VERSION, POST);
     }
 
     @Override

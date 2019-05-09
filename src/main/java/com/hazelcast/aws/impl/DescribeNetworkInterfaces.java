@@ -28,57 +28,46 @@ import static com.hazelcast.aws.impl.Constants.EC2;
 import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
 /**
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */
-public class DescribeInstances extends Ec2Operation<Map<String, String>> {
+public class DescribeNetworkInterfaces extends Ec2Operation<Map<String, String>> {
 
-    public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
+    public DescribeNetworkInterfaces(AwsConfig awsConfig, URL endpointURL) {
         super(awsConfig, endpointURL, EC2, EC2_DOC_VERSION, GET);
         attributes.put("Action", this.getClass().getSimpleName());
         attributes.put("Version", EC2_DOC_VERSION);
     }
 
-    // Visible for testing
-    public DescribeInstances(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
+    //Just for testing purposes
+    public DescribeNetworkInterfaces(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
         this(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
     }
 
-    // Visible for testing
-    DescribeInstances(AwsConfig awsConfig) throws MalformedURLException {
+    //Just for testing purposes
+    // FIXME REMOVE
+    DescribeNetworkInterfaces(AwsConfig awsConfig) throws MalformedURLException {
         this(awsConfig, awsConfig.getHostHeader());
     }
 
-    // Visible for testing
+    // visible for testing
     @Override
     Map<String, String> unmarshal(InputStream stream) {
-        return Ec2XmlUtils.unmarshalDescribeInstancesResponse(stream);
+        return Ec2XmlUtils.unmarshalDescribeNetworkInterfacesResponse(stream);
     }
 
     /**
-     * Add available filters to narrow down the scope of the query
+     * TODO
      */
     @Override
     public void prepareHttpRequest(Object... args) {
         Filter filter = new Filter();
-        if (isNotEmpty(awsConfig.getTagKey())) {
-            if (isNotEmpty(awsConfig.getTagValue())) {
-                filter.addFilter("tag:" + awsConfig.getTagKey(), awsConfig.getTagValue());
-            } else {
-                filter.addFilter("tag-key", awsConfig.getTagKey());
-            }
-        } else if (isNotEmpty(awsConfig.getTagValue())) {
-            filter.addFilter("tag-value", awsConfig.getTagValue());
+        if (args.length > 0) {
+            Map<String, String> taskAddresses = (Map<String, String>) args[0];
+            filter.addFilter("addresses.private-ip-address", taskAddresses.keySet());
         }
-
-        if (isNotEmpty(awsConfig.getSecurityGroupName())) {
-            filter.addFilter("instance.group-name", awsConfig.getSecurityGroupName());
-        }
-
-        filter.addFilter("instance-state-name", "running");
         attributes.putAll(filter.getFilters());
     }
 }
