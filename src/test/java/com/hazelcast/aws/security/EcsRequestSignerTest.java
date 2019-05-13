@@ -46,6 +46,7 @@ public class EcsRequestSignerTest {
     private final static String TEST_SIGNATURE_EXPECTED = "b0e93ee3108fdb85c7ad29eca28646d2b3c0b1218c527fec6cba3580ab806733";
 
     @Test
+    @SuppressWarnings(value = "unchecked")
     public void deriveSigningKeyTest()
             throws Exception {
         // this is from http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html
@@ -78,6 +79,7 @@ public class EcsRequestSignerTest {
     }
 
     @Test
+    @SuppressWarnings(value = "unchecked")
     public void testSigning()
             throws NoSuchFieldException, IllegalAccessException, IOException {
         AwsConfig awsConfig = AwsConfig.builder().setRegion(TEST_REGION).

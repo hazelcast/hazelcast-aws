@@ -24,8 +24,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-import static com.hazelcast.aws.impl.Constants.EC2;
-import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
@@ -37,9 +35,9 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 public class DescribeInstances extends Ec2Operation<Map<String, String>> {
 
     public DescribeInstances(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, EC2, EC2_DOC_VERSION, GET);
+        super(awsConfig, endpointURL, GET);
         attributes.put("Action", this.getClass().getSimpleName());
-        attributes.put("Version", EC2_DOC_VERSION);
+        attributes.put("Version", this.docVersion);
     }
 
     // Visible for testing

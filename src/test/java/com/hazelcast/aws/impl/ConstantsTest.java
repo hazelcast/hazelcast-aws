@@ -23,8 +23,7 @@ public class ConstantsTest
         extends HazelcastTestSupport {
 
     @Test
-    public void testConstructor()
-            throws Exception {
+    public void testConstructor() {
         assertUtilityConstructor(Constants.class);
     }
 }

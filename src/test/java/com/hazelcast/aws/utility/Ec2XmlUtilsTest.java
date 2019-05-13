@@ -16,17 +16,14 @@
 
 package com.hazelcast.aws.utility;
 
-import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.QuickTest;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -36,9 +33,6 @@ import static org.junit.Assert.assertEquals;
 @Category(QuickTest.class)
 public class Ec2XmlUtilsTest
         extends HazelcastTestSupport {
-
-    private final String xml = configXmlString();
-    private AwsConfig awsConfig;
 
     private static String configXmlString() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
@@ -129,23 +123,14 @@ public class Ec2XmlUtilsTest
                 + "    </reservationSet>\n" + "</DescribeInstancesResponse>";
     }
 
-    @Before
-    public void setup() {
-        awsConfig = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
-                             .setSecurityGroupName("hazelcast").build();
-    }
-
     @Test
     public void testConstructor() {
         assertUtilityConstructor(Ec2XmlUtils.class);
     }
 
     @Test
-    public void testUnmarshalling()
-            throws IOException {
-        InputStream is = new ByteArrayInputStream(xml.getBytes());
-        AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key").build();
-
+    public void testUnmarshalling() {
+        InputStream is = new ByteArrayInputStream(configXmlString().getBytes());
         Map<String, String> result = Ec2XmlUtils.unmarshalDescribeInstancesResponse(is);
         assertEquals(2, result.size());
     }

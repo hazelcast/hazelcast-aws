@@ -29,9 +29,9 @@ public final class AwsConfig {
     private final int connectionTimeoutSeconds;
     private final int connectionRetries;
     private final PortRange hzPort;
-    private String accessKey;
-    private String secretKey;
-    private String iamRole;
+    private final String accessKey;
+    private final String secretKey;
+    private final String iamRole;
 
     @SuppressWarnings("checkstyle:parameternumber")
     // Constructor has a lot of parameters, but it's private.

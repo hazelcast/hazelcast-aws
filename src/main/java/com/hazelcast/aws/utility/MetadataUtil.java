@@ -45,12 +45,12 @@ public final class MetadataUtil {
     /**
      * Post-fix URI to fetch availability-zone info.
      */
-    public static final String AVAILABILITY_ZONE_URI = "placement/availability-zone/";
+    private static final String AVAILABILITY_ZONE_URI = "placement/availability-zone/";
 
     /**
      * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
      */
-    public static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
+    private static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
 
     private static final ILogger LOGGER = Logger.getLogger(MetadataUtil.class);
 
@@ -64,7 +64,7 @@ public final class MetadataUtil {
      * @param timeoutInSeconds timeout for the AWS service call
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    static String retrieveMetadataFromURI(String uri, int timeoutInSeconds) {
+    private static String retrieveMetadataFromURI(String uri, int timeoutInSeconds) {
         StringBuilder response = new StringBuilder();
 
         InputStreamReader is = null;
@@ -76,7 +76,7 @@ public final class MetadataUtil {
             reader = new BufferedReader(is);
             String resp;
             while ((resp = reader.readLine()) != null) {
-                response = response.append(resp);
+                response.append(resp);
             }
             return response.toString();
         } catch (IOException io) {

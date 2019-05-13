@@ -24,8 +24,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-import static com.hazelcast.aws.impl.Constants.EC2;
-import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
 
@@ -36,20 +34,14 @@ import static com.hazelcast.aws.impl.Constants.HTTPS;
 public class DescribeNetworkInterfaces extends Ec2Operation<Map<String, String>> {
 
     public DescribeNetworkInterfaces(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, EC2, EC2_DOC_VERSION, GET);
+        super(awsConfig, endpointURL, GET);
         attributes.put("Action", this.getClass().getSimpleName());
-        attributes.put("Version", EC2_DOC_VERSION);
+        attributes.put("Version", this.docVersion);
     }
 
     //Just for testing purposes
-    public DescribeNetworkInterfaces(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
+    private DescribeNetworkInterfaces(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
         this(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-    }
-
-    //Just for testing purposes
-    // FIXME REMOVE
-    DescribeNetworkInterfaces(AwsConfig awsConfig) throws MalformedURLException {
-        this(awsConfig, awsConfig.getHostHeader());
     }
 
     // visible for testing
@@ -62,6 +54,7 @@ public class DescribeNetworkInterfaces extends Ec2Operation<Map<String, String>>
      * TODO
      */
     @Override
+    @SuppressWarnings(value = "unchecked")
     public void prepareHttpRequest(Object... args) {
         Filter filter = new Filter();
         if (args.length > 0) {

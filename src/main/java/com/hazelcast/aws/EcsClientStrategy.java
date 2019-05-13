@@ -42,7 +42,7 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
  */
 class EcsClientStrategy extends AwsClientStrategy {
 
-    public static final String UPPER_ECS = "ECS";
+    private static final String UPPER_ECS = "ECS";
 
     private static final ILogger LOGGER = Logger.getLogger(AwsClientStrategy.class);
 
@@ -61,6 +61,7 @@ class EcsClientStrategy extends AwsClientStrategy {
     }
 
     @Override
+    @SuppressWarnings(value = "unchecked")
     public Map<String, String> getAddresses() throws Exception {
         retrieveAndParseMetadata();
         ListTasks listTasks = new ListTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));

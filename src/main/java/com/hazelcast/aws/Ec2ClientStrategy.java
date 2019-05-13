@@ -33,7 +33,7 @@ import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
  */
 class Ec2ClientStrategy extends AwsClientStrategy {
 
-    public static final String UPPER_EC2 = "EC2";
+    private static final String UPPER_EC2 = "EC2";
 
     public Ec2ClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);

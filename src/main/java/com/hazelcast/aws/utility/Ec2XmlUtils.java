@@ -31,7 +31,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -96,6 +95,15 @@ public final class Ec2XmlUtils {
         return new LinkedHashMap<String, String>();
     }
 
+    /**
+     * Unmarshal the response from {@link com.hazelcast.aws.impl.DescribeNetworkInterfaces} and return the discovered node map.
+     * The map contains mappings from private to public IP and all contained nodes match the filtering rules defined by
+     * the {@code awsConfig}.
+     * If there is an exception while unmarshalling the response, returns an empty map.
+     *
+     * @param stream the response XML stream
+     * @return map from private to public IP or empty map in case of exceptions
+     */
     public static Map<String, String> unmarshalDescribeNetworkInterfacesResponse(InputStream stream) {
         DocumentBuilder builder;
         try {
@@ -121,7 +129,7 @@ public final class Ec2XmlUtils {
                                         .getNode().getFirstChild().getNodeValue();
                         addresses.put(privateIp, publicIp);
                     } catch (DOMException e) {
-                        // ignore
+                        // ignore nonconforming interfaces
                         LOGGER.fine(e);
                     }
                 }
@@ -138,7 +146,7 @@ public final class Ec2XmlUtils {
         return new LinkedHashMap<String, String>();
     }
 
-    public static String getNicelyFormattedXMLDocument(Document doc) throws IOException, TransformerException {
+    private static String getNicelyFormattedXMLDocument(Document doc) throws TransformerException {
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
@@ -150,9 +158,8 @@ public final class Ec2XmlUtils {
         Writer stringWriter = new StringWriter();
         StreamResult streamResult = new StreamResult(stringWriter);
         transformer.transform(new DOMSource(doc), streamResult);
-        String result = stringWriter.toString();
 
-        return result;
+        return stringWriter.toString();
     }
 
     private static class NodeHolder {

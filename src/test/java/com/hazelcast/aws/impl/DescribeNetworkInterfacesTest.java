@@ -3,6 +3,8 @@ package com.hazelcast.aws.impl;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import com.hazelcast.aws.AwsConfig;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsEqual;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,11 +52,10 @@ public class DescribeNetworkInterfacesTest {
         stubDescribeTasks("/.*", describeNetworkInterfacesResponse());
 
         // when
-        Map<String, String> intfaces = describeNetworkInterfaces.execute();
+        Map<String, String> values = describeNetworkInterfaces.execute();
 
         // then
-        // TODO
-        //MatcherAssert.assertThat("list of 3 interfaces", intfaces.size(), new IsEqual<Integer>(2));
+        MatcherAssert.assertThat("list of 2 interfaces", values.size(), new IsEqual<Integer>(2));
     }
 
     private void stubDescribeTasks(String urlRegex, String response) {

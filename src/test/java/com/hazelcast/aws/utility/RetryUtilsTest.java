@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(HazelcastParallelClassRunner.class)
 @Category({QuickTest.class, ParallelTest.class})
+@SuppressWarnings(value = "unchecked")
 public class RetryUtilsTest {
     private static final Integer RETRIES = 1;
     private static final String RESULT = "result string";

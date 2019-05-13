@@ -28,7 +28,6 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -47,6 +46,7 @@ public class Ec2RequestSignerTest {
     private final static String TEST_SIGNATURE_EXPECTED = "8e4f83fe919390f53fa71ea0ea8a25a09e7d10e1740b238fc6969a1410e06c57";
 
     @Test
+    @SuppressWarnings(value = "unchecked")
     public void deriveSigningKeyTest()
             throws Exception {
         // this is from http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html
@@ -77,8 +77,9 @@ public class Ec2RequestSignerTest {
     }
 
     @Test
+    @SuppressWarnings(value = "unchecked")
     public void testSigning()
-            throws NoSuchFieldException, IllegalAccessException, IOException, URISyntaxException {
+            throws NoSuchFieldException, IllegalAccessException, IOException {
         AwsConfig awsConfig = AwsConfig.builder()
                 .setRegion(TEST_REGION)
                 .setHostHeader(TEST_HOST)

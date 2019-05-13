@@ -2,14 +2,9 @@ package com.hazelcast.aws.impl;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.MetadataUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.net.URL;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -28,7 +23,7 @@ public class ContainerMetadataTest {
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         String testEndpoint = String.format("http://%s:%d", ENDPOINT, wireMockRule.port());
 
         AwsConfig awsConfig = AwsConfig.builder()
@@ -40,7 +35,7 @@ public class ContainerMetadataTest {
     }
 
     @Test
-    public void testExecute() throws Exception {
+    public void testExecute() {
         // TODO stub Environment
         // taskMetadata = MetadataUtil.retrieveContainerMetadata();
     }

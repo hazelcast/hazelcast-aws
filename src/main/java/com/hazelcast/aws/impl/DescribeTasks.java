@@ -30,8 +30,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hazelcast.aws.impl.Constants.ECS;
-import static com.hazelcast.aws.impl.Constants.ECS_DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
@@ -41,7 +39,7 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
 //    private Collection<String> taskArns;
 
     public DescribeTasks(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, ECS, ECS_DOC_VERSION, POST);
+        super(awsConfig, endpointURL, POST);
     }
 
     public Map<String, String> execute(Collection<String> taskArns) throws Exception {
@@ -50,6 +48,7 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
     }
 
     @Override
+    @SuppressWarnings(value = "unchecked")
     protected void prepareHttpRequest(Object... args) {
         headers.put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.DescribeTasks");
         headers.put("Content-Type", "application/x-amz-json-1.1");
@@ -76,8 +75,8 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
                     .get("tasks").asArray();
             for (JsonValue task : jsonValues) {
                 for (JsonValue container : task.asObject().get("containers").asArray()) {
-                    for (JsonValue intface : container.asObject().get("networkInterfaces").asArray()) {
-                        String privateIpv4Address = intface.asObject().get("privateIpv4Address").asString();
+                    for (JsonValue value : container.asObject().get("networkInterfaces").asArray()) {
+                        String privateIpv4Address = value.asObject().get("privateIpv4Address").asString();
                         response.put(privateIpv4Address, privateIpv4Address);
                     }
                 }

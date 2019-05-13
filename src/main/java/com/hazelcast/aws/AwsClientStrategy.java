@@ -26,10 +26,10 @@ import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
  */
 public abstract class AwsClientStrategy {
 
-    protected final AwsConfig awsConfig;
-    protected final String endpoint;
+    final AwsConfig awsConfig;
+    final String endpoint;
 
-    protected AwsClientStrategy(AwsConfig awsConfig, String endpoint) {
+    AwsClientStrategy(AwsConfig awsConfig, String endpoint) {
         this.awsConfig = awsConfig;
         this.endpoint = endpoint;
     }

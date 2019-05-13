@@ -68,18 +68,19 @@ public abstract class AwsOperation<E> {
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
 
-    protected AwsConfig awsConfig;
-    protected AwsCredentials awsCredentials;
-    protected URL endpointURL;
-    protected Map<String, String> attributes = new HashMap<String, String>();
-    protected Map<String, String> headers = new HashMap<String, String>();
-    protected String body = "";
+    final AwsConfig awsConfig;
+    final AwsCredentials awsCredentials;
+    private final URL endpointURL;
+    final Map<String, String> attributes = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<String, String>();
 
-    protected final String service;
+    private final String service;
     protected final String docVersion;
     private final String httpMethod;
 
-    protected AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
+    String body = "";
+
+    AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
         this.awsConfig = awsConfig;
         this.awsCredentials = new AwsCredentials(awsConfig);
         this.endpointURL = endpointURL;
@@ -157,11 +158,10 @@ public abstract class AwsOperation<E> {
     /**
      *
      */
-    protected abstract void retrieveCredentials() throws IOException;
+    protected abstract void retrieveCredentials();
 
 
-    protected void retrieveContainerCredentials(Environment env)
-            throws IOException {
+    void retrieveContainerCredentials(Environment env) {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
         String uri = env.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
@@ -191,7 +191,7 @@ public abstract class AwsOperation<E> {
      * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    protected String retrieveRoleFromURI(String uri) {
+    String retrieveRoleFromURI(String uri) {
         return MetadataUtil
                 .retrieveMetadataFromURI(uri, awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
@@ -202,7 +202,7 @@ public abstract class AwsOperation<E> {
      *
      * @param json The JSON representation of the IAM (Task) Role.
      */
-    protected void parseAndStoreRoleCreds(String json) {
+    void parseAndStoreRoleCreds(String json) {
         JsonObject roleAsJson = Json.parse(json).asObject();
         awsCredentials.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsCredentials.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
@@ -218,8 +218,7 @@ public abstract class AwsOperation<E> {
         return df.format(new Date());
     }
 
-    private InputStream callServiceWithRetries()
-            throws Exception {
+    private InputStream callServiceWithRetries() {
         return RetryUtils.retry(new Callable<InputStream>() {
             @Override
             public InputStream call() throws Exception {

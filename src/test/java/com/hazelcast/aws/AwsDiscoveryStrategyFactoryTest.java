@@ -48,9 +48,9 @@ import static org.junit.Assert.assertTrue;
 public class AwsDiscoveryStrategyFactoryTest
         extends HazelcastTestSupport {
 
-    private static DiscoveryStrategy createStrategy(Map<String, Comparable> props) {
+    private static void createStrategy(Map<String, Comparable> props) {
         final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
-        return factory.newDiscoveryStrategy(null, null, props);
+        factory.newDiscoveryStrategy(null, null, props);
     }
 
     private static Config createConfig(String xmlFileName) {
@@ -59,8 +59,7 @@ public class AwsDiscoveryStrategyFactoryTest
     }
 
     @Test(expected = InvalidConfigurationException.class)
-    public void hostHeaderMalformed()
-            throws Exception {
+    public void hostHeaderMalformed() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
@@ -69,8 +68,7 @@ public class AwsDiscoveryStrategyFactoryTest
     }
 
     @Test
-    public void testMinimalOk()
-            throws Exception {
+    public void testMinimalOk() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         createStrategy(props);
     }
@@ -91,8 +89,7 @@ public class AwsDiscoveryStrategyFactoryTest
     }
 
     @Test
-    public void testFull()
-            throws Exception {
+    public void testFull() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
@@ -127,7 +124,7 @@ public class AwsDiscoveryStrategyFactoryTest
 
         assertTrue(strategies.hasNext());
         final DiscoveryStrategy strategy = strategies.next();
-        assertTrue(strategy != null && strategy instanceof AwsDiscoveryStrategy);
+        assertTrue(strategy instanceof AwsDiscoveryStrategy);
     }
 
     @Test

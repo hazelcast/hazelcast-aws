@@ -21,7 +21,6 @@ import com.hazelcast.aws.utility.MetadataUtil;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.io.IOException;
 import java.net.URL;
 
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
@@ -34,12 +33,12 @@ public abstract class Ec2Operation<E> extends AwsOperation<E> {
 
     private static final ILogger LOGGER = Logger.getLogger(Ec2Operation.class);
 
-    protected Ec2Operation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
-        super(awsConfig, endpointURL, service, docVersion, httpMethod);
+    Ec2Operation(AwsConfig awsConfig, URL endpointURL, String httpMethod) {
+        super(awsConfig, endpointURL, Constants.EC2, Constants.EC2_DOC_VERSION, httpMethod);
     }
 
     @Override
-    protected void retrieveCredentials() throws IOException {
+    protected void retrieveCredentials() {
         retrieveIamRole();
         if (isNotEmpty(awsCredentials.getIamRole())) {
             parseAndStoreRoleCreds(retrieveIamRoleCredentials());
@@ -50,13 +49,13 @@ public abstract class Ec2Operation<E> extends AwsOperation<E> {
     }
 
     // Visible for testing
-    protected String retrieveIamRoleCredentials() {
+    String retrieveIamRoleCredentials() {
         return MetadataUtil.retrieveIamRoleCredentials(
                 awsCredentials.getIamRole(), awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
 
     // Visible for testing
-    protected String getDefaultIamRole() {
+    String getDefaultIamRole() {
         return MetadataUtil.getDefaultIamRole(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
 

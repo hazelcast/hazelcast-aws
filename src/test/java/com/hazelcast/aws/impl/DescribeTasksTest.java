@@ -9,7 +9,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.net.URL;
-import java.util.Collection;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;

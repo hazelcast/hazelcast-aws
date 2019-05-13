@@ -18,7 +18,6 @@ package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
 
-import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -26,12 +25,12 @@ import java.net.URL;
  */
 public abstract class EcsOperation<E> extends AwsOperation<E> {
 
-    protected EcsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
-        super(awsConfig, endpointURL, service, docVersion, httpMethod);
+    EcsOperation(AwsConfig awsConfig, URL endpointURL, String httpMethod) {
+        super(awsConfig, endpointURL, Constants.ECS, Constants.ECS_DOC_VERSION, httpMethod);
     }
 
     @Override
-    protected void retrieveCredentials() throws IOException {
+    protected void retrieveCredentials() {
         retrieveContainerCredentials(getEnvironment());
     }
 }
