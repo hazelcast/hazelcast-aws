@@ -26,12 +26,16 @@ import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
 import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
 import static com.hazelcast.aws.impl.Constants.HOSTNAME_PREFIX_LENGTH;
 
-public class AWSClient {
+class AwsClient {
 
     private final AwsClientStrategy clientStrategy;
     private String endpoint;
 
-    public AWSClient(AwsConfig awsConfig) {
+    /**
+     *
+     * @param awsConfig
+     */
+    AwsClient(AwsConfig awsConfig) {
         if (awsConfig == null) {
             throw new IllegalArgumentException("AwsConfig is required!");
         }
@@ -49,19 +53,19 @@ public class AWSClient {
         clientStrategy = AwsClientStrategy.create(awsConfig, endpoint);
     }
 
-    public Collection<String> getPrivateIpAddresses() throws Exception {
+    Collection<String> getPrivateIpAddresses() throws Exception {
         return clientStrategy.getPrivateIpAddresses();
     }
 
-    public Map<String, String> getAddresses() throws Exception {
+    Map<String, String> getAddresses() throws Exception {
         return clientStrategy.getAddresses();
     }
 
-    public String getAvailabilityZone() {
+    String getAvailabilityZone() {
         return clientStrategy.getAvailabilityZone();
     }
 
-    public String getEndpoint() {
+    String getEndpoint() {
         return this.endpoint;
     }
 }

@@ -54,10 +54,10 @@ public class DescribeTasksTest {
         stubDescribeTasks("/.*", describeTasksResponse());
 
         // when
-        Map<String, String> intfaces = describeTasks.execute();
+        Map<String, String> values = describeTasks.execute();
 
         // then
-        MatcherAssert.assertThat("list of 3 tasks", intfaces.size() == 3);
+        MatcherAssert.assertThat("list of 3 tasks", values.size() == 3);
     }
 
     private void stubDescribeTasks(String urlRegex, String response) {

@@ -63,23 +63,34 @@ public abstract class AwsOperation<E> {
      * see http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
      */
     static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
+
     static final String UTF8_ENCODING = "UTF-8";
+
     private static final ILogger LOGGER = Logger.getLogger(AwsOperation.class);
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
 
+    protected final String docVersion;
+
     final AwsConfig awsConfig;
     final AwsCredentials awsCredentials;
-    private final URL endpointURL;
     final Map<String, String> attributes = new HashMap<String, String>();
     final Map<String, String> headers = new HashMap<String, String>();
 
-    private final String service;
-    protected final String docVersion;
-    private final String httpMethod;
-
     String body = "";
 
+    private final URL endpointURL;
+    private final String service;
+    private final String httpMethod;
+
+    /**
+     *
+     * @param awsConfig
+     * @param endpointURL
+     * @param service
+     * @param docVersion
+     * @param httpMethod
+     */
     AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
         this.awsConfig = awsConfig;
         this.awsCredentials = new AwsCredentials(awsConfig);
@@ -155,13 +166,9 @@ public abstract class AwsOperation<E> {
         return scanner.hasNext() ? scanner.next() : "";
     }
 
-    /**
-     *
-     */
     protected abstract void retrieveCredentials();
 
-
-    void retrieveContainerCredentials(Environment env) {
+    protected void retrieveContainerCredentials(Environment env) {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
         String uri = env.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
@@ -191,7 +198,7 @@ public abstract class AwsOperation<E> {
      * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    String retrieveRoleFromURI(String uri) {
+    protected String retrieveRoleFromURI(String uri) {
         return MetadataUtil
                 .retrieveMetadataFromURI(uri, awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
@@ -202,7 +209,7 @@ public abstract class AwsOperation<E> {
      *
      * @param json The JSON representation of the IAM (Task) Role.
      */
-    void parseAndStoreRoleCreds(String json) {
+    protected void parseAndStoreRoleCreds(String json) {
         JsonObject roleAsJson = Json.parse(json).asObject();
         awsCredentials.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsCredentials.setSecretKey(roleAsJson.getString("SecretAccessKey", null));

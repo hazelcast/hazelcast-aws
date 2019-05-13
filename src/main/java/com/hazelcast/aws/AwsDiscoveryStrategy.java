@@ -48,7 +48,7 @@ import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
 /**
  * AWS implementation of {@link DiscoveryStrategy}.
  *
- * @see AWSClient
+ * @see AwsClient
  */
 public class AwsDiscoveryStrategy
         extends AbstractDiscoveryStrategy {
@@ -60,7 +60,7 @@ public class AwsDiscoveryStrategy
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
 
     private final AwsConfig awsConfig;
-    private final AWSClient awsClient;
+    private final AwsClient awsClient;
 
     private final Map<String, Object> memberMetadata = new HashMap<String, Object>();
 
@@ -68,7 +68,7 @@ public class AwsDiscoveryStrategy
         super(LOGGER, properties);
         this.awsConfig = getAwsConfig();
         try {
-            this.awsClient = new AWSClient(awsConfig);
+            this.awsClient = new AwsClient(awsConfig);
         } catch (IllegalArgumentException e) {
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
@@ -77,7 +77,7 @@ public class AwsDiscoveryStrategy
     /**
      * For test purposes only.
      */
-    AwsDiscoveryStrategy(Map<String, Comparable> properties, AWSClient client) {
+    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsClient client) {
         super(LOGGER, properties);
         this.awsConfig = getAwsConfig();
         this.awsClient = client;

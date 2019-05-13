@@ -41,7 +41,7 @@ import static org.mockito.Mockito.mock;
 public class AwsDiscoveryStrategyTest
         extends HazelcastTestSupport {
 
-    private final AWSClient mockClient = mock(AWSClient.class);
+    private final AwsClient mockClient = mock(AwsClient.class);
     private final AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(Collections.<String, Comparable>emptyMap(),
             mockClient);
 
