@@ -31,7 +31,8 @@ import java.util.Collection;
 import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
- * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
+ * ECS ListTasks operation.
+ * See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ListTasks.html
  * for AWS API details.
  */
 public class ListTasks extends EcsOperation<Collection<String>> {

@@ -22,9 +22,9 @@ import java.util.Map;
 import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
 
 /**
- *
+ * Abstract AWS client strategy
  */
-public abstract class AwsClientStrategy {
+abstract class AwsClientStrategy {
 
     final AwsConfig awsConfig;
     final String endpoint;
@@ -34,7 +34,13 @@ public abstract class AwsClientStrategy {
         this.endpoint = endpoint;
     }
 
-    public static AwsClientStrategy create(AwsConfig awsConfig, String endpoint) {
+    /**
+     * Creates an AWS client strategy
+     * @param awsConfig configuration
+     * @param endpoint endpoint
+     * @return the appropriate AWS client strategy
+     */
+    static AwsClientStrategy create(AwsConfig awsConfig, String endpoint) {
         if (endpoint.toLowerCase().startsWith(ECS_PREFIX)) {
             return new EcsClientStrategy(awsConfig, endpoint);
         } else {
@@ -42,9 +48,9 @@ public abstract class AwsClientStrategy {
         }
     }
 
-    public abstract Collection<String> getPrivateIpAddresses() throws Exception;
+    abstract Collection<String> getPrivateIpAddresses() throws Exception;
 
-    public abstract Map<String, String> getAddresses() throws Exception;
+    abstract Map<String, String> getAddresses() throws Exception;
 
-    public abstract String getAvailabilityZone();
+    abstract String getAvailabilityZone();
 }

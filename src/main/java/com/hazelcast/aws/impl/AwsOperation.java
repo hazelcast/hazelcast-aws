@@ -23,9 +23,9 @@ import com.hazelcast.aws.security.Aws4RequestSignerImpl;
 import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.aws.security.AwsCredentials;
 import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.MetadataUtil;
+import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.aws.utility.RetryUtils;
-import com.hazelcast.aws.utility.StringUtil;
+import com.hazelcast.aws.utility.StringUtils;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
@@ -48,12 +48,13 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.utility.StringUtil.isEmpty;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 import static com.hazelcast.nio.IOUtil.closeResource;
 
 /**
- *
+ * Abstract base class for AWS operations returning a response object of type E.
+ * Used by AwsClientStrategy implementations for calling AWS service endpoints.
  */
 public abstract class AwsOperation<E> {
 
@@ -84,12 +85,12 @@ public abstract class AwsOperation<E> {
     private final String httpMethod;
 
     /**
-     *
-     * @param awsConfig
-     * @param endpointURL
-     * @param service
-     * @param docVersion
-     * @param httpMethod
+     * Creates an AwsOperation
+     * @param awsConfig configuration
+     * @param endpointURL endpoint URL
+     * @param service AWS service name, e.g., "ec2"
+     * @param docVersion service document version (see AWS API docs for service)
+     * @param httpMethod HTTP method name to use for this operation, e.g., "POST"
      */
     AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
         this.awsConfig = awsConfig;
@@ -103,6 +104,7 @@ public abstract class AwsOperation<E> {
     /**
      * Invokes this service, unmarshal the response and return it.
      *
+     * @param args service arguments
      * @return the response
      * @throws Exception if there is an exception invoking the service
      */
@@ -119,7 +121,7 @@ public abstract class AwsOperation<E> {
         requestSigner.sign(attributes, headers, body, httpMethod);
         headers.put("Authorization", requestSigner.getAuthorizationHeader());
         String securityToken = awsCredentials.getSecurityToken();
-        if (StringUtil.isNotEmpty(securityToken)) {
+        if (StringUtils.isNotEmpty(securityToken)) {
             headers.put("X-Amz-Security-Token", securityToken);
         }
 
@@ -135,13 +137,15 @@ public abstract class AwsOperation<E> {
     }
 
     /**
-     * @param stream
-     * @return
+     * Unmarshals the response
+     * @param stream input stream containing the server respons
+     * @return the response object
      */
     abstract E unmarshal(InputStream stream);
 
     /**
-     * @param args
+     * Prepare the HTTP request
+     * @param args service arguments
      */
     abstract void prepareHttpRequest(Object... args);
 
@@ -168,9 +172,11 @@ public abstract class AwsOperation<E> {
 
     protected abstract void retrieveCredentials();
 
+    /**
+     * Helper method for retrieving IAM task role credentials when running on ECS
+     * @param env the environment
+     */
     protected void retrieveContainerCredentials(Environment env) {
-        // before giving up, attempt to discover whether we're running in an ECS Container,
-        // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
         String uri = env.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
         if (uri == null) {
             throw new IllegalArgumentException("Could not acquire credentials! "
@@ -199,7 +205,7 @@ public abstract class AwsOperation<E> {
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
     protected String retrieveRoleFromURI(String uri) {
-        return MetadataUtil
+        return MetadataUtils
                 .retrieveMetadataFromURI(uri, awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
 
@@ -233,8 +239,14 @@ public abstract class AwsOperation<E> {
             }
         }, awsConfig.getConnectionRetries());
     }
-    // visible for testing
 
+    /**
+     * Issues the actual service call and checks for error response codes.
+     * Visible for testing.
+     *
+     * @return input stream for server response
+     * @throws Exception in case of networking or service errors
+     */
     InputStream callService() throws Exception {
         String query = Aws4RequestSignerUtils.getCanonicalizedQueryString(attributes);
         String spec = "/" + (isNotEmpty(query) ? "?" + query : "");

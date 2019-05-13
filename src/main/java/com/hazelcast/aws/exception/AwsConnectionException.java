@@ -32,16 +32,16 @@ public class AwsConnectionException extends RuntimeException {
         this.errorMessage = errorMessage;
     }
 
-    private static String messageFrom(int httpResponseCode, String errorMessage) {
-        return String.format("Connection to AWS failed (HTTP Response Code: %s, Message: \"%s\")",
-                httpResponseCode, errorMessage);
-    }
-
     public int getHttpResponseCode() {
         return httpResponseCode;
     }
 
     public String getErrorMessage() {
         return errorMessage;
+    }
+
+    private static String messageFrom(int httpResponseCode, String errorMessage) {
+        return String.format("Connection to AWS failed (HTTP Response Code: %s, Message: \"%s\")",
+                httpResponseCode, errorMessage);
     }
 }

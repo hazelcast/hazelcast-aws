@@ -32,9 +32,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
+import static com.hazelcast.aws.utility.Aws4RequestSignerUtils.buildAuthHeader;
 import static java.lang.String.format;
 
+/**
+ * Implementation of AWS signature version 4 algorithm
+ */
 public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     private static final ILogger LOGGER = Logger.getLogger(Aws4RequestSignerImpl.class);
@@ -59,12 +62,12 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     private String signature;
 
     /**
-     *
-     * @param config
-     * @param awsCredentials
-     * @param timeStamp
-     * @param service
-     * @param endpoint
+     * Creates an {@link Aws4RequestSignerImpl}
+     * @param config configuration
+     * @param awsCredentials AWS credentials
+     * @param timeStamp request timestamp
+     * @param service AWS service, e.g., "ec2"
+     * @param endpoint endpoint for service
      */
     public Aws4RequestSignerImpl(AwsConfig config, AwsCredentials awsCredentials, String timeStamp, String service,
                                  String endpoint) {
@@ -73,33 +76,6 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         this.timestamp = timeStamp;
         this.service = service;
         this.endpoint = endpoint;
-    }
-
-    private static String hash(String in) {
-        String payloadHash;
-        try {
-            MessageDigest md = MessageDigest.getInstance(ALGORITHM);
-            md.update(in.getBytes(UTF_8));
-            byte[] digest = md.digest();
-            payloadHash = QuickMath.bytesToHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
-        return payloadHash;
-    }
-
-    private static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders,
-                                          String signature) {
-        return SIGNATURE_METHOD_V4 + " " + "Credential=" + accessKey + "/" + credentialScope + ", "
-                + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
-    }
-
-    private String getCredentialScope() {
-        // datestamp/region/service/API_TERMINATOR
-        String dateStamp = timestamp.substring(0, DATE_LENGTH);
-        return format("%s/%s/%s/%s", dateStamp, config.getRegion(), this.service, API_TERMINATOR);
     }
 
     @Override
@@ -120,6 +96,33 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         this.signature = createSignature(stringToSign, signingKey);
         return signature;
     }
+
+    @Override
+    public String getAuthorizationHeader() {
+        return buildAuthHeader(awsCredentials.getAccessKey(), getCredentialScope(), getSignedHeaders(), signature);
+    }
+
+    private static String hash(String in) {
+        String payloadHash;
+        try {
+            MessageDigest md = MessageDigest.getInstance(ALGORITHM);
+            md.update(in.getBytes(UTF_8));
+            byte[] digest = md.digest();
+            payloadHash = QuickMath.bytesToHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        } catch (UnsupportedEncodingException e) {
+            return null;
+        }
+        return payloadHash;
+    }
+
+    private String getCredentialScope() {
+        // datestamp/region/service/API_TERMINATOR
+        String dateStamp = timestamp.substring(0, DATE_LENGTH);
+        return format("%s/%s/%s/%s", dateStamp, config.getRegion(), this.service, API_TERMINATOR);
+    }
+
     /* Task 1 */
     private String getCanonicalizedRequest(String httpMethod) {
         return httpMethod + NEW_LINE + '/' + NEW_LINE
@@ -213,10 +216,9 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         return signed.toString();
     }
 
-    @Override
-    public String getAuthorizationHeader() {
-        return buildAuthHeader(awsCredentials.getAccessKey(), getCredentialScope(),
-                getSignedHeaders(), signature);
+    String createFormattedCredential() {
+        return awsCredentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
+                + service + "/aws4_request";
     }
 
     private Map<String, String> getSortedLowercaseHeaders() {
@@ -226,11 +228,6 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         }
         sortedHeaders.put("host", endpoint);
         return sortedHeaders;
-    }
-
-    public String createFormattedCredential() {
-        return awsCredentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
-                + service + "/aws4_request";
     }
 
 }

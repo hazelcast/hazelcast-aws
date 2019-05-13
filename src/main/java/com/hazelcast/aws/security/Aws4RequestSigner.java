@@ -19,14 +19,32 @@ package com.hazelcast.aws.security;
 import java.util.Map;
 
 /**
- * TODO javadoc
+ * AWS request signer implementing signature version 4 algorithm
+ * See https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
  */
 public interface Aws4RequestSigner {
 
+    /**
+     * Signs a GET request with empty body
+     * @param attributes query parameters
+     * @param headers request headers
+     * @return signature
+     */
     String sign(Map<String, String> attributes, Map<String, String> headers);
 
+    /**
+     * Signs a request
+     * @param attributes query parameters
+     * @param headers request headers
+     * @param body request body
+     * @param httpMethod HTTP method, e.g., "GET" or "POST"
+     * @return signature
+     */
     String sign(Map<String, String> attributes, Map<String, String> headers, String body, String httpMethod);
 
+    /**
+     * @return the complete <code>Authorization</code> header for the generated signature
+     */
     String getAuthorizationHeader();
 
 }

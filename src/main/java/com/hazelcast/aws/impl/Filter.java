@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Query filter to narrow down the scope of the queried EC2 instance set.
+ * Query filter to narrow down the scope of the queried set.
  */
 public class Filter {
 

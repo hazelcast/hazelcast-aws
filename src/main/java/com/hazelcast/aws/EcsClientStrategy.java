@@ -21,7 +21,7 @@ import com.hazelcast.aws.impl.DescribeNetworkInterfaces;
 import com.hazelcast.aws.impl.DescribeTasks;
 import com.hazelcast.aws.impl.ListTasks;
 import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.MetadataUtil;
+import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
@@ -35,7 +35,7 @@ import java.util.Map;
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
 import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
  *
@@ -57,7 +57,15 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     @Override
     public Collection<String> getPrivateIpAddresses() throws Exception {
-        return getAddresses().keySet();
+        retrieveAndParseMetadata();
+        ListTasks listTasks = new ListTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
+        Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
+        if (!taskArns.isEmpty()) {
+            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
+            Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            return taskAddresses.keySet();
+        }
+        return Collections.EMPTY_LIST;
     }
 
     @Override
@@ -69,19 +77,18 @@ class EcsClientStrategy extends AwsClientStrategy {
         if (!taskArns.isEmpty()) {
             DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
             Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
-            DescribeNetworkInterfaces describeNetworks =
+            DescribeNetworkInterfaces describeNetworkInterfaces =
                     new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
-            Map<String, String> networks = describeNetworks.execute(taskAddresses);
-            // FIXME TODO
-            LOGGER.fine(String.format("%s", networks));
-            return taskAddresses;
+            Map<String, String> privateAndPublicAddresses = describeNetworkInterfaces.execute(taskAddresses);
+            LOGGER.fine(String.format("Found privateAndPublicAddresses: %s", privateAndPublicAddresses));
+            return privateAndPublicAddresses;
         }
         return Collections.EMPTY_MAP;
     }
 
     private void retrieveAndParseMetadata() {
         if (runningOnEcs()) {
-            String json = MetadataUtil.retrieveContainerMetadata(awsConfig.getConnectionTimeoutSeconds(),
+            String json = MetadataUtils.retrieveContainerMetadata(awsConfig.getConnectionTimeoutSeconds(),
                     awsConfig.getConnectionRetries());
             parseContainerMetadata(json);
         }

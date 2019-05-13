@@ -33,7 +33,9 @@ import java.util.Map;
 import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
- *
+ * ECS DescribeTasks operation.
+ * See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_DescribeTasks.html
+ * for AWS API details.
  */
 public class DescribeTasks extends EcsOperation<Map<String, String>> {
 //    private Collection<String> taskArns;

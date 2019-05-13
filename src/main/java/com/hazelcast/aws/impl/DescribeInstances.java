@@ -26,9 +26,10 @@ import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
+ * EC2 DescribeInstances operation.
  * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
  * for AWS API details.
  */

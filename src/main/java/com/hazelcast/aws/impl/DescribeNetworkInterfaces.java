@@ -22,13 +22,15 @@ import com.hazelcast.aws.utility.Ec2XmlUtils;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
 
 /**
- * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html
+ * EC2 DescribeNetworkInterfaces operation.
+ * See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html
  * for AWS API details.
  */
 public class DescribeNetworkInterfaces extends Ec2Operation<Map<String, String>> {
@@ -58,8 +60,8 @@ public class DescribeNetworkInterfaces extends Ec2Operation<Map<String, String>>
     public void prepareHttpRequest(Object... args) {
         Filter filter = new Filter();
         if (args.length > 0) {
-            Map<String, String> taskAddresses = (Map<String, String>) args[0];
-            filter.addFilter("addresses.private-ip-address", taskAddresses.keySet());
+            Collection<String> taskAddresses = (Collection<String>) args[0];
+            filter.addFilter("addresses.private-ip-address", taskAddresses);
         }
         attributes.putAll(filter.getFilters());
     }

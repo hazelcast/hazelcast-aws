@@ -17,14 +17,14 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.utility.MetadataUtil;
+import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
 import java.net.URL;
 
-import static com.hazelcast.aws.utility.StringUtil.isEmpty;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isEmpty;
+import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
  *
@@ -50,13 +50,13 @@ public abstract class Ec2Operation<E> extends AwsOperation<E> {
 
     // Visible for testing
     String retrieveIamRoleCredentials() {
-        return MetadataUtil.retrieveIamRoleCredentials(
+        return MetadataUtils.retrieveIamRoleCredentials(
                 awsCredentials.getIamRole(), awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
 
     // Visible for testing
     String getDefaultIamRole() {
-        return MetadataUtil.getDefaultIamRole(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
+        return MetadataUtils.getDefaultIamRole(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
 
     private void retrieveIamRole() {

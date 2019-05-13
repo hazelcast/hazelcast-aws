@@ -37,6 +37,6 @@ public class ContainerMetadataTest {
     @Test
     public void testExecute() {
         // TODO stub Environment
-        // taskMetadata = MetadataUtil.retrieveContainerMetadata();
+        // taskMetadata = MetadataUtils.retrieveContainerMetadata();
     }
 }

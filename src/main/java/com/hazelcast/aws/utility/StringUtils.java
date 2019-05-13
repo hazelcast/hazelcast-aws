@@ -16,9 +16,9 @@
 
 package com.hazelcast.aws.utility;
 
-public final class StringUtil {
+public final class StringUtils {
 
-    private StringUtil() {
+    private StringUtils() {
     }
 
     /**

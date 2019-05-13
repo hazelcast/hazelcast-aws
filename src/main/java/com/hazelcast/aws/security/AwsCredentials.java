@@ -19,7 +19,7 @@ package com.hazelcast.aws.security;
 import com.hazelcast.aws.AwsConfig;
 
 /**
- * Effective Credentials to be used for AWS operations
+ * Holder of Effective Credentials to be used for AWS operations
  */
 public class AwsCredentials {
     private String iamRole;
@@ -27,6 +27,10 @@ public class AwsCredentials {
     private String secretKey;
     private String securityToken;
 
+    /**
+     * Initialize credentials from config
+     * @param config configuration
+     */
     public AwsCredentials(AwsConfig config) {
         this.iamRole = config.getIamRole();
         this.accessKey = config.getAccessKey();

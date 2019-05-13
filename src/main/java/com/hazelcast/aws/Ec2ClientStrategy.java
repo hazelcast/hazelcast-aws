@@ -18,7 +18,6 @@ package com.hazelcast.aws;
 
 import com.hazelcast.aws.impl.DescribeInstances;
 import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.MetadataUtil;
 
 import java.net.URL;
 import java.util.Collection;
@@ -26,7 +25,8 @@ import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.utility.MetadataUtils.getEc2AvailabilityZone;
+import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
  *
@@ -51,7 +51,7 @@ class Ec2ClientStrategy extends AwsClientStrategy {
     @Override
     public String getAvailabilityZone() {
         if (runningOnEc2()) {
-            return MetadataUtil.getEc2AvailabilityZone(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
+            return getEc2AvailabilityZone(awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
         }
         return UPPER_EC2;
     }

@@ -33,8 +33,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
-import static com.hazelcast.aws.utility.MetadataUtil.EC2_INSTANCE_METADATA_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
+import static com.hazelcast.aws.utility.MetadataUtils.EC2_INSTANCE_METADATA_URI;
+import static com.hazelcast.aws.utility.MetadataUtils.IAM_SECURITY_CREDENTIALS_URI;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;

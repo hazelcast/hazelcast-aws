@@ -28,7 +28,7 @@ import java.net.URLConnection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-public final class MetadataUtil {
+public final class MetadataUtils {
 
     /**
      * This IP is only accessible inside AWS and is used to fetch metadata of running EC2 Instance.
@@ -52,9 +52,9 @@ public final class MetadataUtil {
      */
     private static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
 
-    private static final ILogger LOGGER = Logger.getLogger(MetadataUtil.class);
+    private static final ILogger LOGGER = Logger.getLogger(MetadataUtils.class);
 
-    private MetadataUtil() {
+    private MetadataUtils() {
     }
 
     /**
