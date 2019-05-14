@@ -15,3 +15,4 @@ reports/
 target/
 atlassian-ide-plugin.xml
 performance*.log
+temp.*

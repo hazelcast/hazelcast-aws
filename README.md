@@ -1,15 +1,16 @@
 # Hazelcast Discovery Plugin for AWS
 
 This repository contains a plugin which provides the automatic Hazelcast member discovery in the Amazon Web Services Platform.
+Both Amazon Elastic Compute Cloud (Amazon EC2) and Amazon Elastic Container Service (ECS) are supported.
 
 ***NOTE:*** *hazelcast-cloud module has been renamed as hazelcast-aws module (starting with Hazelcast 3.7.3). If you want to use AWS Discovery, you should add the library hazelcast-aws JAR to your environment.*
-
-***NOTE:*** *hazelcast-aws 2.4* is compatible with *hazelcast 3.12+*, *hazelcast-aws 2.3* is compatible with *hazelcast 3.11.x*, for older hazelcast versions you need to use *hazelcast-aws 2.2*.
 
 ## Requirements
 
 - Hazelcast 3.6+
 - Linux Kernel 3.19+ (TCP connections may get stuck when used with older Kernel versions, resulting in undefined timeouts)
+
+***NOTE:*** *hazelcast-aws 2.4+* is compatible with *hazelcast 3.12+*, *hazelcast-aws 2.3* is compatible with *hazelcast 3.11.x*, for older hazelcast versions you need to use *hazelcast-aws 2.2*.
 
 ## Embedded mode
 
@@ -33,9 +34,11 @@ compile group: "com.hazelcast", name: "hazelcast-aws", version: "${hazelcast-aws
 
 ## Understanding AWS Discovery Strategy
 
-Hazelcast member starts by fetching a list of all instances (accessible by the user) filtered by region, security group, and instance tag key/value. Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under IP:PORT, then it joins the cluster.
+On EC2, Hazelcast members start by fetching a list of all instances (accessible by the user) filtered by region, security group, and instance tag key/value. Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under IP:PORT, then it joins the cluster.
 
 If users want to create multiple Hazelcast clusters in one region, then they need to manually tag the instances.
+
+On ECS, the process is similar. Hazelcast members start by fetching a list of all accessible tasks. Then, each container is checked one-by-one with its IP and each of the ports defined in the hz-port property. When a member is discovered under IP:PORT, then it joins the cluster.
 
 ## Configuration
 
@@ -85,7 +88,7 @@ Here are the definitions of the properties
 * `access-key`, `secret-key`: access and secret keys of your account on EC2; if not set, `iam-role` is used
 * `iam-role`: AWS IAM Role to fetch credentials (used if `access-key`/`secret-key` not specified); if not set, the default IAM Role assigned to EC2 Instance is used
 * `region`: region where Hazelcast members are running; if not set, `us-east-1` region is used
-* `host-header`: URL that is the entry point for a web service; it is optional
+* `host-header`: URL that is the entry point for a web service; it is optional. If not set, the default value `ec2.amazonaws.com` is used. If set, it must start with "`ec2.`" for EC2 support.
 * `security-group-name`: filter to look only for EC2 Instances with the given security group; it is optional
 * `tag-key`, `tag-value`: filter to look only for EC2 Instances with the given `tag-key`/`tag-value`; they are optional
 * `connection-timeout-seconds`: maximum amount of time Hazelcast will try to connect to a well known member before giving up; setting this value too low could mean that a member is not able to connect to a cluster; setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up); its default value is 5
@@ -158,22 +161,6 @@ clientConfig.getAwsConfig().setEnabled(true)
       .setProperty("hz-port", "5701-5708")
       .setProperty("use-public-ip", "true");
 ```
-
-## Configuration for AWS ECS
-
-In order to enable discovery within AWS ECS Cluster, within `taskdef.json` or container settings, Hazelcast member should be bind to `host` network. Therefore, proper json representation for task should contain below segment:
-```
-"networkMode": "host"
-```
-
-Also, cluster member should have below interface binding in `hazelcast.xml` configuration file.
-```
-<interfaces enabled="true">
-    <interface>10.0.*.*</interface>
-</interfaces>
-```
-Please note that `10.0.*.*` value depends on your CIDR block definition.
-If more than one `subnet` or `custom VPC` is used for cluster, it should be checked that `container instances` within cluster have network connectivity or have `tracepath` to each other. 
 
 ## IAM Roles
 
@@ -302,3 +289,74 @@ AWS uses two virtualization types to launch the EC2 instances: Para-Virtualizati
 ***RELATED INFORMATION***
 
 *You can download the white paper "Amazon EC2 Deployment Guide for Hazelcast IMDG" [here](https://hazelcast.com/resources/amazon-ec2-deployment-guide/).*
+
+## Configuration for AWS ECS
+
+Hazelcast member discover on both ECS Fargate and ECS EC2 is supported. The ECS mode is activated by setting `host-header` to an ECS endpoint address, typically `ecs.amazonaws.com`.
+Most of the EC2 configuration above applies to ECS mode too.
+
+#### XML Configuration
+
+```xml
+<hazelcast>
+  <network>
+    <join>
+      <multicast enabled="false"/>
+      <aws enabled="true">
+        <host-header>ecs.amazonaws.com</host-header>
+        <region>us-west-1</region>
+        <access-key>my-access-key</access-key>
+        <secret-key>my-secret-key</secret-key>
+        <hz-port>5701-5708</hz-port>
+      </aws>
+    </join>
+  </network>
+</hazelcast>
+```
+
+#### Java-based Configuration
+
+```java
+config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(true)
+      .setProperty("host-header", "ecs.amazonaws.com")
+      .setProperty("region", "us-west-1")
+      .setProperty("access-key", "my-access-key")
+      .setProperty("secret-key", "my-secret-key")
+      .setProperty("hz-port", "5701-5708");
+```
+
+Here are the definitions of the properties
+
+* `host-header`: URL that is the entry point for a web service; must start with "`ecs.`" for ECS support.
+* `region`: region where Hazelcast members are running; if not set, `us-east-1` region is used.
+* `access-key`, `secret-key`: access and secret keys of your account on EC2; if not set, `iam-role` is used.
+* `iam-role`: AWS IAM Role to fetch credentials (used if `access-key`/`secret-key` not specified);
+  if not set, the default IAM Role assigned to ECS Task is used.
+* `connection-timeout-seconds`: maximum amount of time Hazelcast will try to connect to a well known member before giving up;
+  setting this value too low could mean that a member is not able to connect to a cluster; setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up); its default value is 5.
+* `hz-port`: a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701-5708` is used.
+
+Note that:
+* If you don't specify any of the properties other than `host-header`, then the plugin uses the IAM Role assigned to ECS Task and forms a cluster from all Hazelcast members running in the default cluster in region `us-east-1`.
+* If you use the plugin in the Hazelcast Client running outside of the AWS network, then the following parameters are mandatory: `access-key` and `secret-key`.
+
+Furthermore, cluster members should have interface binding below in `hazelcast.xml` configuration file.
+```
+<interfaces enabled="true">
+    <interface>10.0.*.*</interface>
+</interfaces>
+```
+Please note that `10.0.*.*` value depends on your CIDR block definition.
+
+If more than one `subnet` or `custom VPC` is used for cluster, it should be checked that `container instances` within cluster have network connectivity or have `tracepath` to each other. 
+
+### Old ECS mode
+
+For plugin versions before 3.0 only partial support for ECS was provided.
+We provide the old instructions below just for reference but we strongly recommend to use the new ECS mode described above.
+
+*Before 3.0 Only:* In order to enable discovery within AWS ECS Cluster, within `taskdef.json` or container settings, Hazelcast member should be bind to `host` network. Therefore, proper json representation for task should contain below segment:
+```
+"networkMode": "host"
+```
