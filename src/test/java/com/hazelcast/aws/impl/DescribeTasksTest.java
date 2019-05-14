@@ -4,12 +4,13 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import com.hazelcast.aws.AwsConfig;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsCollectionContaining;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.net.URL;
-import java.util.Map;
+import java.util.Collection;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -54,10 +55,11 @@ public class DescribeTasksTest {
         stubDescribeTasks("/.*", describeTasksResponse());
 
         // when
-        Map<String, String> values = describeTasks.execute();
+        Collection<String> values = describeTasks.execute();
 
         // then
         MatcherAssert.assertThat("list of 3 tasks", values.size() == 3);
+        MatcherAssert.assertThat(values, IsCollectionContaining.hasItems("10.0.1.219", "10.0.1.16", "10.0.1.161"));
     }
 
     private void stubDescribeTasks(String urlRegex, String response) {

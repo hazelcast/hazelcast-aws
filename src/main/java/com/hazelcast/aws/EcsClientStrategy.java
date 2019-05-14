@@ -62,8 +62,8 @@ class EcsClientStrategy extends AwsClientStrategy {
         Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
         if (!taskArns.isEmpty()) {
             DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-            Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
-            return taskAddresses.keySet();
+            Collection<String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            return taskAddresses;
         }
         return Collections.EMPTY_LIST;
     }
@@ -76,7 +76,7 @@ class EcsClientStrategy extends AwsClientStrategy {
         Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
         if (!taskArns.isEmpty()) {
             DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-            Map<String, String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            Collection<String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
             DescribeNetworkInterfaces describeNetworkInterfaces =
                     new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
             Map<String, String> privateAndPublicAddresses = describeNetworkInterfaces.execute(taskAddresses);

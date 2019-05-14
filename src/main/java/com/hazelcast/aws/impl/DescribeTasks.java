@@ -26,9 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.POST;
 
@@ -37,16 +36,10 @@ import static com.hazelcast.aws.impl.Constants.POST;
  * See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_DescribeTasks.html
  * for AWS API details.
  */
-public class DescribeTasks extends EcsOperation<Map<String, String>> {
-//    private Collection<String> taskArns;
+public class DescribeTasks extends EcsOperation<Collection<String>> {
 
     public DescribeTasks(AwsConfig awsConfig, URL endpointURL) {
         super(awsConfig, endpointURL, POST);
-    }
-
-    public Map<String, String> execute(Collection<String> taskArns) throws Exception {
-//        this.taskArns = taskArns;
-        return super.execute(taskArns);
     }
 
     @Override
@@ -69,8 +62,8 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
     }
 
     @Override
-    Map<String, String> unmarshal(InputStream stream) {
-        Map<String, String> response = new HashMap<String, String>();
+    Collection<String> unmarshal(InputStream stream) {
+        Collection<String> response = new ArrayList<String>();
 
         try {
             JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING)).asObject()
@@ -79,7 +72,7 @@ public class DescribeTasks extends EcsOperation<Map<String, String>> {
                 for (JsonValue container : task.asObject().get("containers").asArray()) {
                     for (JsonValue value : container.asObject().get("networkInterfaces").asArray()) {
                         String privateIpv4Address = value.asObject().get("privateIpv4Address").asString();
-                        response.put(privateIpv4Address, privateIpv4Address);
+                        response.add(privateIpv4Address);
                     }
                 }
             }
