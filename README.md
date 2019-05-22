@@ -292,7 +292,7 @@ AWS uses two virtualization types to launch the EC2 instances: Para-Virtualizati
 
 ## Configuration for AWS ECS
 
-Hazelcast member discover on both ECS Fargate and ECS EC2 is supported. The ECS mode is activated by setting `host-header` to an ECS endpoint address, typically `ecs.amazonaws.com`.
+Hazelcast member discovery on both ECS Fargate and ECS EC2 is supported. The ECS mode is activated by setting `host-header` to an ECS endpoint address, typically `ecs.amazonaws.com`.
 Most of the EC2 configuration above applies to ECS mode too.
 
 #### XML Configuration
