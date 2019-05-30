@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-package com.hazelcast.aws.impl;
+package com.hazelcast.aws;
 
-import com.hazelcast.aws.AwsConfig;
-
-import java.net.URL;
+import java.io.InputStream;
 
 /**
  *
  */
-public abstract class EcsOperation<E> extends AwsOperation<E> {
+public interface AwsResponseUnmarshaller<R> {
 
-    EcsOperation(AwsConfig awsConfig, URL endpointURL, String httpMethod) {
-        super(awsConfig, endpointURL, Constants.ECS, Constants.ECS_DOC_VERSION, httpMethod);
-    }
-
-    @Override
-    protected void retrieveCredentials() {
-        retrieveContainerCredentials(getEnvironment());
-    }
+    R unmarshal(InputStream stream);
 }

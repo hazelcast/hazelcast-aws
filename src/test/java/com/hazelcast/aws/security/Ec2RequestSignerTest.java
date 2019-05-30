@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.impl.Constants;
 import com.hazelcast.aws.impl.Filter;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
@@ -25,9 +25,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -46,40 +44,9 @@ public class Ec2RequestSignerTest {
     private final static String TEST_SIGNATURE_EXPECTED = "8e4f83fe919390f53fa71ea0ea8a25a09e7d10e1740b238fc6969a1410e06c57";
 
     @Test
-    @SuppressWarnings(value = "unchecked")
     public void deriveSigningKeyTest()
             throws Exception {
         // this is from http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html
-        AwsConfig awsConfig = AwsConfig.builder().setRegion(TEST_REGION).
-                setHostHeader(TEST_HOST).
-                                               setAccessKey(TEST_ACCESS_KEY).
-                                               setSecretKey(TEST_SECRET_KEY).build();
-        AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
-
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
-        // Override the attributes map. We need to change values. Not pretty, but
-        // no real alternative, and in this case : testing only
-
-        Field field = di.getClass().getSuperclass().getSuperclass().getDeclaredField("attributes");
-        field.setAccessible(true);
-        Map<String, String> attributes = (Map<String, String>) field.get(di);
-        attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
-        field.set(di, attributes);
-
-        // Override private method
-        Aws4RequestSignerImpl rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
-
-        Method method = rs.getClass().getDeclaredMethod("deriveSigningKey");
-        method.setAccessible(true);
-        byte[] derivedKey = (byte[]) method.invoke(rs);
-
-        assertEquals(TEST_DERIVED_EXPECTED, bytesToHex(derivedKey));
-    }
-
-    @Test
-    @SuppressWarnings(value = "unchecked")
-    public void testSigning()
-            throws NoSuchFieldException, IllegalAccessException, IOException {
         AwsConfig awsConfig = AwsConfig.builder()
                 .setRegion(TEST_REGION)
                 .setHostHeader(TEST_HOST)
@@ -88,23 +55,36 @@ public class Ec2RequestSignerTest {
                 .build();
         AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
 
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
-        di.getRequestSigner();
+        Aws4RequestSignerImpl rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
 
-        Field attributesField = di.getClass().getSuperclass().getSuperclass().getDeclaredField("attributes");
-        attributesField.setAccessible(true);
-        Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
+        byte[] derivedKey = rs.deriveSigningKey();
+
+        assertEquals(TEST_DERIVED_EXPECTED, bytesToHex(derivedKey));
+    }
+
+    @Test
+    public void testSigning() {
+        AwsConfig awsConfig = AwsConfig.builder()
+                .setRegion(TEST_REGION)
+                .setHostHeader(TEST_HOST)
+                .setAccessKey(TEST_ACCESS_KEY)
+                .setSecretKey(TEST_SECRET_KEY)
+                .build();
+        AwsCredentials awsCredentials = new AwsCredentials(awsConfig);
+
+        Map<String, String> attributes = new HashMap<>();
         Filter filter = new Filter();
         filter.addFilter("instance-state-name", "running");
         attributes.putAll(filter.getFilters());
+        attributes.put("Action", "DescribeInstances");
+        attributes.put("Version", Constants.EC2_DOC_VERSION);
 
-        Field headersField = di.getClass().getSuperclass().getSuperclass().getDeclaredField("headers");
-        headersField.setAccessible(true);
-        Map<String, String> headers = (Map<String, String>) headersField.get(di);
+        Map<String, String> headers = new HashMap<>();
         headers.put("Host", TEST_HOST);
         headers.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-        Aws4RequestSigner actual = new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
+        Aws4RequestSigner actual =
+                new Aws4RequestSignerImpl(awsConfig, awsCredentials, TEST_REQUEST_DATE, TEST_SERVICE, TEST_HOST);
         String signature = actual.sign(attributes, headers);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,13 +125,13 @@ public class Ec2XmlUtilsTest
 
     @Test
     public void testConstructor() {
-        assertUtilityConstructor(Ec2XmlUtils.class);
+        assertUtilityConstructor(MarshallingUtils.class);
     }
 
     @Test
     public void testUnmarshalling() {
         InputStream is = new ByteArrayInputStream(configXmlString().getBytes());
-        Map<String, String> result = Ec2XmlUtils.unmarshalDescribeInstancesResponse(is);
+        Map<String, String> result = MarshallingUtils.unmarshalDescribeInstancesResponse(is);
         assertEquals(2, result.size());
     }
 }

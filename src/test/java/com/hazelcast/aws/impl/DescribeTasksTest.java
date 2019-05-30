@@ -31,7 +31,7 @@ public class DescribeTasksTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
-    private DescribeTasks describeTasks;
+    private EcsOperationClient describeTasks;
 
     @Before
     public void setUp() throws Exception {
@@ -43,7 +43,7 @@ public class DescribeTasksTest {
                 .setAccessKey(TEST_ACCESS_KEY)
                 .setSecretKey(TEST_SECRET_KEY)
                 .build();
-        describeTasks = new DescribeTasks(awsConfig, new URL(testEndpoint));
+        describeTasks = new EcsOperationClient(awsConfig, new URL(testEndpoint));
 //        stubFor(post(urlMatching("^/.*"))
 //                .atPriority(5).willReturn(aResponse().withStatus(401).withBody("\"reason\":\"Forbidden\"")));
 
@@ -55,7 +55,7 @@ public class DescribeTasksTest {
         stubDescribeTasks("/.*", describeTasksResponse());
 
         // when
-        Collection<String> values = describeTasks.execute();
+        Collection<String> values = describeTasks.execute(new DescribeTasksRequest());
 
         // then
         MatcherAssert.assertThat("list of 3 tasks", values.size() == 3);

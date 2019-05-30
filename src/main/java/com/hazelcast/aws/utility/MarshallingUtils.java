@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package com.hazelcast.aws.utility;
 
+import com.hazelcast.internal.json.Json;
+import com.hazelcast.internal.json.JsonArray;
+import com.hazelcast.internal.json.JsonValue;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.w3c.dom.DOMException;
@@ -31,31 +34,35 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.UTF8_ENCODING;
 import static com.hazelcast.config.DomConfigHelper.childElements;
 import static com.hazelcast.config.DomConfigHelper.cleanNodeName;
 import static java.lang.String.format;
 
-public final class Ec2XmlUtils {
+public final class MarshallingUtils {
 
     private static final String NODE_ITEM = "item";
     private static final String NODE_VALUE = "value";
     private static final String NODE_KEY = "key";
 
-    private static final ILogger LOGGER = Logger.getLogger(Ec2XmlUtils.class);
+    private static final ILogger LOGGER = Logger.getLogger(MarshallingUtils.class);
 
-    private Ec2XmlUtils() {
+    private MarshallingUtils() {
     }
 
     /**
-     * Unmarshal the response from {@link com.hazelcast.aws.impl.DescribeInstances} and return the discovered node map.
+     * Unmarshal the response from DescribeInstances and return the discovered node map.
      * The map contains mappings from private to public IP and all contained nodes match the filtering rules defined by
      * the {@code awsConfig}.
      * If there is an exception while unmarshalling the response, returns an empty map.
@@ -96,7 +103,7 @@ public final class Ec2XmlUtils {
     }
 
     /**
-     * Unmarshal the response from {@link com.hazelcast.aws.impl.DescribeNetworkInterfaces} and return the discovered node map.
+     * Unmarshal the response from DescribeNetworkInterfaces and return the discovered node map.
      * The map contains mappings from private to public IP and all contained nodes match the filtering rules defined by
      * the {@code awsConfig}.
      * If there is an exception while unmarshalling the response, returns an empty map.
@@ -144,6 +151,56 @@ public final class Ec2XmlUtils {
             LOGGER.warning(e);
         }
         return new LinkedHashMap<String, String>();
+    }
+
+    /**
+     * Unmarshal the response from DescribeTasks and return the discovered tasks' private IPs.
+     *
+     * @param stream the response XML stream
+     * @return a collection containing the private IPs of the discovered tasks
+     */
+    public static Collection<String> unmarshalDescribeTasksResponse(InputStream stream) {
+        Collection<String> response = new ArrayList<String>();
+
+        try {
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING)).asObject()
+                    .get("tasks").asArray();
+            for (JsonValue task : jsonValues) {
+                for (JsonValue container : task.asObject().get("containers").asArray()) {
+                    for (JsonValue value : container.asObject().get("networkInterfaces").asArray()) {
+                        String privateIpv4Address = value.asObject().get("privateIpv4Address").asString();
+                        response.add(privateIpv4Address);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Malformed response", e);
+        }
+
+        return response;
+    }
+
+    /**
+     * Unmarshal the response from ListTasks and return the discovered task collection.
+     * The collection contains the IDs (taskArns) of the discovered tasks.
+     *
+     * @param stream the response XML stream
+     * @return a collection containing the taskArns of the discovered tasks
+     */
+    public static Collection<String> unmarshalListTasksResponse(InputStream stream) {
+        ArrayList<String> response = new ArrayList<String>();
+
+        try {
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING))
+                    .asObject().get("taskArns").asArray();
+            for (JsonValue value : jsonValues) {
+                response.add(value.asString());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Malformed response", e);
+        }
+
+        return response;
     }
 
     private static String getNicelyFormattedXMLDocument(Document doc) throws TransformerException {
@@ -229,8 +286,7 @@ public final class Ec2XmlUtils {
         }
 
         /**
-         * Unmarshal the response from the {@link com.hazelcast.aws.impl.DescribeInstances} service and
-         * return the map from private to public IP.
+         * Unmarshal the response from the DescribeInstances service and return the map from private to public IP.
          * This method expects that the DOM containing the XML has been positioned at the node containing the addresses.
          *
          * @return map from private to public IP
@@ -251,7 +307,6 @@ public final class Ec2XmlUtils {
                     privatePublicPairs.put(privateIp, publicIp);
                     LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
                 }
-
             }
             return privatePublicPairs;
         }

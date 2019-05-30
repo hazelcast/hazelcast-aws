@@ -10,6 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -31,7 +32,7 @@ public class DescribeNetworkInterfacesTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
-    private DescribeNetworkInterfaces describeNetworkInterfaces;
+    private Ec2OperationClient describeNetworkInterfaces;
 
     @Before
     public void setUp() throws Exception {
@@ -43,8 +44,7 @@ public class DescribeNetworkInterfacesTest {
                 .setAccessKey(TEST_ACCESS_KEY)
                 .setSecretKey(TEST_SECRET_KEY)
                 .build();
-        describeNetworkInterfaces = new DescribeNetworkInterfaces(awsConfig, new URL(testEndpoint));
-
+        describeNetworkInterfaces = new Ec2OperationClient(awsConfig, new URL(testEndpoint));
     }
 
     @Test
@@ -52,7 +52,8 @@ public class DescribeNetworkInterfacesTest {
         stubDescribeTasks("/.*", describeNetworkInterfacesResponse());
 
         // when
-        Map<String, String> values = describeNetworkInterfaces.execute();
+        Map<String, String> values = describeNetworkInterfaces.execute(
+                new DescribeNetworkInterfacesRequest(Collections.emptyList()));
 
         // then
         MatcherAssert.assertThat("list of 2 interfaces", values.size(), new IsEqual<Integer>(2));

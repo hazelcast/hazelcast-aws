@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
 public class AwsDiscoveryStrategy
         extends AbstractDiscoveryStrategy {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategy.class);
-    private static final String DEFAULT_PORT_RANGE = "5701-5708";
+    private static final String DEFAULT_PORT_RANGE = "5701";
     private static final Integer DEFAULT_CONNECTION_RETRIES = 10;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final String DEFAULT_REGION = "us-east-1";

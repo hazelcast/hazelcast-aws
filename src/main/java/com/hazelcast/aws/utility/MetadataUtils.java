@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package com.hazelcast.aws.utility;
 
 import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.internal.json.Json;
+import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -25,10 +27,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-public final class MetadataUtils {
+public class MetadataUtils {
 
     /**
      * This IP is only accessible inside AWS and is used to fetch metadata of running EC2 Instance.
@@ -50,11 +54,11 @@ public final class MetadataUtils {
     /**
      * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
      */
-    private static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
+    public static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
 
     private static final ILogger LOGGER = Logger.getLogger(MetadataUtils.class);
 
-    private MetadataUtils() {
+    MetadataUtils() {
     }
 
     /**
@@ -136,16 +140,20 @@ public final class MetadataUtils {
      *
      * @param timeoutInSeconds timeout for the AWS service call
      * @param retries          number of retries in case the AWS request fails
-     * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
+     * @return The content of the HTTP response, as a Map
      */
-    public static String retrieveContainerMetadata(final int timeoutInSeconds, int retries) {
-        final String uri = new Environment().getEnvVar(ECS_CONTAINER_METADATA_URI_VAR_NAME);
-        return RetryUtils.retry(new Callable<String>() {
-            @Override
-            public String call() {
-                return retrieveMetadataFromURI(uri, timeoutInSeconds);
-            }
-        }, retries);
+    public static Map<String, String> retrieveContainerMetadataFromEnv(Environment env, final int timeoutInSeconds, int retries) {
+        final String uri = env.getEnvVar(ECS_CONTAINER_METADATA_URI_VAR_NAME);
+        return RetryUtils.retry(() -> parseContainerMetadata(retrieveMetadataFromURI(uri, timeoutInSeconds)), retries);
+    }
+
+    private static Map<String, String> parseContainerMetadata(String json) {
+        JsonObject containerAsJson = Json.parse(json).asObject();
+        JsonObject labels = containerAsJson.get("Labels").asObject();
+        Map<String, String> map = new HashMap<>();
+        map.put("clusterName",labels.getString("com.amazonaws.ecs.cluster", null));
+        map.put("familyName", labels.getString("com.amazonaws.ecs.task-definition-family", null));
+        return map;
     }
 
     /**

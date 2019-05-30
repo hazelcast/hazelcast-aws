@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
+import com.hazelcast.aws.AwsRequest;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.Aws4RequestSigner;
 import com.hazelcast.aws.security.Aws4RequestSignerImpl;
-import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.aws.security.AwsCredentials;
+import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.aws.utility.RetryUtils;
@@ -48,15 +49,16 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import static com.hazelcast.aws.impl.Constants.UTF8_ENCODING;
 import static com.hazelcast.aws.utility.StringUtils.isEmpty;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 import static com.hazelcast.nio.IOUtil.closeResource;
 
 /**
- * Abstract base class for AWS operations returning a response object of type E.
+ * Abstract base class for invoking an AWS service.
  * Used by AwsClientStrategy implementations for calling AWS service endpoints.
  */
-public abstract class AwsOperation<E> {
+public abstract class AwsOperationClient {
 
     /**
      * URI to fetch container credentials (when IAM role is enabled)
@@ -65,89 +67,84 @@ public abstract class AwsOperation<E> {
      */
     static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
 
-    static final String UTF8_ENCODING = "UTF-8";
-
-    private static final ILogger LOGGER = Logger.getLogger(AwsOperation.class);
+    private static final ILogger LOGGER = Logger.getLogger(AwsOperationClient.class);
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
 
-    protected final String docVersion;
-
-    final AwsConfig awsConfig;
-    final AwsCredentials awsCredentials;
-    final Map<String, String> attributes = new HashMap<String, String>();
-    final Map<String, String> headers = new HashMap<String, String>();
-
-    String body = "";
+    private final AwsConfig awsConfig;
+    private final AwsCredentials awsCredentials;
 
     private final URL endpointURL;
     private final String service;
     private final String httpMethod;
 
     /**
-     * Creates an AwsOperation
+     * Creates an AwsOperationClient
      * @param awsConfig configuration
      * @param endpointURL endpoint URL
      * @param service AWS service name, e.g., "ec2"
-     * @param docVersion service document version (see AWS API docs for service)
      * @param httpMethod HTTP method name to use for this operation, e.g., "POST"
      */
-    AwsOperation(AwsConfig awsConfig, URL endpointURL, String service, String docVersion, String httpMethod) {
+    AwsOperationClient(AwsConfig awsConfig, URL endpointURL, String service, String httpMethod) {
         this.awsConfig = awsConfig;
         this.awsCredentials = new AwsCredentials(awsConfig);
         this.endpointURL = endpointURL;
         this.service = service;
-        this.docVersion = docVersion;
         this.httpMethod = httpMethod;
     }
 
     /**
-     * Invokes this service, unmarshal the response and return it.
+     * Sumbits a service request with retry logic. In case of success, unmarshals the response and returns it.
      *
-     * @param args service arguments
+     * @param awsRequest service request
      * @return the response
-     * @throws Exception if there is an exception invoking the service
      */
-    public E execute(Object... args) throws Exception {
-        if (isNotEmpty(awsCredentials.getIamRole()) || isEmpty(awsCredentials.getAccessKey())) {
-            retrieveCredentials();
-        }
+    public <R> R execute(AwsRequest<R> awsRequest) {
+        // authorization
+        final Map<String, String> enrichedHeaders = authorizeRequest(awsRequest);
 
-        LOGGER.finest("OK we have credentials, signing request...");
-
-        prepareHttpRequest(args);
-
-        Aws4RequestSigner requestSigner = getRequestSigner();
-        requestSigner.sign(attributes, headers, body, httpMethod);
-        headers.put("Authorization", requestSigner.getAuthorizationHeader());
-        String securityToken = awsCredentials.getSecurityToken();
-        if (StringUtils.isNotEmpty(securityToken)) {
-            headers.put("X-Amz-Security-Token", securityToken);
-        }
-
+        // service invocation
         InputStream stream = null;
-
         try {
             LOGGER.finest("Calling service at " + endpointURL.toExternalForm());
-            stream = callServiceWithRetries();
-            return unmarshal(stream);
+            stream = callServiceWithRetries(awsRequest.getAttributes(), enrichedHeaders, awsRequest.getBody());
+            return awsRequest.unmarshalResponse(stream);
         } finally {
             closeResource(stream);
         }
     }
 
     /**
-     * Unmarshals the response
-     * @param stream input stream containing the server respons
-     * @return the response object
+     * Retrieve awsCredentials from configuration or from default IAM role in the current environment
      */
-    abstract E unmarshal(InputStream stream);
+    protected abstract void retrieveCredentials();
 
-    /**
-     * Prepare the HTTP request
-     * @param args service arguments
-     */
-    abstract void prepareHttpRequest(Object... args);
+    private <R> Map<String, String> authorizeRequest(AwsRequest<R> awsRequest) {
+        if (isNotEmpty(awsCredentials.getIamRole()) || isEmpty(awsCredentials.getAccessKey())) {
+            retrieveCredentials();
+        }
+
+        final Map<String, String> enrichedHeaders = new HashMap<String, String>();
+        enrichedHeaders.putAll(awsRequest.getHeaders());
+
+        Aws4RequestSigner requestSigner = getRequestSigner();
+        requestSigner.sign(awsRequest.getAttributes(), enrichedHeaders, awsRequest.getBody(), httpMethod);
+        enrichedHeaders.put("Authorization", requestSigner.getAuthorizationHeader());
+        enrichedHeaders.put("X-Amz-Date", requestSigner.getTimestamp());
+        enrichedHeaders.put("Host", endpointURL.getHost());
+
+
+        String securityToken = awsCredentials.getSecurityToken();
+        if (StringUtils.isNotEmpty(securityToken)) {
+            enrichedHeaders.put("X-Amz-Security-Token", securityToken);
+        }
+        return enrichedHeaders;
+    }
+
+    // Visible for testing
+    AwsCredentials getAwsCredentials() {
+        return awsCredentials;
+    }
 
     /**
      * AWS response codes for client and server errors are specified here:
@@ -157,12 +154,8 @@ public abstract class AwsOperation<E> {
         return responseCode >= MIN_HTTP_CODE_FOR_AWS_ERROR && responseCode < MAX_HTTP_CODE_FOR_AWS_ERROR;
     }
 
-    private static String extractErrorMessage(HttpURLConnection httpConnection) {
-        InputStream errorStream = httpConnection.getErrorStream();
-        if (errorStream == null) {
-            return "";
-        }
-        return readFrom(errorStream);
+    protected AwsConfig getAwsConfig() {
+        return awsConfig;
     }
 
     private static String readFrom(InputStream stream) {
@@ -170,14 +163,11 @@ public abstract class AwsOperation<E> {
         return scanner.hasNext() ? scanner.next() : "";
     }
 
-    protected abstract void retrieveCredentials();
-
     /**
      * Helper method for retrieving IAM task role credentials when running on ECS
-     * @param env the environment
      */
-    protected void retrieveContainerCredentials(Environment env) {
-        String uri = env.getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
+    void retrieveContainerCredentials() {
+        String uri = getEnvironment().getEnvVar(Constants.ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME);
         if (uri == null) {
             throw new IllegalArgumentException("Could not acquire credentials! "
                     + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
@@ -204,7 +194,7 @@ public abstract class AwsOperation<E> {
      * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    protected String retrieveRoleFromURI(String uri) {
+    String retrieveRoleFromURI(String uri) {
         return MetadataUtils
                 .retrieveMetadataFromURI(uri, awsConfig.getConnectionTimeoutSeconds(), awsConfig.getConnectionRetries());
     }
@@ -215,7 +205,7 @@ public abstract class AwsOperation<E> {
      *
      * @param json The JSON representation of the IAM (Task) Role.
      */
-    protected void parseAndStoreRoleCreds(String json) {
+    void parseAndStoreRoleCreds(String json) {
         JsonObject roleAsJson = Json.parse(json).asObject();
         awsCredentials.setAccessKey(roleAsJson.getString("AccessKeyId", null));
         awsCredentials.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
@@ -225,17 +215,19 @@ public abstract class AwsOperation<E> {
         }
     }
 
-    private String getFormattedTimestamp() {
-        SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return df.format(new Date());
-    }
-
-    private InputStream callServiceWithRetries() {
+    /**
+     * Calls service with retry-logic
+     *
+     * @return the response <code>InputStream</code>
+     * @param attributes
+     * @param headers
+     * @param body
+     */
+    private InputStream callServiceWithRetries(Map<String, String> attributes, Map<String, String> headers, String body) {
         return RetryUtils.retry(new Callable<InputStream>() {
             @Override
             public InputStream call() throws Exception {
-                return callService();
+                return callService(attributes, headers, body);
             }
         }, awsConfig.getConnectionRetries());
     }
@@ -246,8 +238,11 @@ public abstract class AwsOperation<E> {
      *
      * @return input stream for server response
      * @throws Exception in case of networking or service errors
+     * @param attributes
+     * @param headers
+     * @param body
      */
-    InputStream callService() throws Exception {
+    InputStream callService(Map<String, String> attributes, Map<String, String> headers, String body) throws Exception {
         String query = Aws4RequestSignerUtils.getCanonicalizedQueryString(attributes);
         String spec = "/" + (isNotEmpty(query) ? "?" + query : "");
         URL url = new URL(endpointURL, spec);
@@ -283,27 +278,28 @@ public abstract class AwsOperation<E> {
         return httpConnection.getInputStream();
     }
 
-    // visible for testing
+    // Visible for testing
     void checkNoAwsErrors(HttpURLConnection httpConnection)
             throws IOException {
         int responseCode = httpConnection.getResponseCode();
         if (isAwsError(responseCode)) {
-            String errorMessage = extractErrorMessage(httpConnection);
+            InputStream errorStream = httpConnection.getErrorStream();
+            String errorMessage = (errorStream == null) ? "" : readFrom(errorStream);
             throw new AwsConnectionException(responseCode, errorMessage);
         }
-    }
-
-    public Aws4RequestSigner getRequestSigner() {
-        String timeStamp = getFormattedTimestamp();
-        Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
-        headers.put("X-Amz-Date", timeStamp);
-        headers.put("Host", endpointURL.getHost());
-        return rs;
     }
 
     // Added for testing (mocking) purposes.
     // Visible for testing
     Environment getEnvironment() {
         return new Environment();
+    }
+
+    private Aws4RequestSigner getRequestSigner() {
+        SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String timeStamp = df.format(new Date());
+        Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL.getHost());
+        return rs;
     }
 }

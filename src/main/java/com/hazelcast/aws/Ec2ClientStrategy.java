@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.impl.DescribeInstancesRequest;
+import com.hazelcast.aws.impl.Ec2OperationClient;
 import com.hazelcast.aws.utility.Environment;
 
-import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
-import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.MetadataUtils.getEc2AvailabilityZone;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
@@ -45,7 +44,11 @@ class Ec2ClientStrategy extends AwsClientStrategy {
     }
 
     public Map<String, String> getAddresses() throws Exception {
-        return new DescribeInstances(awsConfig, new URL(HTTPS, endpoint, -1, "/")).execute();
+        return new Ec2OperationClient(awsConfig, endpoint)
+                .execute(new DescribeInstancesRequest(
+                        awsConfig.getTagKey(),
+                        awsConfig.getTagValue(),
+                        awsConfig.getSecurityGroupName()));
     }
 
     @Override

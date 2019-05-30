@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.exception.AwsConnectionException;
+import com.hazelcast.aws.security.AwsCredentials;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.annotation.ParallelTest;
@@ -40,6 +41,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -77,7 +80,8 @@ public class DescribeInstancesTest {
 
         final String uri = EC2_INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
 
-        DescribeInstances descriptor = spy(new DescribeInstances(predefinedAwsConfigBuilder().build()));
+        AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
+        Ec2OperationClient descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn("").when(descriptor).retrieveRoleFromURI(uri);
         doReturn(mockedEnv).when(descriptor).getEnvironment();
         descriptor.retrieveCredentials();
@@ -94,36 +98,36 @@ public class DescribeInstancesTest {
         // test when <iam-role>DEFAULT</iam-role>
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("DEFAULT").build();
 
-        DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
+        Ec2OperationClient descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn(defaultIamRoleName).when(descriptor).getDefaultIamRole();
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveIamRoleCredentials();
         doReturn(mockedEnv).when(descriptor).getEnvironment();
         descriptor.retrieveCredentials();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.getAwsCredentials().getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.getAwsCredentials().getSecretKey());
 
         // test when <iam-role></iam-role>
         awsConfig = predefinedAwsConfigBuilder().setIamRole("").build();
 
-        descriptor = spy(new DescribeInstances(awsConfig));
+        descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn(defaultIamRoleName).when(descriptor).getDefaultIamRole();
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveIamRoleCredentials();
         descriptor.retrieveCredentials();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.getAwsCredentials().getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.getAwsCredentials().getSecretKey());
 
         // test when no <iam-role></iam-role> defined, BUT default IAM role has been assigned
         awsConfig = predefinedAwsConfigBuilder().build();
 
-        descriptor = spy(new DescribeInstances(awsConfig));
+        descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn(defaultIamRoleName).when(descriptor).getDefaultIamRole();
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveIamRoleCredentials();
         descriptor.retrieveCredentials();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.getAwsCredentials().getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.getAwsCredentials().getSecretKey());
 
     }
 
@@ -134,12 +138,12 @@ public class DescribeInstancesTest {
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole(someRole).build();
 
-        DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
+        Ec2OperationClient descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveIamRoleCredentials();
         descriptor.retrieveCredentials();
 
-        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
-        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
+        assertEquals("Could not parse access key from IAM role", DUMMY_ACCESS_KEY, descriptor.getAwsCredentials().getAccessKey());
+        assertEquals("Could not parse secret key from IAM role", DUMMY_SECRET_KEY, descriptor.getAwsCredentials().getSecretKey());
 
     }
 
@@ -147,7 +151,7 @@ public class DescribeInstancesTest {
     public void test_when_Empty_IamRole_And_DefaultIamRole_But_IamTaskRoleEnvVar_Exists()
             throws IOException {
         final String ecsEnvVarCredsUri = "someURL";
-        final String uri = DescribeInstances.IAM_TASK_ROLE_ENDPOINT + ecsEnvVarCredsUri;
+        final String uri = AwsOperationClient.IAM_TASK_ROLE_ENDPOINT + ecsEnvVarCredsUri;
         final String defaultRoleUri = EC2_INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
 
         Environment mockedEnv = mock(Environment.class);
@@ -156,15 +160,15 @@ public class DescribeInstancesTest {
         AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
 
         // test when default role is null
-        DescribeInstances descriptor = spy(new DescribeInstances(awsConfig));
+        Ec2OperationClient descriptor = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
         doReturn(DUMMY_IAM_ROLE).when(descriptor).retrieveRoleFromURI(uri);
         doReturn("").when(descriptor).retrieveRoleFromURI(defaultRoleUri);
         doReturn(mockedEnv).when(descriptor).getEnvironment();
 
         descriptor.retrieveCredentials();
 
-        assertEquals("Could not parse access key from IAM task role", DUMMY_ACCESS_KEY, descriptor.awsCredentials.getAccessKey());
-        assertEquals("Could not parse secret key from IAM task role", DUMMY_SECRET_KEY, descriptor.awsCredentials.getSecretKey());
+        assertEquals("Could not parse access key from IAM task role", DUMMY_ACCESS_KEY, descriptor.getAwsCredentials().getAccessKey());
+        assertEquals("Could not parse secret key from IAM task role", DUMMY_SECRET_KEY, descriptor.getAwsCredentials().getSecretKey());
     }
 
     @Test
@@ -177,7 +181,7 @@ public class DescribeInstancesTest {
         given(httpConnection.getResponseCode()).willReturn(httpResponseCode);
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig);
+        Ec2OperationClient describeInstances = new Ec2OperationClient(awsConfig, awsConfig.getHostHeader());
 
         // when
         describeInstances.checkNoAwsErrors(httpConnection);
@@ -198,7 +202,7 @@ public class DescribeInstancesTest {
         given(httpConnection.getErrorStream()).willReturn(toInputStream(errorMessage));
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig);
+        Ec2OperationClient describeInstances = new Ec2OperationClient(awsConfig, awsConfig.getHostHeader());
 
         // when & then
         try {
@@ -224,7 +228,7 @@ public class DescribeInstancesTest {
         given(httpConnection.getErrorStream()).willReturn(null);
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig);
+        Ec2OperationClient describeInstances = new Ec2OperationClient(awsConfig, awsConfig.getHostHeader());
 
         // when & then
         try {
@@ -243,11 +247,12 @@ public class DescribeInstancesTest {
         // given
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setAccessKey("dummyAccessKey").setSecretKey("dummySecretKey").build();
 
-        DescribeInstances describeInstances = spy(new DescribeInstances(awsConfig, awsConfig.getHostHeader()));
-        doReturn(stubDescribeInstancesResponse()).when(describeInstances).callService();
+        Ec2OperationClient describeInstances = spy(new Ec2OperationClient(awsConfig, awsConfig.getHostHeader()));
+        doReturn(stubDescribeInstancesResponse()).when(describeInstances).callService(anyMap(), anyMap(), anyString());
 
         // when
-        Map<String, String> result = describeInstances.execute();
+        Map<String, String> result = describeInstances.execute(new DescribeInstancesRequest(
+                awsConfig.getTagKey(), awsConfig.getTagValue(), awsConfig.getSecurityGroupName()));
 
         // then
         Assert.assertNotNull(result);
@@ -353,13 +358,15 @@ public class DescribeInstancesTest {
                 + "  \"SecretAccessKey\" : \"hOCVge3EXAMPLExSJ+B\",\n"
                 + "  \"Token\" : \"AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR\",\n"
                 + "  \"Expiration\" : \"2015-09-07T03:19:56Z\"\n}";
+
         AwsConfig awsConfig = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
                 .setSecurityGroupName("hazelcast").build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig);
-        describeInstances.parseAndStoreRoleCreds(s);
 
-        assertEquals("ASIAIEXAMPLEOXYDA", describeInstances.awsCredentials.getAccessKey());
-        assertEquals("hOCVge3EXAMPLExSJ+B", describeInstances.awsCredentials.getSecretKey());
-        assertEquals("AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR", describeInstances.awsCredentials.getSecurityToken());
+        Ec2OperationClient client = new Ec2OperationClient(awsConfig, awsConfig.getHostHeader());
+        client.parseAndStoreRoleCreds(s);
+        AwsCredentials awsCredentials = client.getAwsCredentials();
+        assertEquals("ASIAIEXAMPLEOXYDA", awsCredentials.getAccessKey());
+        assertEquals("hOCVge3EXAMPLExSJ+B", awsCredentials.getSecretKey());
+        assertEquals("AQoDYXdzEE4EXAMPLE2UGAFshkTsyw7gojLdiEXAMPLE+1SfSRTfLR", awsCredentials.getSecurityToken());
     }
 }

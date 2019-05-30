@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ public final class Constants {
 
     public static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
     public static final String EC2_DOC_VERSION = "2016-11-15";
-    public static final String ECS_DOC_VERSION = "2014-11-13";
     public static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     public static final String HTTPS = "https";
     public static final String GET = "GET";
@@ -34,6 +33,7 @@ public final class Constants {
     public static final String EC2 = "ec2";
     public static final String ECS = "ecs";
     public static final String AWS_EXECUTION_ENV_VAR_NAME = "AWS_EXECUTION_ENV";
+    public static final String UTF8_ENCODING = "UTF-8";
 
     public static final int HOSTNAME_PREFIX_LENGTH = 4;
 

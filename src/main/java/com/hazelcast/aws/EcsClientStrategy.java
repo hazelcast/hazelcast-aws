@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,22 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.impl.Constants;
-import com.hazelcast.aws.impl.DescribeNetworkInterfaces;
-import com.hazelcast.aws.impl.DescribeTasks;
-import com.hazelcast.aws.impl.ListTasks;
+import com.hazelcast.aws.impl.DescribeNetworkInterfacesRequest;
+import com.hazelcast.aws.impl.DescribeTasksRequest;
+import com.hazelcast.aws.impl.Ec2OperationClient;
+import com.hazelcast.aws.impl.EcsOperationClient;
+import com.hazelcast.aws.impl.ListTasksRequest;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtils;
-import com.hazelcast.internal.json.Json;
-import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
 import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
-import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
@@ -58,11 +56,12 @@ class EcsClientStrategy extends AwsClientStrategy {
     @Override
     public Collection<String> getPrivateIpAddresses() throws Exception {
         retrieveAndParseMetadata();
-        ListTasks listTasks = new ListTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-        Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
+        EcsOperationClient listTasks = new EcsOperationClient(awsConfig, endpoint);
+        Collection<String> taskArns = listTasks.execute(new ListTasksRequest(metadataClusterName, metadataFamilyName));
         if (!taskArns.isEmpty()) {
-            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-            Collection<String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
+            EcsOperationClient describeTasks = new EcsOperationClient(awsConfig, endpoint);
+            Collection<String> taskAddresses =
+                    describeTasks.execute(new DescribeTasksRequest(taskArns, metadataClusterName));
             return taskAddresses;
         }
         return Collections.EMPTY_LIST;
@@ -72,14 +71,15 @@ class EcsClientStrategy extends AwsClientStrategy {
     @SuppressWarnings(value = "unchecked")
     public Map<String, String> getAddresses() throws Exception {
         retrieveAndParseMetadata();
-        ListTasks listTasks = new ListTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-        Collection<String> taskArns = listTasks.execute(metadataClusterName, metadataFamilyName);
+        EcsOperationClient listTasks = new EcsOperationClient(awsConfig, endpoint);
+        Collection<String> taskArns = listTasks.execute(new ListTasksRequest(metadataClusterName, metadataFamilyName));
         if (!taskArns.isEmpty()) {
-            DescribeTasks describeTasks = new DescribeTasks(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
-            Collection<String> taskAddresses = describeTasks.execute(taskArns, metadataClusterName, metadataFamilyName);
-            DescribeNetworkInterfaces describeNetworkInterfaces =
-                    new DescribeNetworkInterfaces(awsConfig, new URL(HTTPS, EC2_PREFIX + endpointDomain, -1, "/"));
-            Map<String, String> privateAndPublicAddresses = describeNetworkInterfaces.execute(taskAddresses);
+            Collection<String> taskAddresses = new EcsOperationClient(awsConfig, endpoint)
+                    .execute(new DescribeTasksRequest(taskArns, metadataClusterName));
+            Ec2OperationClient describeNetworkInterfaces =
+                    new Ec2OperationClient(awsConfig, EC2_PREFIX + endpointDomain);
+            Map<String, String> privateAndPublicAddresses =
+                    describeNetworkInterfaces.execute(new DescribeNetworkInterfacesRequest(taskAddresses));
             LOGGER.fine(String.format("Found privateAndPublicAddresses: %s", privateAndPublicAddresses));
             return privateAndPublicAddresses;
         }
@@ -88,18 +88,15 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     private void retrieveAndParseMetadata() {
         if (runningOnEcs()) {
-            String json = MetadataUtils.retrieveContainerMetadata(awsConfig.getConnectionTimeoutSeconds(),
+            Map<String, String> metadata = MetadataUtils.retrieveContainerMetadataFromEnv(
+                    getEnvironment(),
+                    awsConfig.getConnectionTimeoutSeconds(),
                     awsConfig.getConnectionRetries());
-            parseContainerMetadata(json);
+            metadataClusterName = metadata.get("clusterName");
+            metadataFamilyName = metadata.get("familyName");
         }
     }
 
-    private void parseContainerMetadata(String json) {
-        JsonObject containerAsJson = Json.parse(json).asObject();
-        JsonObject labels = containerAsJson.get("Labels").asObject();
-        metadataClusterName = labels.getString("com.amazonaws.ecs.cluster", null);
-        metadataFamilyName = labels.getString("com.amazonaws.ecs.task-definition-family", null);
-    }
 
     @Override
     public String getAvailabilityZone() {
@@ -107,7 +104,11 @@ class EcsClientStrategy extends AwsClientStrategy {
     }
 
     private boolean runningOnEcs() {
-        String execEnv = new Environment().getEnvVar(AWS_EXECUTION_ENV_VAR_NAME);
+        String execEnv = getEnvironment().getEnvVar(AWS_EXECUTION_ENV_VAR_NAME);
         return isNotEmpty(execEnv) && execEnv.contains(UPPER_ECS);
+    }
+
+    private Environment getEnvironment() {
+        return new Environment();
     }
 }

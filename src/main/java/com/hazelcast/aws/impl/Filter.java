@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class Filter {
      * @param name  Filter name
      * @param values Filter values
      */
-    public void addFilter(String name, Collection<String> values) {
+    public void addMultiValuedFilter(String name, Collection<String> values) {
         if (values.size() > 0) {
             filters.put("Filter." + index + ".Name", name);
             int valueIndex = 1;

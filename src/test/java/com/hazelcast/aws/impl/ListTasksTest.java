@@ -30,7 +30,7 @@ public class ListTasksTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
-    private ListTasks listTasks;
+    private EcsOperationClient listTasks;
 
     @Before
     public void setUp() throws Exception {
@@ -44,7 +44,7 @@ public class ListTasksTest {
                 .setAccessKey(TEST_ACCESS_KEY)
                 .setSecretKey(TEST_SECRET_KEY)
                 .build();
-        listTasks = new ListTasks(awsConfig, new URL(testEndpoint));
+        listTasks = new EcsOperationClient(awsConfig, new URL(testEndpoint));
         stubFor(post(urlMatching("^/.*"))
                 .atPriority(5).willReturn(aResponse().withStatus(401).withBody("\"reason\":\"Forbidden\"")));
 
@@ -56,7 +56,7 @@ public class ListTasksTest {
         stubListTasks("/.*", listTaskEmptyResponse());
 
         // when
-        Collection<String> taskArns = listTasks.execute();
+        Collection<String> taskArns = listTasks.execute(new ListTasksRequest());
 
         // then
         MatcherAssert.assertThat("empty list", taskArns.size() == 0);
@@ -68,7 +68,7 @@ public class ListTasksTest {
         stubListTasks("/.*", listTasksResponse());
 
         // when
-        Collection<String> taskArns = listTasks.execute();
+        Collection<String> taskArns = listTasks.execute(new ListTasksRequest());
 
         // then
         MatcherAssert.assertThat("list of 2 tasks", taskArns.size() == 2);
