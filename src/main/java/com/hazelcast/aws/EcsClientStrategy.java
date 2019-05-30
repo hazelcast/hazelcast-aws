@@ -36,16 +36,14 @@ import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
- *
+ * Strategy for discovery of Hazelcast instances running under ECS / Fargate
  */
 class EcsClientStrategy extends AwsClientStrategy {
 
     private static final String UPPER_ECS = "ECS";
 
-    private static final ILogger LOGGER = Logger.getLogger(AwsClientStrategy.class);
+    private static final ILogger LOGGER = Logger.getLogger(EcsClientStrategy.class);
 
-    private String metadataClusterName;
-    private String metadataFamilyName;
     private String endpointDomain;
 
     EcsClientStrategy(AwsConfig awsConfig, String endpoint) {
@@ -54,23 +52,11 @@ class EcsClientStrategy extends AwsClientStrategy {
     }
 
     @Override
-    public Collection<String> getPrivateIpAddresses() throws Exception {
-        retrieveAndParseMetadata();
-        EcsOperationClient listTasks = new EcsOperationClient(awsConfig, endpoint);
-        Collection<String> taskArns = listTasks.execute(new ListTasksRequest(metadataClusterName, metadataFamilyName));
-        if (!taskArns.isEmpty()) {
-            EcsOperationClient describeTasks = new EcsOperationClient(awsConfig, endpoint);
-            Collection<String> taskAddresses =
-                    describeTasks.execute(new DescribeTasksRequest(taskArns, metadataClusterName));
-            return taskAddresses;
-        }
-        return Collections.EMPTY_LIST;
-    }
-
-    @Override
     @SuppressWarnings(value = "unchecked")
     public Map<String, String> getAddresses() throws Exception {
-        retrieveAndParseMetadata();
+        Map<String, String> metadata = retrieveAndParseMetadata();
+        String metadataClusterName = metadata.get("clusterName");
+        String metadataFamilyName = metadata.get("familyName");
         EcsOperationClient listTasks = new EcsOperationClient(awsConfig, endpoint);
         Collection<String> taskArns = listTasks.execute(new ListTasksRequest(metadataClusterName, metadataFamilyName));
         if (!taskArns.isEmpty()) {
@@ -80,21 +66,21 @@ class EcsClientStrategy extends AwsClientStrategy {
                     new Ec2OperationClient(awsConfig, EC2_PREFIX + endpointDomain);
             Map<String, String> privateAndPublicAddresses =
                     describeNetworkInterfaces.execute(new DescribeNetworkInterfacesRequest(taskAddresses));
-            LOGGER.fine(String.format("Found privateAndPublicAddresses: %s", privateAndPublicAddresses));
+            LOGGER.fine(String.format("The following (private, public) addresses found: %s", privateAndPublicAddresses));
             return privateAndPublicAddresses;
         }
         return Collections.EMPTY_MAP;
     }
 
-    private void retrieveAndParseMetadata() {
+    private Map<String, String> retrieveAndParseMetadata() {
         if (runningOnEcs()) {
             Map<String, String> metadata = MetadataUtils.retrieveContainerMetadataFromEnv(
                     getEnvironment(),
                     awsConfig.getConnectionTimeoutSeconds(),
                     awsConfig.getConnectionRetries());
-            metadataClusterName = metadata.get("clusterName");
-            metadataFamilyName = metadata.get("familyName");
+            return metadata;
         }
+        return Collections.EMPTY_MAP;
     }
 
 

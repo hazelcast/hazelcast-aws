@@ -98,7 +98,7 @@ public enum AwsProperties {
      */
     PORT("hz-port", STRING, true);
 
-    // needs to be transient for findbugs/spotbugs
+    // needs to be transient for findbugs/spotbugs (see https://github.com/spotbugs/spotbugs/issues/740)
     private final transient PropertyDefinition propertyDefinition;
 
     AwsProperties(String key, PropertyTypeConverter typeConverter, boolean optional, ValueValidator validator) {

@@ -20,7 +20,6 @@ import com.hazelcast.aws.impl.DescribeInstancesRequest;
 import com.hazelcast.aws.impl.Ec2OperationClient;
 import com.hazelcast.aws.utility.Environment;
 
-import java.util.Collection;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
@@ -28,7 +27,7 @@ import static com.hazelcast.aws.utility.MetadataUtils.getEc2AvailabilityZone;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
- *
+ * Strategy for discovery of Hazelcast instances running under EC2
  */
 class Ec2ClientStrategy extends AwsClientStrategy {
 
@@ -36,11 +35,6 @@ class Ec2ClientStrategy extends AwsClientStrategy {
 
     public Ec2ClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);
-    }
-
-    @Override
-    public Collection<String> getPrivateIpAddresses() throws Exception {
-        return getAddresses().keySet();
     }
 
     public Map<String, String> getAddresses() throws Exception {

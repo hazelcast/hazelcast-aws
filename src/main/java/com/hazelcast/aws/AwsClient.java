@@ -19,7 +19,6 @@ package com.hazelcast.aws;
 import com.hazelcast.aws.utility.StringUtils;
 import com.hazelcast.config.InvalidConfigurationException;
 
-import java.util.Collection;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
@@ -32,7 +31,6 @@ import static com.hazelcast.aws.impl.Constants.HOSTNAME_PREFIX_LENGTH;
 class AwsClient {
 
     private final AwsClientStrategy clientStrategy;
-    private String endpoint;
 
     /**
      * Creates an AwsClient
@@ -43,25 +41,20 @@ class AwsClient {
             throw new IllegalArgumentException("AwsConfig is required!");
         }
         String hostHeader = awsConfig.getHostHeader();
-        this.endpoint = hostHeader;
         if (StringUtils.isNotEmpty(awsConfig.getRegion())) {
-            if (!(hostHeader.startsWith(EC2_PREFIX) || hostHeader.startsWith(ECS_PREFIX))) {
-                throw new InvalidConfigurationException(
-                        String.format("HostHeader should start with \"%s\" or \"%s\" prefix, found: %s",
-                                EC2_PREFIX, ECS_PREFIX, hostHeader));
-            }
-            String host = hostHeader.substring(0, HOSTNAME_PREFIX_LENGTH);
-            this.endpoint = host + awsConfig.getRegion() + "." + hostHeader.substring(HOSTNAME_PREFIX_LENGTH);
+            hostHeader = createEndpoint(awsConfig, hostHeader);
         }
-        clientStrategy = AwsClientStrategy.create(awsConfig, endpoint);
+        clientStrategy = AwsClientStrategy.create(awsConfig, hostHeader);
     }
 
-    /**
-     * @return the private IPs for Hazelcast members
-     * @throws Exception
-     */
-    Collection<String> getPrivateIpAddresses() throws Exception {
-        return clientStrategy.getPrivateIpAddresses();
+    private String createEndpoint(AwsConfig awsConfig, String hostHeader) {
+        if (!(hostHeader.startsWith(EC2_PREFIX) || hostHeader.startsWith(ECS_PREFIX))) {
+            throw new InvalidConfigurationException(
+                    String.format("HostHeader should start with \"%s\" or \"%s\" prefix, found: %s",
+                            EC2_PREFIX, ECS_PREFIX, hostHeader));
+        }
+        String hostName = hostHeader.substring(0, HOSTNAME_PREFIX_LENGTH);
+        return hostName + awsConfig.getRegion() + "." + hostHeader.substring(HOSTNAME_PREFIX_LENGTH);
     }
 
     /**
@@ -79,7 +72,8 @@ class AwsClient {
         return clientStrategy.getAvailabilityZone();
     }
 
+    // Visible for testing
     String getEndpoint() {
-        return this.endpoint;
+        return clientStrategy.endpoint;
     }
 }

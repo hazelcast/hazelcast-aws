@@ -16,7 +16,6 @@
 
 package com.hazelcast.aws;
 
-import java.util.Collection;
 import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
@@ -26,8 +25,8 @@ import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
  */
 abstract class AwsClientStrategy {
 
-    final AwsConfig awsConfig;
-    final String endpoint;
+    protected final AwsConfig awsConfig;
+    protected final String endpoint;
 
     AwsClientStrategy(AwsConfig awsConfig, String endpoint) {
         this.awsConfig = awsConfig;
@@ -35,10 +34,11 @@ abstract class AwsClientStrategy {
     }
 
     /**
-     * Creates an AWS client strategy
+     * Static factory method returning a new AWS client strategy depending on the configured endpoint.
+     * It will return EcsClientStrategy or Ec2ClientStrategy.
      * @param awsConfig configuration
      * @param endpoint endpoint
-     * @return the appropriate AWS client strategy
+     * @return the appropriate AWS client strategy (EcsClientStrategy or Ec2ClientStrategy)
      */
     static AwsClientStrategy create(AwsConfig awsConfig, String endpoint) {
         if (endpoint.toLowerCase().startsWith(ECS_PREFIX)) {
@@ -47,8 +47,6 @@ abstract class AwsClientStrategy {
             return new Ec2ClientStrategy(awsConfig, endpoint);
         }
     }
-
-    abstract Collection<String> getPrivateIpAddresses() throws Exception;
 
     abstract Map<String, String> getAddresses() throws Exception;
 

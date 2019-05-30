@@ -19,7 +19,7 @@ package com.hazelcast.aws;
 import java.io.InputStream;
 
 /**
- *
+ * Functional interface to unmarshal service response streams to the required Java type
  */
 public interface AwsResponseUnmarshaller<R> {
 

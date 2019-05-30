@@ -16,9 +16,6 @@
 
 package com.hazelcast.aws.impl;
 
-/**
- * AWS constants
- */
 public final class Constants {
 
     public static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";

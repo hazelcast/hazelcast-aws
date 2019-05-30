@@ -7,10 +7,16 @@ Both Amazon Elastic Compute Cloud (Amazon EC2) and Amazon Elastic Container Serv
 
 ## Requirements
 
-- Hazelcast 3.6+
+- Java 8
+- Hazelcast 3.6+ (see NOTE below)
 - Linux Kernel 3.19+ (TCP connections may get stuck when used with older Kernel versions, resulting in undefined timeouts)
 
-***NOTE:*** *hazelcast-aws 2.4+* is compatible with *hazelcast 3.12+*, *hazelcast-aws 2.3* is compatible with *hazelcast 3.11.x*, for older hazelcast versions you need to use *hazelcast-aws 2.2*.
+***NOTE:*** *hazelcast-aws 2.4+* is compatible with *hazelcast 3.12+*, *hazelcast-aws 2.3* is compatible with *hazelcast 3.11.x*,
+for older hazelcast versions you need to use *hazelcast-aws 2.2*.
+
+## Breaking changes in version 3
+
+From version 3.0 onward, the default `hz-port` value is `5701`.
 
 ## Embedded mode
 
@@ -92,7 +98,7 @@ Here are the definitions of the properties
 * `security-group-name`: filter to look only for EC2 Instances with the given security group; it is optional
 * `tag-key`, `tag-value`: filter to look only for EC2 Instances with the given `tag-key`/`tag-value`; they are optional
 * `connection-timeout-seconds`: maximum amount of time Hazelcast will try to connect to a well known member before giving up; setting this value too low could mean that a member is not able to connect to a cluster; setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up); its default value is 5
-* `hz-port`: a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701-5708` is used
+* `hz-port`: a port or a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701` is used
 
 Note that:
 * If you don't specify any of the properties, then the plugin uses the IAM Role assigned to EC2 Instance and forms a cluster from all Hazelcast members running in the default region `us-east-1`
@@ -335,7 +341,7 @@ Here are the definitions of the properties
   if not set, the default IAM Role assigned to ECS Task is used.
 * `connection-timeout-seconds`: maximum amount of time Hazelcast will try to connect to a well known member before giving up;
   setting this value too low could mean that a member is not able to connect to a cluster; setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up); its default value is 5.
-* `hz-port`: a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701-5708` is used.
+* `hz-port`: a port or a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701` is used.
 
 Note that:
 * If you don't specify any of the properties other than `host-header`, then the plugin uses the IAM Role assigned to ECS Task and forms a cluster from all Hazelcast members running in the default cluster in region `us-east-1`.
