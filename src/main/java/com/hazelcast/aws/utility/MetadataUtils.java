@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-public class MetadataUtils {
+public final class MetadataUtils {
 
     /**
      * This IP is only accessible inside AWS and is used to fetch metadata of running EC2 Instance.
@@ -47,18 +47,18 @@ public class MetadataUtils {
     public static final String IAM_SECURITY_CREDENTIALS_URI = "iam/security-credentials/";
 
     /**
+     * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
+     */
+    static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
+
+    /**
      * Post-fix URI to fetch availability-zone info.
      */
     private static final String AVAILABILITY_ZONE_URI = "placement/availability-zone/";
 
-    /**
-     * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
-     */
-    public static final String ECS_CONTAINER_METADATA_URI_VAR_NAME = "ECS_CONTAINER_METADATA_URI";
-
     private static final ILogger LOGGER = Logger.getLogger(MetadataUtils.class);
 
-    MetadataUtils() {
+    private MetadataUtils() {
     }
 
     /**
@@ -151,7 +151,7 @@ public class MetadataUtils {
         JsonObject containerAsJson = Json.parse(json).asObject();
         JsonObject labels = containerAsJson.get("Labels").asObject();
         Map<String, String> map = new HashMap<>();
-        map.put("clusterName",labels.getString("com.amazonaws.ecs.cluster", null));
+        map.put("clusterName", labels.getString("com.amazonaws.ecs.cluster", null));
         map.put("familyName", labels.getString("com.amazonaws.ecs.task-definition-family", null));
         return map;
     }
