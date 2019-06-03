@@ -53,7 +53,7 @@ public class DescribeNetworkInterfacesTest {
 
         // when
         Map<String, String> values = describeNetworkInterfaces.execute(
-                new DescribeNetworkInterfacesRequest(Collections.emptyList()));
+                new DescribeNetworkInterfacesOperation(Collections.emptyList()));
 
         // then
         MatcherAssert.assertThat("list of 2 interfaces", values.size(), new IsEqual<Integer>(2));

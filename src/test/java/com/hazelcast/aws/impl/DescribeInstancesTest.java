@@ -251,7 +251,7 @@ public class DescribeInstancesTest {
         doReturn(stubDescribeInstancesResponse()).when(describeInstances).callService(anyMap(), anyMap(), anyString());
 
         // when
-        Map<String, String> result = describeInstances.execute(new DescribeInstancesRequest(
+        Map<String, String> result = describeInstances.execute(new DescribeInstancesOperation(
                 awsConfig.getTagKey(), awsConfig.getTagValue(), awsConfig.getSecurityGroupName()));
 
         // then

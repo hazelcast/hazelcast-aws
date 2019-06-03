@@ -21,12 +21,10 @@ import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.EC2;
 import static com.hazelcast.aws.impl.Constants.GET;
 import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtils.isEmpty;
@@ -46,15 +44,7 @@ public class Ec2OperationClient extends AwsOperationClient {
 
     // Visible for testing
     Ec2OperationClient(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, Constants.EC2, GET);
-    }
-
-    @Override
-    InputStream callService(Map<String, String> attributes, Map<String, String> headers, String body) throws Exception {
-        Map<String, String> enrichedAttributes = new HashMap<>();
-        enrichedAttributes.putAll(attributes);
-        enrichedAttributes.put("Version", Constants.EC2_DOC_VERSION);
-        return super.callService(enrichedAttributes, headers, body);
+        super(awsConfig, endpointURL, EC2, GET);
     }
 
     @Override

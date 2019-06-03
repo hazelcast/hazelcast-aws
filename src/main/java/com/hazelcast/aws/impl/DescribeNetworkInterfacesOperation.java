@@ -16,25 +16,28 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.AwsRequest;
+import com.hazelcast.aws.AwsOperation;
 import com.hazelcast.aws.utility.MarshallingUtils;
 
 import java.util.Collection;
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
+
 /**
- * EC2 DescribeNetworkInterfaces operation request.
+ * EC2 DescribeNetworkInterfaces operation.
  * See <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html">EC2 documentation</a>.
  */
-public class DescribeNetworkInterfacesRequest extends AwsRequest<Map<String, String>> {
+public class DescribeNetworkInterfacesOperation extends AwsOperation<Map<String, String>> {
 
     /**
      * @param taskAddresses private IP addresses as <code>Collection&lt;String&gt;
      */
-    public DescribeNetworkInterfacesRequest(Collection<String> taskAddresses) {
+    public DescribeNetworkInterfacesOperation(Collection<String> taskAddresses) {
         super(MarshallingUtils::unmarshalDescribeNetworkInterfacesResponse);
 
         getAttributes().put("Action", "DescribeNetworkInterfaces");
+        getAttributes().put("Version", EC2_DOC_VERSION);
 
         if (taskAddresses != null) {
             Filter filter = new Filter();

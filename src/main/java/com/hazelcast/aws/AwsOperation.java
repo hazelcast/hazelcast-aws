@@ -21,18 +21,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An abstract request to an AWS service;
- * has a body, headers and query parameters (attributes);
+ * An instance of an operation call to an AWS service;
+ * has request body, headers and query parameters (attributes);
  * is able to unmarshal a response from a response stream using a specified AwsResponseUnmarshaller.
  */
-public abstract class AwsRequest<T> {
+public abstract class AwsOperation<T> {
 
     private final Map<String, String> attributes = new HashMap<String, String>();
     private final Map<String, String> headers = new HashMap<String, String>();
     private String body = "";
     private AwsResponseUnmarshaller<T> unmarshaller;
 
-    public AwsRequest(AwsResponseUnmarshaller<T> unmarshaller) {
+    public AwsOperation(AwsResponseUnmarshaller<T> unmarshaller) {
         this.unmarshaller = unmarshaller;
     }
 

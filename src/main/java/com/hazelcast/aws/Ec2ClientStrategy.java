@@ -16,7 +16,7 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.impl.DescribeInstancesRequest;
+import com.hazelcast.aws.impl.DescribeInstancesOperation;
 import com.hazelcast.aws.impl.Ec2OperationClient;
 import com.hazelcast.aws.utility.Environment;
 
@@ -39,7 +39,7 @@ class Ec2ClientStrategy extends AwsClientStrategy {
 
     public Map<String, String> getAddresses() throws Exception {
         return new Ec2OperationClient(awsConfig, endpoint)
-                .execute(new DescribeInstancesRequest(
+                .execute(new DescribeInstancesOperation(
                         awsConfig.getTagKey(),
                         awsConfig.getTagValue(),
                         awsConfig.getSecurityGroupName()));

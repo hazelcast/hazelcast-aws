@@ -16,23 +16,25 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.AwsRequest;
+import com.hazelcast.aws.AwsOperation;
 import com.hazelcast.aws.utility.MarshallingUtils;
 
 import java.util.Map;
 
+import static com.hazelcast.aws.impl.Constants.EC2_DOC_VERSION;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 
 /**
- * EC2 DescribeInstances operation request.
+ * EC2 DescribeInstances operation.
  * See <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 documentation</a>.
  */
-public class DescribeInstancesRequest extends AwsRequest<Map<String, String>> {
+public class DescribeInstancesOperation extends AwsOperation<Map<String, String>> {
 
-    public DescribeInstancesRequest(String tagKey, String tagValue, String securityGroupName) {
+    public DescribeInstancesOperation(String tagKey, String tagValue, String securityGroupName) {
         super(MarshallingUtils::unmarshalDescribeInstancesResponse);
 
         getAttributes().put("Action", "DescribeInstances");
+        getAttributes().put("Version", EC2_DOC_VERSION);
 
         /* Prepares the request using filters from config to narrow down the scope of the query */
         Filter filter = new Filter();

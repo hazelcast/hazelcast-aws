@@ -17,11 +17,11 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.impl.Constants;
-import com.hazelcast.aws.impl.DescribeNetworkInterfacesRequest;
-import com.hazelcast.aws.impl.DescribeTasksRequest;
+import com.hazelcast.aws.impl.DescribeNetworkInterfacesOperation;
+import com.hazelcast.aws.impl.DescribeTasksOperation;
 import com.hazelcast.aws.impl.Ec2OperationClient;
 import com.hazelcast.aws.impl.EcsOperationClient;
-import com.hazelcast.aws.impl.ListTasksRequest;
+import com.hazelcast.aws.impl.ListTasksOperation;
 import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.MetadataUtils;
 import com.hazelcast.logging.ILogger;
@@ -34,6 +34,7 @@ import java.util.Map;
 import static com.hazelcast.aws.impl.Constants.AWS_EXECUTION_ENV_VAR_NAME;
 import static com.hazelcast.aws.impl.Constants.EC2_PREFIX;
 import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
+import static java.lang.String.format;
 
 /**
  * Strategy for discovery of Hazelcast instances running under ECS / Fargate
@@ -57,16 +58,16 @@ class EcsClientStrategy extends AwsClientStrategy {
         Map<String, String> metadata = retrieveAndParseMetadata();
         String metadataClusterName = metadata.get("clusterName");
         String metadataFamilyName = metadata.get("familyName");
-        EcsOperationClient listTasks = new EcsOperationClient(awsConfig, endpoint);
-        Collection<String> taskArns = listTasks.execute(new ListTasksRequest(metadataClusterName, metadataFamilyName));
+        EcsOperationClient ecsOperationClient = new EcsOperationClient(awsConfig, endpoint);
+        Ec2OperationClient ec2OperationClient = new Ec2OperationClient(awsConfig, EC2_PREFIX + endpointDomain);
+        Collection<String> taskArns = ecsOperationClient.execute(new ListTasksOperation(metadataClusterName, metadataFamilyName));
         if (!taskArns.isEmpty()) {
-            Collection<String> taskAddresses = new EcsOperationClient(awsConfig, endpoint)
-                    .execute(new DescribeTasksRequest(taskArns, metadataClusterName));
-            Ec2OperationClient describeNetworkInterfaces =
-                    new Ec2OperationClient(awsConfig, EC2_PREFIX + endpointDomain);
-            Map<String, String> privateAndPublicAddresses =
-                    describeNetworkInterfaces.execute(new DescribeNetworkInterfacesRequest(taskAddresses));
-            LOGGER.fine(String.format("The following (private, public) addresses found: %s", privateAndPublicAddresses));
+            Collection<String> taskAddresses = new EcsOperationClient(awsConfig, endpoint).execute(
+                    new DescribeTasksOperation(taskArns, metadataClusterName));
+            ec2OperationClient.synchronizeCredentials(ecsOperationClient);
+            Map<String, String> privateAndPublicAddresses = ec2OperationClient.execute(
+                    new DescribeNetworkInterfacesOperation(taskAddresses));
+            LOGGER.fine(format("The following (private, public) addresses found: %s", privateAndPublicAddresses));
             return privateAndPublicAddresses;
         }
         return Collections.EMPTY_MAP;

@@ -16,28 +16,26 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.AwsRequest;
+import com.hazelcast.aws.AwsOperation;
 import com.hazelcast.aws.utility.MarshallingUtils;
-import com.hazelcast.internal.json.Json;
-import com.hazelcast.internal.json.JsonArray;
 import com.hazelcast.internal.json.JsonObject;
 
 import java.util.Collection;
 
 /**
- * ECS DescribeTasks operation request.
- * See <a href="https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_DescribeTasks.html">EC2 documentation</a>.
+ * ECS ListTasks operation request.
+ * See <a href="https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ListTasks.html">EC2 documentation</a>.
  */
-public class DescribeTasksRequest extends AwsRequest<Collection<String>> {
+public class ListTasksOperation extends AwsOperation<Collection<String>> {
 
-    public DescribeTasksRequest() {
+    public ListTasksOperation() {
         this(null, null);
     }
 
-    public DescribeTasksRequest(Collection<String> taskArns, String clusterName) {
-        super(MarshallingUtils::unmarshalDescribeTasksResponse);
+    public ListTasksOperation(String clusterName, String familyName) {
+        super(MarshallingUtils::unmarshalListTasksResponse);
 
-        getHeaders().put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.DescribeTasks");
+        getHeaders().put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
         getHeaders().put("Content-Type", "application/x-amz-json-1.1");
         getHeaders().put("Accept-Encoding", "identity");
 
@@ -47,13 +45,9 @@ public class DescribeTasksRequest extends AwsRequest<Collection<String>> {
             body.add("cluster", clusterName);
         }
 
-        JsonArray jsonArray = new JsonArray();
-        if (taskArns != null && taskArns.size() > 0) {
-            for (Object arg : taskArns) {
-                jsonArray.add(Json.value(String.valueOf(arg)));
-            }
+        if (familyName != null) {
+            body.add("family", familyName);
         }
-        body.add("tasks", jsonArray);
 
         setBody(body.toString());
     }

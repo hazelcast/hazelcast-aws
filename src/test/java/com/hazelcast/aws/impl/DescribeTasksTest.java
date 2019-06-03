@@ -55,7 +55,7 @@ public class DescribeTasksTest {
         stubDescribeTasks("/.*", describeTasksResponse());
 
         // when
-        Collection<String> values = describeTasks.execute(new DescribeTasksRequest());
+        Collection<String> values = describeTasks.execute(new DescribeTasksOperation());
 
         // then
         MatcherAssert.assertThat("list of 3 tasks", values.size() == 3);

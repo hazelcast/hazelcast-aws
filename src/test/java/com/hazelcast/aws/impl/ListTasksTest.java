@@ -56,7 +56,7 @@ public class ListTasksTest {
         stubListTasks("/.*", listTaskEmptyResponse());
 
         // when
-        Collection<String> taskArns = listTasks.execute(new ListTasksRequest());
+        Collection<String> taskArns = listTasks.execute(new ListTasksOperation());
 
         // then
         MatcherAssert.assertThat("empty list", taskArns.size() == 0);
@@ -68,7 +68,7 @@ public class ListTasksTest {
         stubListTasks("/.*", listTasksResponse());
 
         // when
-        Collection<String> taskArns = listTasks.execute(new ListTasksRequest());
+        Collection<String> taskArns = listTasks.execute(new ListTasksOperation());
 
         // then
         MatcherAssert.assertThat("list of 2 tasks", taskArns.size() == 2);

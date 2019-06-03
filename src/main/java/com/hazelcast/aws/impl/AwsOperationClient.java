@@ -17,7 +17,7 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.AwsRequest;
+import com.hazelcast.aws.AwsOperation;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.Aws4RequestSigner;
 import com.hazelcast.aws.security.Aws4RequestSignerImpl;
@@ -55,7 +55,7 @@ import static com.hazelcast.aws.utility.StringUtils.isNotEmpty;
 import static com.hazelcast.nio.IOUtil.closeResource;
 
 /**
- * Abstract base class for invoking an AWS service.
+ * Abstract base class for invoking an operation of an AWS service.
  * Used by AwsClientStrategy implementations for calling AWS service endpoints.
  */
 public abstract class AwsOperationClient {
@@ -87,28 +87,28 @@ public abstract class AwsOperationClient {
      */
     AwsOperationClient(AwsConfig awsConfig, URL endpointURL, String service, String httpMethod) {
         this.awsConfig = awsConfig;
-        this.awsCredentials = new AwsCredentials(awsConfig);
         this.endpointURL = endpointURL;
         this.service = service;
         this.httpMethod = httpMethod;
+        this.awsCredentials = new AwsCredentials(awsConfig);
     }
 
     /**
      * Sumbits a service request with retry logic. In case of success, unmarshals the response and returns it.
      *
-     * @param awsRequest service request
+     * @param awsOperation service request
      * @return the response
      */
-    public <R> R execute(AwsRequest<R> awsRequest) {
+    public <R> R execute(AwsOperation<R> awsOperation) {
         // authorization
-        final Map<String, String> enrichedHeaders = authorizeRequest(awsRequest);
+        final Map<String, String> enrichedHeaders = authorizeRequest(awsOperation);
 
         // service invocation
         InputStream stream = null;
         try {
             LOGGER.finest("Calling service at " + endpointURL.toExternalForm());
-            stream = callServiceWithRetries(awsRequest.getAttributes(), enrichedHeaders, awsRequest.getBody());
-            return awsRequest.unmarshalResponse(stream);
+            stream = callServiceWithRetries(awsOperation.getAttributes(), enrichedHeaders, awsOperation.getBody());
+            return awsOperation.unmarshalResponse(stream);
         } finally {
             closeResource(stream);
         }
@@ -119,19 +119,20 @@ public abstract class AwsOperationClient {
      */
     protected abstract void retrieveCredentials();
 
-    private <R> Map<String, String> authorizeRequest(AwsRequest<R> awsRequest) {
+    private <R> Map<String, String> authorizeRequest(AwsOperation<R> awsOperation) {
         if (isNotEmpty(awsCredentials.getIamRole()) || isEmpty(awsCredentials.getAccessKey())) {
             retrieveCredentials();
         }
 
-        final Map<String, String> enrichedHeaders = new HashMap<String, String>();
-        enrichedHeaders.putAll(awsRequest.getHeaders());
-
         Aws4RequestSigner requestSigner = getRequestSigner();
-        requestSigner.sign(awsRequest.getAttributes(), enrichedHeaders, awsRequest.getBody(), httpMethod);
-        enrichedHeaders.put("Authorization", requestSigner.getAuthorizationHeader());
+
+        final Map<String, String> enrichedHeaders = new HashMap<String, String>();
+        enrichedHeaders.putAll(awsOperation.getHeaders());
         enrichedHeaders.put("X-Amz-Date", requestSigner.getTimestamp());
+
+        requestSigner.sign(awsOperation.getAttributes(), enrichedHeaders, awsOperation.getBody(), httpMethod);
         enrichedHeaders.put("Host", endpointURL.getHost());
+        enrichedHeaders.put("Authorization", requestSigner.getAuthorizationHeader());
 
 
         String securityToken = awsCredentials.getSecurityToken();
@@ -141,9 +142,16 @@ public abstract class AwsOperationClient {
         return enrichedHeaders;
     }
 
-    // Visible for testing
     AwsCredentials getAwsCredentials() {
         return awsCredentials;
+    }
+
+    public void synchronizeCredentials(AwsOperationClient other) {
+        AwsCredentials otherAwsCredentials = other.getAwsCredentials();
+        this.awsCredentials.setAccessKey(otherAwsCredentials.getAccessKey());
+        this.awsCredentials.setSecretKey(otherAwsCredentials.getSecretKey());
+        this.awsCredentials.setSecurityToken(otherAwsCredentials.getSecurityToken());
+        this.awsCredentials.setIamRole(otherAwsCredentials.getIamRole());
     }
 
     /**
