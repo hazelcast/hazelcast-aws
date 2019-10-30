@@ -47,11 +47,16 @@ public class TcpIpJoinerOverAWS
     }
 
     static AwsConfig fromDeprecatedAwsConfig(com.hazelcast.config.AwsConfig awsConfig) {
-        return AwsConfig.builder().setAccessKey(awsConfig.getProperty("access-key")).setSecretKey(awsConfig.getProperty("secret-key"))
-                        .setRegion(awsConfig.getProperty("region")).setSecurityGroupName(awsConfig.getProperty("security-group-name"))
-                        .setTagKey(awsConfig.getProperty("tag-key")).setTagValue(awsConfig.getProperty("tag-value"))
-                        .setHostHeader(awsConfig.getProperty("host-header")).setIamRole(awsConfig.getProperty("iam-role"))
-                        .setConnectionTimeoutSeconds(Integer.parseInt(awsConfig.getProperty("connection-timeout-seconds"))).build();
+        return AwsConfig.builder().setAccessKey(awsConfig.getProperty("access-key"))
+                        .setSecretKey(awsConfig.getProperty("secret-key"))
+                        .setRegion(awsConfig.getProperty("region"))
+                        .setSecurityGroupName(awsConfig.getProperty("security-group-name"))
+                        .setTagKey(awsConfig.getProperty("tag-key"))
+                        .setTagValue(awsConfig.getProperty("tag-value"))
+                        .setHostHeader(awsConfig.getProperty("host-header"))
+                        .setIamRole(awsConfig.getProperty("iam-role"))
+                        .setConnectionTimeoutSeconds(Integer.parseInt(awsConfig.getProperty("connection-timeout-seconds")))
+                        .build();
 
     }
 
