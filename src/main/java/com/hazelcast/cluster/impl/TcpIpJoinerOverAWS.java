@@ -46,12 +46,16 @@ public class TcpIpJoinerOverAWS
         aws = new AWSClient(awsConfig);
     }
 
-    static AwsConfig fromDeprecatedAwsConfig(com.hazelcast.config.AwsConfig awsConfig) {
-        return AwsConfig.builder().setAccessKey(awsConfig.getAccessKey()).setSecretKey(awsConfig.getSecretKey())
-                        .setRegion(awsConfig.getRegion()).setSecurityGroupName(awsConfig.getSecurityGroupName())
-                        .setTagKey(awsConfig.getTagKey()).setTagValue(awsConfig.getTagValue())
-                        .setHostHeader(awsConfig.getHostHeader()).setIamRole(awsConfig.getIamRole())
-                        .setConnectionTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds()).build();
+    private static AwsConfig fromDeprecatedAwsConfig(com.hazelcast.config.AwsConfig awsConfig) {
+        return AwsConfig.builder().setAccessKey(awsConfig.getProperty("access-key"))
+                        .setSecretKey(awsConfig.getProperty("secret-key"))
+                        .setRegion(awsConfig.getProperty("region"))
+                        .setSecurityGroupName(awsConfig.getProperty("security-group-name"))
+                        .setTagKey(awsConfig.getProperty("tag-key"))
+                        .setTagValue(awsConfig.getProperty("tag-value"))
+                        .setHostHeader(awsConfig.getProperty("host-header"))
+                        .setIamRole(awsConfig.getProperty("iam-role"))
+                        .build();
 
     }
 
