@@ -18,7 +18,7 @@
     <name>hazelcast-aws</name>
     <groupId>com.hazelcast</groupId>
     <artifactId>hazelcast-aws</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>Hazelcast In-Memory DataGrid Aws Plugin</description>
     <url>http://www.hazelcast.com/</url>
@@ -29,7 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <jdk.version>1.8</jdk.version>
-        <hazelcast.version>4.0-SNAPSHOT</hazelcast.version>
+        <hazelcast.version>4.0-BETA-1</hazelcast.version>
 
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
