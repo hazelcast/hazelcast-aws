@@ -15,6 +15,7 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.exception.AwsInvalidRegionException;
 import com.hazelcast.cluster.Address;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.test.HazelcastParallelClassRunner;
@@ -63,6 +64,18 @@ public class AwsDiscoveryStrategyTest
 
         // then
         assertEquals("us-hz-1", awsConfig.getRegion());
+    }
+
+    @Test
+    public void throwOnInvalidRegion() {
+        // given
+        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
+        doReturn("us-hz-1a").when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
+        // when
+        Runnable getAwsConfig = awsDiscoveryStrategy::getAwsConfig;
+
+        // then
+        assertThrows(AwsInvalidRegionException.class, getAwsConfig);
     }
 
     @Test
