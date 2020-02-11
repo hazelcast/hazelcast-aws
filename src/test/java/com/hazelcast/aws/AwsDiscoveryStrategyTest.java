@@ -21,10 +21,8 @@ import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.QuickTest;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import java.util.*;
@@ -138,31 +136,29 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void validateValidRegion() {
-        List<String> awsRegions = Arrays.asList(
-            "us-east-2", "us-west-2", "ap-south-1", "ap-northeast-3", "ap-southeast-2",
-            "ca-central-1", "cn-north-1", "cn-northwest-1", "us-gov-east-1");
-
-        awsRegions.forEach(region -> {
-            AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-            doReturn(region).when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
-
-            awsDiscoveryStrategy.validateRegion(region);
-        });
+        awsDiscoveryStrategy.validateRegion("us-west-1");
+        awsDiscoveryStrategy.validateRegion("us-gov-east-1");
     }
 
     @Test
     public void validateInvalidRegion() {
-        List<String> invalidRegions = Arrays.asList("us-east-2a", "us-invalid-2","us-gov-1a","us-gov-invalid-2");
+        String region = "us-wrong-1";
 
-        invalidRegions.forEach(region -> {
-            AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-            doReturn(region).when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
+        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
 
-            Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-            String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
+        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
+        assertEquals(expectedMessage, thrownEx.getMessage());
+    }
 
-            InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-            assertEquals(expectedMessage, thrownEx.getMessage());
-        });
+    @Test
+    public void validateInvalidGovRegion() {
+        String region = "us-gov-wrong-1";
+
+        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
+
+        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
+        assertEquals(expectedMessage, thrownEx.getMessage());
     }
 }
