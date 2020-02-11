@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.exception.AwsInvalidRegionException;
 import com.hazelcast.aws.utility.MetadataUtil;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.properties.PropertyDefinition;
@@ -56,7 +55,7 @@ public class AwsDiscoveryStrategy
     private static final Integer DEFAULT_CONNECTION_RETRIES = 3;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
-    private static final String AWS_REGION_REGEX = "\\w{2}-\\w+-\\d(?!.+)";
+    private static final String AWS_REGION_REGEX = "\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)";
     private static final Pattern AWS_REGION_PATTERN = Pattern.compile(AWS_REGION_REGEX);
 
     private final AwsConfig awsConfig;
@@ -125,11 +124,10 @@ public class AwsDiscoveryStrategy
         return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 
-    private void validateRegion(String region) {
-        boolean isAwsRegion = AWS_REGION_PATTERN.matcher(region).matches();
-
-        if (!isAwsRegion) {
-            throw new AwsInvalidRegionException();
+    void validateRegion(String region) {
+        if (!AWS_REGION_PATTERN.matcher(region).matches()) {
+            String message = String.format("The provided region %s is not a valid AWS region.", region);
+            throw new InvalidConfigurationException(message);
         }
     }
 

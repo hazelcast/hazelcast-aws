@@ -15,20 +15,19 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.exception.AwsInvalidRegionException;
 import com.hazelcast.cluster.Address;
+import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.QuickTest;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static com.hazelcast.spi.partitiongroup.PartitionGroupMetaData.PARTITION_GROUP_ZONE;
 import static java.util.Collections.emptyList;
@@ -58,24 +57,12 @@ public class AwsDiscoveryStrategyTest
     public void useCurrentRegion() {
         // given
         AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-        doReturn("us-hz-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
+        doReturn("us-east-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
         // when
         AwsConfig awsConfig = awsDiscoveryStrategy.getAwsConfig();
 
         // then
-        assertEquals("us-hz-1", awsConfig.getRegion());
-    }
-
-    @Test
-    public void throwOnInvalidRegion() {
-        // given
-        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-        doReturn("us-hz-1a").when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
-        // when
-        Runnable getAwsConfig = awsDiscoveryStrategy::getAwsConfig;
-
-        // then
-        assertThrows(AwsInvalidRegionException.class, getAwsConfig);
+        assertEquals("us-east-1", awsConfig.getRegion());
     }
 
     @Test
@@ -147,5 +134,35 @@ public class AwsDiscoveryStrategyTest
         assertEquals(new Address(privateAddress, port), node.getPrivateAddress());
         assertEquals(new Address(publicAddress, port), node.getPublicAddress());
         assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void validateValidRegion() {
+        List<String> awsRegions = Arrays.asList(
+            "us-east-2", "us-west-2", "ap-south-1", "ap-northeast-3", "ap-southeast-2",
+            "ca-central-1", "cn-north-1", "cn-northwest-1", "us-gov-east-1");
+
+        awsRegions.forEach(region -> {
+            AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
+            doReturn(region).when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
+
+            awsDiscoveryStrategy.validateRegion(region);
+        });
+    }
+
+    @Test
+    public void validateInvalidRegion() {
+        List<String> invalidRegions = Arrays.asList("us-east-2a", "us-invalid-2","us-gov-1a","us-gov-invalid-2");
+
+        invalidRegions.forEach(region -> {
+            AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
+            doReturn(region).when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
+
+            Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+            String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
+
+            InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
+            assertEquals(expectedMessage, thrownEx.getMessage());
+        });
     }
 }
