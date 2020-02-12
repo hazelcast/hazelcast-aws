@@ -142,22 +142,28 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void validateInvalidRegion() {
+        // given
         String region = "us-wrong-1";
-
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
         String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
 
+        //when
+        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+
+        //then
         InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
         assertEquals(expectedMessage, thrownEx.getMessage());
     }
 
     @Test
     public void validateInvalidGovRegion() {
+        // given
         String region = "us-gov-wrong-1";
-
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
         String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
 
+        // when
+        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+
+        //then
         InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
         assertEquals(expectedMessage, thrownEx.getMessage());
     }
