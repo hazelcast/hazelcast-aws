@@ -102,7 +102,7 @@ public enum AwsProperties {
      */
     PORT("hz-port", STRING, true);
 
-    private final PropertyDefinition propertyDefinition;
+    private transient final PropertyDefinition propertyDefinition;
 
     AwsProperties(String key, PropertyTypeConverter typeConverter, boolean optional, ValueValidator validator) {
         this.propertyDefinition = new SimplePropertyDefinition(key, optional, typeConverter, validator);
