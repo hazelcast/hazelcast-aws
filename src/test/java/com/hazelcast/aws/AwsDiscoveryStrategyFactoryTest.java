@@ -45,11 +45,11 @@ import static org.junit.Assert.assertTrue;
 @RunWith(HazelcastParallelClassRunner.class)
 @Category(QuickTest.class)
 public class AwsDiscoveryStrategyFactoryTest
-        extends HazelcastTestSupport {
+  extends HazelcastTestSupport {
 
-    private static DiscoveryStrategy createStrategy(Map<String, Comparable> props) {
+    private static void createStrategy(Map<String, Comparable> props) {
         final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
-        return factory.newDiscoveryStrategy(null, null, props);
+        factory.newDiscoveryStrategy(null, null, props);
     }
 
     private static Config createConfig(String xmlFileName) {
@@ -58,21 +58,17 @@ public class AwsDiscoveryStrategyFactoryTest
     }
 
     @Test(expected = InvalidConfigurationException.class)
-    public void hostHeaderMalformed()
-            throws Exception {
+    public void hostHeaderMalformed() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
         props.put("host-header", "test-value");
-        props.put("region", "us-east-1");
         createStrategy(props);
     }
 
     @Test
-    public void testMinimalOk()
-            throws Exception {
+    public void testMinimalOk() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
-        props.put("region", "us-east-1");
         createStrategy(props);
     }
 
@@ -80,7 +76,6 @@ public class AwsDiscoveryStrategyFactoryTest
     public void testOnlyGivenRoleOk() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("iam-role", "test-value");
-        props.put("region", "us-east-1");
         createStrategy(props);
     }
 
@@ -89,17 +84,15 @@ public class AwsDiscoveryStrategyFactoryTest
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("secret-key", "test-value");
         props.put("access-key", "test-value");
-        props.put("region", "us-east-1");
         createStrategy(props);
     }
 
     @Test
-    public void testFull()
-            throws Exception {
+    public void testFull() {
         final Map<String, Comparable> props = new HashMap<String, Comparable>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
-        props.put("region", "us-east-1");
+        props.put("region", "test-value");
         props.put("iam-role", "test-value");
         props.put("host-header", "ec2.test-value");
         props.put("security-group-name", "test-value");
@@ -130,7 +123,7 @@ public class AwsDiscoveryStrategyFactoryTest
 
         assertTrue(strategies.hasNext());
         final DiscoveryStrategy strategy = strategies.next();
-        assertTrue(strategy != null && strategy instanceof AwsDiscoveryStrategy);
+        assertTrue(strategy instanceof AwsDiscoveryStrategy);
     }
 
     @Test
@@ -161,14 +154,13 @@ public class AwsDiscoveryStrategyFactoryTest
 
         assertEquals("test-access-key", providerProperties.get("access-key"));
         assertEquals("test-secret-key", providerProperties.get("secret-key"));
-        assertEquals("us-east-1", providerProperties.get("region"));
+        assertEquals("test-region", providerProperties.get("region"));
         assertEquals("test-iam-role", providerProperties.get("iam-role"));
         assertEquals("ec2.test-host-header", providerProperties.get("host-header"));
         assertEquals("test-security-group-name", providerProperties.get("security-group-name"));
         assertEquals("test-tag-key", providerProperties.get("tag-key"));
         assertEquals("test-tag-value", providerProperties.get("tag-value"));
         assertEquals("10", providerProperties.get("connection-timeout-seconds"));
-        assertEquals("11", providerProperties.get("read-timeout-seconds"));
         assertEquals("5702", providerProperties.get("hz-port"));
     }
 }

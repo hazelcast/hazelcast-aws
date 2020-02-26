@@ -20,26 +20,27 @@ package com.hazelcast.aws.exception;
  * <p>
  * A list of error codes can be found at: {@see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html}.
  */
-public class AwsConnectionException
-        extends RuntimeException {
-    private final int httpReponseCode;
+public class AwsConnectionException extends RuntimeException {
+
+    private final int httpResponseCode;
     private final String errorMessage;
 
-    public AwsConnectionException(int httpReponseCode, String errorMessage) {
-        super(messageFrom(httpReponseCode, errorMessage));
-        this.httpReponseCode = httpReponseCode;
+    public AwsConnectionException(int httpResponseCode, String errorMessage) {
+        super(messageFrom(httpResponseCode, errorMessage));
+        this.httpResponseCode = httpResponseCode;
         this.errorMessage = errorMessage;
     }
 
-    private static String messageFrom(int httpReponseCode, String errorMessage) {
-        return String.format("Connection to AWS failed (HTTP Response Code: %s, Message: \"%s\")", httpReponseCode, errorMessage);
-    }
-
-    public int getHttpReponseCode() {
-        return httpReponseCode;
+    public int getHttpResponseCode() {
+        return httpResponseCode;
     }
 
     public String getErrorMessage() {
         return errorMessage;
+    }
+
+    private static String messageFrom(int httpResponseCode, String errorMessage) {
+        return String.format("Connection to AWS failed (HTTP Response Code: %s, Message: \"%s\")",
+          httpResponseCode, errorMessage);
     }
 }

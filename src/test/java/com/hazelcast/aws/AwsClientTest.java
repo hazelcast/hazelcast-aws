@@ -29,33 +29,63 @@ import static org.junit.Assert.assertEquals;
 @Category({QuickTest.class, ParallelJVMTest.class})
 public class AwsClientTest {
 
-    private static AwsConfig.Builder predefinedAwsConfigBuilder() {
-        return AwsConfig.builder().setHostHeader("ec2.amazonaws.com").setRegion("us-east-1").setConnectionTimeoutSeconds(5);
+    public static final String DEFAULT_REGION = "us-east-1";
+    public static final String EC2_HOST_HEADER = "ec2.amazonaws.com";
+    public static final String ECS_HOST_HEADER = "ecs.amazonaws.com";
+
+    private static AwsConfig.Builder predefinedEc2ConfigBuilder() {
+        return AwsConfig.builder().setHostHeader(EC2_HOST_HEADER).setRegion(DEFAULT_REGION).setConnectionTimeoutSeconds(5);
+    }
+
+    private static AwsConfig.Builder predefinedEcsConfigBuilder() {
+        return AwsConfig.builder().setHostHeader(ECS_HOST_HEADER).setRegion(DEFAULT_REGION).setConnectionTimeoutSeconds(5);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testAwsClient_whenNoAwsConfig() {
-        new AWSClient(null);
+        new AwsClient(null);
     }
 
     @Test
     public void testAwsClient_getEndPoint() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").build();
-        AWSClient awsClient = new AWSClient(awsConfig);
+        AwsConfig awsConfig = predefinedEc2ConfigBuilder().setIamRole("test").build();
+        AwsClient awsClient = new AwsClient(awsConfig);
         assertEquals("ec2.us-east-1.amazonaws.com", awsClient.getEndpoint());
     }
 
     @Test
     public void testAwsClient_withDifferentHostHeader() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").setHostHeader("ec2.amazonaws.com.cn")
-                                                          .setRegion("cn-north-1").build();
-        AWSClient awsClient = new AWSClient(awsConfig);
+        AwsConfig awsConfig = predefinedEc2ConfigBuilder().setIamRole("test")
+          .setHostHeader("ec2.amazonaws.com.cn")
+          .setRegion("cn-north-1").build();
+        AwsClient awsClient = new AwsClient(awsConfig);
         assertEquals("ec2.cn-north-1.amazonaws.com.cn", awsClient.getEndpoint());
     }
 
     @Test(expected = InvalidConfigurationException.class)
     public void testAwsClient_withInvalidHostHeader() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").setHostHeader("ec3.amazonaws.com.cn").build();
-        new AWSClient(awsConfig);
+        AwsConfig awsConfig = predefinedEc2ConfigBuilder().setIamRole("test").setHostHeader("ec3.amazonaws.com.cn").build();
+        new AwsClient(awsConfig);
+    }
+
+    @Test
+    public void testEcsAwsClient_getEndPoint() {
+        AwsConfig awsConfig = predefinedEcsConfigBuilder().setIamRole("test").build();
+        AwsClient awsClient = new AwsClient(awsConfig);
+        assertEquals("ecs.us-east-1.amazonaws.com", awsClient.getEndpoint());
+    }
+
+    @Test
+    public void testEcsAwsClient_withDifferentHostHeader() {
+        AwsConfig awsConfig = predefinedEcsConfigBuilder().setIamRole("test").setHostHeader("ecs.amazonaws.com.cn")
+          .setRegion("cn-north-1").build();
+        AwsClient awsClient = new AwsClient(awsConfig);
+        assertEquals("ecs.cn-north-1.amazonaws.com.cn", awsClient.getEndpoint());
+    }
+
+    @Test(expected = InvalidConfigurationException.class)
+    public void testEcsAwsClient_withInvalidHostHeader() {
+        AwsConfig awsConfig = predefinedEcsConfigBuilder().setIamRole("test").setHostHeader("eks.amazonaws.com.cn").build();
+        new AwsClient(awsConfig);
     }
 }

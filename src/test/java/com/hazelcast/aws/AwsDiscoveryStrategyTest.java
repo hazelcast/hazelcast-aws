@@ -16,7 +16,6 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.cluster.Address;
-import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
@@ -25,43 +24,25 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 import static com.hazelcast.spi.partitiongroup.PartitionGroupMetaData.PARTITION_GROUP_ZONE;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 @RunWith(HazelcastParallelClassRunner.class)
 @Category(QuickTest.class)
 public class AwsDiscoveryStrategyTest
-        extends HazelcastTestSupport {
+  extends HazelcastTestSupport {
 
-    private final AWSClient mockClient = mock(AWSClient.class);
-    private final AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(getProperties(),
-            mockClient);
-
-    private Map<String, Comparable> getProperties() {
-        Map<String, Comparable> properties = new HashMap<>();
-        properties.put("region", "us-east-1");
-        return properties;
-    }
-
-    @Test
-    public void useCurrentRegion() {
-        // given
-        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-        doReturn("us-east-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3);
-        // when
-        AwsConfig awsConfig = awsDiscoveryStrategy.getAwsConfig();
-
-        // then
-        assertEquals("us-east-1", awsConfig.getRegion());
-    }
+    private final AwsClient mockClient = mock(AwsClient.class);
+    private final AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(Collections.<String, Comparable>emptyMap(),
+      mockClient);
 
     @Test
     public void discoverLocalMetadata() {
@@ -77,7 +58,7 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesNoAddresses()
-            throws Exception {
+      throws Exception {
         // given
         given(mockClient.getAddresses()).willReturn(Collections.<String, String>emptyMap());
 
@@ -90,7 +71,7 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesOneAddress()
-            throws Exception {
+      throws Exception {
         // given
         String privateAddress = "10.0.0.1";
         String publicAddress = "156.24.63.1";
@@ -101,7 +82,7 @@ public class AwsDiscoveryStrategyTest
 
         // then
         int defaultPortFrom = 5701;
-        int defaultPortTo = 5708;
+        int defaultPortTo = 5701;
         Iterator<DiscoveryNode> iterator = result.iterator();
         for (int port = defaultPortFrom; port <= defaultPortTo; port++) {
             DiscoveryNode node = iterator.next();
@@ -113,15 +94,14 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesOneAddressOnePort()
-            throws Exception {
+      throws Exception {
         // given
         String privateAddress = "10.0.0.1";
         String publicAddress = "156.24.63.1";
         int port = 5701;
         given(mockClient.getAddresses()).willReturn(Collections.singletonMap(privateAddress, publicAddress));
-        Map<String, Comparable> properties = getProperties();
-        properties.put("hz-port", port);
-        AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(properties, mockClient);
+        AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(
+          Collections.<String, Comparable>singletonMap("hz-port", port), mockClient);
 
         // when
         Iterable<DiscoveryNode> result = awsDiscoveryStrategy.discoverNodes();
@@ -132,39 +112,5 @@ public class AwsDiscoveryStrategyTest
         assertEquals(new Address(privateAddress, port), node.getPrivateAddress());
         assertEquals(new Address(publicAddress, port), node.getPublicAddress());
         assertFalse(iterator.hasNext());
-    }
-
-    @Test
-    public void validateValidRegion() {
-        awsDiscoveryStrategy.validateRegion("us-west-1");
-        awsDiscoveryStrategy.validateRegion("us-gov-east-1");
-    }
-
-    @Test
-    public void validateInvalidRegion() {
-        // given
-        String region = "us-wrong-1";
-        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-
-        //when
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-
-        //then
-        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-        assertEquals(expectedMessage, thrownEx.getMessage());
-    }
-
-    @Test
-    public void validateInvalidGovRegion() {
-        // given
-        String region = "us-gov-wrong-1";
-        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-
-        // when
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-
-        //then
-        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-        assertEquals(expectedMessage, thrownEx.getMessage());
     }
 }
