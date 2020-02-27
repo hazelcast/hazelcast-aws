@@ -30,7 +30,6 @@ public final class Constants {
     public static final String ECS_PREFIX = ECS + ".";
 
     public static final String AWS_EXECUTION_ENV_VAR_NAME = "AWS_EXECUTION_ENV";
-    public static final String UTF8_ENCODING = "UTF-8";
 
     public static final int HOSTNAME_PREFIX_LENGTH = 4;
 
