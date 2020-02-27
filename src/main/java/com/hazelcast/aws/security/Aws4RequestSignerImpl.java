@@ -79,7 +79,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     @Override
     public String sign(Map<String, String> attributes, Map<String, String> headers) {
-        return this.sign(attributes, headers, "", Constants.GET);
+        return this.sign(attributes, headers, "", "GET");
     }
 
     @Override

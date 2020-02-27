@@ -24,8 +24,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import static com.hazelcast.aws.impl.Constants.EC2;
-import static com.hazelcast.aws.impl.Constants.GET;
-import static com.hazelcast.aws.impl.Constants.HTTPS;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 
@@ -38,12 +36,12 @@ public class Ec2OperationClient extends AwsOperationClient {
     private static final ILogger LOGGER = Logger.getLogger(Ec2OperationClient.class);
 
     public Ec2OperationClient(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
-        this(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
+        this(awsConfig, new URL("https", endpoint, -1, "/"));
     }
 
     // Visible for testing
     Ec2OperationClient(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, EC2, GET);
+        super(awsConfig, endpointURL, EC2, "GET");
     }
 
     @Override

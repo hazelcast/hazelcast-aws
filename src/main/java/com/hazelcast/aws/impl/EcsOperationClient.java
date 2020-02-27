@@ -21,8 +21,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import static com.hazelcast.aws.impl.Constants.ECS;
-import static com.hazelcast.aws.impl.Constants.HTTPS;
-import static com.hazelcast.aws.impl.Constants.POST;
 
 /**
  * AWS ECS service client.
@@ -31,12 +29,12 @@ import static com.hazelcast.aws.impl.Constants.POST;
 public class EcsOperationClient extends AwsOperationClient {
 
     public EcsOperationClient(AwsConfig awsConfig, String endpoint) throws MalformedURLException {
-        this(awsConfig, new URL(HTTPS, endpoint, -1, "/"));
+        this(awsConfig, new URL("https", endpoint, -1, "/"));
     }
 
     // Visible for testing
     EcsOperationClient(AwsConfig awsConfig, URL endpointURL) {
-        super(awsConfig, endpointURL, ECS, POST);
+        super(awsConfig, endpointURL, ECS, "POST");
     }
 
     @Override
