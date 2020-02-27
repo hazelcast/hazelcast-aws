@@ -19,9 +19,6 @@ import java.util.Map;
 
 import static com.hazelcast.aws.impl.Constants.ECS_PREFIX;
 
-/**
- * Abstract AWS discovery client strategy
- */
 abstract class AwsClientStrategy {
 
     protected final AwsConfig awsConfig;
@@ -40,11 +37,9 @@ abstract class AwsClientStrategy {
      * @return the appropriate AWS client strategy (EcsClientStrategy or Ec2ClientStrategy)
      */
     static AwsClientStrategy create(AwsConfig awsConfig, String endpoint) {
-        if (endpoint.toLowerCase().startsWith(ECS_PREFIX)) {
-            return new EcsClientStrategy(awsConfig, endpoint);
-        } else {
-            return new Ec2ClientStrategy(awsConfig, endpoint);
-        }
+        return endpoint.toLowerCase().startsWith(ECS_PREFIX)
+          ? new EcsClientStrategy(awsConfig, endpoint)
+          : new Ec2ClientStrategy(awsConfig, endpoint);
     }
 
     abstract Map<String, String> getAddresses() throws Exception;
