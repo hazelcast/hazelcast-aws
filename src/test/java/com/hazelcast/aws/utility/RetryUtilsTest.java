@@ -40,7 +40,7 @@ public class RetryUtilsTest {
     private static final Integer RETRIES = 1;
     private static final String RESULT = "result string";
 
-    private Callable<String> callable = mock(Callable.class);
+    private final Callable<String> callable = mock(Callable.class);
 
     @Test
     public void retryNoRetries()
