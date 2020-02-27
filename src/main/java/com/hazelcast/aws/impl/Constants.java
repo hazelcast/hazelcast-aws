@@ -24,10 +24,11 @@ public final class Constants {
     public static final String HTTPS = "https";
     public static final String POST = "POST";
     public static final String ECS_CONTAINER_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
-    public static final String EC2_PREFIX = "ec2.";
-    public static final String ECS_PREFIX = "ecs.";
     public static final String EC2 = "ec2";
     public static final String ECS = "ecs";
+    public static final String EC2_PREFIX = EC2 + ".";
+    public static final String ECS_PREFIX = ECS + ".";
+
     public static final String AWS_EXECUTION_ENV_VAR_NAME = "AWS_EXECUTION_ENV";
     public static final String UTF8_ENCODING = "UTF-8";
 

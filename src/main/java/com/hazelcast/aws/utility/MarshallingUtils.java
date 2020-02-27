@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -162,7 +163,7 @@ public final class MarshallingUtils {
         Collection<String> response = new ArrayList<String>();
 
         try {
-            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING)).asObject()
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, StandardCharsets.UTF_8)).asObject()
                     .get("tasks").asArray();
             for (JsonValue task : jsonValues) {
                 for (JsonValue container : task.asObject().get("containers").asArray()) {
@@ -190,7 +191,7 @@ public final class MarshallingUtils {
         ArrayList<String> response = new ArrayList<String>();
 
         try {
-            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, UTF8_ENCODING))
+            JsonArray jsonValues = Json.parse(new InputStreamReader(stream, StandardCharsets.UTF_8))
                     .asObject().get("taskArns").asArray();
             for (JsonValue value : jsonValues) {
                 response.add(value.asString());

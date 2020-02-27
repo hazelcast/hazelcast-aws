@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -166,7 +167,7 @@ public abstract class AwsOperationClient {
     }
 
     private static String readFrom(InputStream stream) {
-        Scanner scanner = new Scanner(stream, UTF8_ENCODING).useDelimiter("\\A");
+        Scanner scanner = new Scanner(stream, StandardCharsets.UTF_8.toString()).useDelimiter("\\A");
         return scanner.hasNext() ? scanner.next() : "";
     }
 
@@ -279,7 +280,7 @@ public abstract class AwsOperationClient {
 
         if (isNotEmpty(body)) {
             OutputStream outputStream = httpConnection.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF8_ENCODING));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
             writer.write(body);
             writer.flush();
             writer.close();
