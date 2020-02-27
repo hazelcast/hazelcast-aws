@@ -1,5 +1,7 @@
 # Hazelcast Discovery Plugin for AWS
 
+THIS IS A TEST
+
 This repository contains a plugin which provides the automatic Hazelcast member discovery in the Amazon Web Services Platform.
 
 ***NOTE:*** *hazelcast-cloud module has been renamed as hazelcast-aws module (starting with Hazelcast 3.7.3). If you want to use AWS Discovery, you should add the library hazelcast-aws JAR to your environment.*
