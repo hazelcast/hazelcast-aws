@@ -58,6 +58,9 @@ import static com.hazelcast.internal.nio.IOUtil.closeResource;
  */
 public abstract class AwsOperationClient {
 
+    private static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
+
+
     /**
      * URI to fetch container credentials (when IAM role is enabled)
      * <p>
@@ -307,7 +310,7 @@ public abstract class AwsOperationClient {
     }
 
     private Aws4RequestSigner getRequestSigner() {
-        SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
+        SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         String timeStamp = df.format(new Date());
         Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL

@@ -31,7 +31,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.hazelcast.aws.utility.Aws4RequestSignerUtils.buildAuthHeader;
 import static java.lang.String.format;
 
 /**
@@ -40,6 +39,8 @@ import static java.lang.String.format;
 public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     private static final ILogger LOGGER = Logger.getLogger(Aws4RequestSignerImpl.class);
+
+    private static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
 
     private static final String NEW_LINE = "\n";
     private static final String API_TERMINATOR = "aws4_request";
@@ -137,8 +138,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     /* Task 2 */
     private String createStringToSign(String canonicalRequest) {
-        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE
-                + hash(canonicalRequest);
+        return String.format("%s%s%s%s%s%s%s", SIGNATURE_METHOD_V4, NEW_LINE, timestamp, NEW_LINE, getCredentialScope(), NEW_LINE, hash(canonicalRequest));
     }
 
     /* Task 3 */
@@ -232,6 +232,10 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         }
         sortedHeaders.put("host", endpoint);
         return sortedHeaders;
+    }
+
+    private static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
+        return String.format("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s", SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
     }
 
 }

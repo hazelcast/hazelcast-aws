@@ -21,8 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
-
 /**
  * Static utility class for Aws signature version 4
  */
@@ -59,10 +57,5 @@ public final class Aws4RequestSignerUtils {
         List<String> components = getListOfEntries(attributes);
         Collections.sort(components);
         return getCanonicalizedQueryString(components);
-    }
-
-    public static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
-        return SIGNATURE_METHOD_V4 + " " + "Credential=" + accessKey + "/" + credentialScope + ", "
-                + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
     }
 }
