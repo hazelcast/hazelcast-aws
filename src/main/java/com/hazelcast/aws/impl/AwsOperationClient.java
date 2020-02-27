@@ -48,7 +48,6 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.impl.Constants.UTF8_ENCODING;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static com.hazelcast.internal.nio.IOUtil.closeResource;
