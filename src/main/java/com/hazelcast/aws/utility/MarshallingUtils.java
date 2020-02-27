@@ -80,7 +80,7 @@ public final class MarshallingUtils {
 
             Element element = doc.getDocumentElement();
             NodeHolder elementNodeHolder = new NodeHolder(element);
-            Map<String, String> addresses = new LinkedHashMap<String, String>();
+            Map<String, String> addresses = new LinkedHashMap<>();
             List<NodeHolder> reservationSet = elementNodeHolder.getSubNodes("reservationset");
             for (NodeHolder reservation : reservationSet) {
                 List<NodeHolder> items = reservation.getSubNodes(NODE_ITEM);
@@ -98,7 +98,7 @@ public final class MarshallingUtils {
         } catch (Exception e) {
             LOGGER.warning(e);
         }
-        return new LinkedHashMap<String, String>();
+        return new LinkedHashMap<>();
     }
 
     /**
@@ -119,7 +119,7 @@ public final class MarshallingUtils {
             builder = dbf.newDocumentBuilder();
             Document doc = builder.parse(stream);
 
-            Map<String, String> addresses = new LinkedHashMap<String, String>();
+            Map<String, String> addresses = new LinkedHashMap<>();
             Element element = doc.getDocumentElement();
 
             NodeHolder elementNodeHolder = new NodeHolder(element);
@@ -149,7 +149,7 @@ public final class MarshallingUtils {
         } catch (Exception e) {
             LOGGER.warning(e);
         }
-        return new LinkedHashMap<String, String>();
+        return new LinkedHashMap<>();
     }
 
     /**
@@ -159,7 +159,7 @@ public final class MarshallingUtils {
      * @return a collection containing the private IPs of the discovered tasks
      */
     public static Collection<String> unmarshalDescribeTasksResponse(InputStream stream) {
-        Collection<String> response = new ArrayList<String>();
+        Collection<String> response = new ArrayList<>();
 
         try {
             JsonArray jsonValues = Json.parse(new InputStreamReader(stream, StandardCharsets.UTF_8)).asObject()
@@ -187,7 +187,7 @@ public final class MarshallingUtils {
      * @return a collection containing the taskArns of the discovered tasks
      */
     public static Collection<String> unmarshalListTasksResponse(InputStream stream) {
-        ArrayList<String> response = new ArrayList<String>();
+        ArrayList<String> response = new ArrayList<>();
 
         try {
             JsonArray jsonValues = Json.parse(new InputStreamReader(stream, StandardCharsets.UTF_8))
@@ -292,7 +292,7 @@ public final class MarshallingUtils {
          * @see #getFirstSubNode(String)
          */
         Map<String, String> getAddresses() {
-            Map<String, String> privatePublicPairs = new LinkedHashMap<String, String>();
+            Map<String, String> privatePublicPairs = new LinkedHashMap<>();
             if (node == null) {
                 return privatePublicPairs;
             }

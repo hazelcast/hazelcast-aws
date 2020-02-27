@@ -24,5 +24,4 @@ public class Environment {
     public String getEnvVar(String name) {
         return System.getenv(name);
     }
-
 }

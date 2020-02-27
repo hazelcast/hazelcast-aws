@@ -44,7 +44,7 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     private static final ILogger LOGGER = Logger.getLogger(EcsClientStrategy.class);
 
-    private String endpointDomain;
+    private final String endpointDomain;
 
     EcsClientStrategy(AwsConfig awsConfig, String endpoint) {
         super(awsConfig, endpoint);
@@ -74,13 +74,13 @@ class EcsClientStrategy extends AwsClientStrategy {
 
     private Map<String, String> retrieveAndParseMetadata() {
         if (runningOnEcs()) {
-            Map<String, String> metadata = MetadataUtils.retrieveContainerMetadataFromEnv(
+            return MetadataUtils.retrieveContainerMetadataFromEnv(
                     getEnvironment(),
                     awsConfig.getConnectionTimeoutSeconds(),
                     awsConfig.getConnectionRetries());
-            return metadata;
         }
-        return Collections.EMPTY_MAP;
+
+        return Collections.emptyMap();
     }
 
 
