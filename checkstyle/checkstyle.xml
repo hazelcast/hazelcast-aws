@@ -57,9 +57,6 @@
         <property name="file" value="${main.basedir}/checkstyle/suppressions.xml"/>
     </module>
 
-    <!-- Enable suppression of file contents using //CHECKSTYLE:[ON|OFF] comments -->
-    <module name="SuppressionCommentFilter"/>
-
     <!-- Enable the suppression annotation @SuppressWarnings("checkstyle:lowercasecheckname"} -->
     <module name="SuppressWarningsFilter"/>
 
