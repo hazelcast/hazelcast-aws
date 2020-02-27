@@ -1,4 +1,4 @@
-# Hazelcast Discovery Plugin for AWS
+# THIS IS A TEST
 
 This repository contains a plugin which provides the automatic Hazelcast member discovery in the Amazon Web Services Platform.
 
