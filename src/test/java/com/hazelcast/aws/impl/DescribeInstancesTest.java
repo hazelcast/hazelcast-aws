@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static com.hazelcast.aws.utility.MetadataUtils.EC2_INSTANCE_METADATA_URI;
@@ -62,9 +63,8 @@ public class DescribeInstancesTest {
         + "\",\n" + "          \"Expiration\" : \"2016-10-04T18:19:39Z\"\n" + "        }\n";
     private static final String HOST_HEADER = "ec2.amazonaws.com";
 
-    private static InputStream toInputStream(String s)
-      throws Exception {
-        return new ByteArrayInputStream(s.getBytes("UTF-8"));
+    private static InputStream toInputStream(String s) {
+        return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
     }
 
     private static AwsConfig.Builder predefinedAwsConfigBuilder() {
