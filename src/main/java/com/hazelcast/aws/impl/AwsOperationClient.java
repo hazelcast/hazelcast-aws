@@ -58,15 +58,14 @@ import static com.hazelcast.internal.nio.IOUtil.closeResource;
  */
 public abstract class AwsOperationClient {
 
-    private static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
-
-
     /**
      * URI to fetch container credentials (when IAM role is enabled)
      * <p>
      * see http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
      */
     static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
+
+    private static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
 
     private static final ILogger LOGGER = Logger.getLogger(AwsOperationClient.class);
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;

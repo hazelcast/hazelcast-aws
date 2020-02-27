@@ -16,7 +16,6 @@
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.Constants;
 import com.hazelcast.aws.utility.Aws4RequestSignerUtils;
 import com.hazelcast.internal.util.QuickMath;
 import com.hazelcast.logging.ILogger;
@@ -138,7 +137,8 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
 
     /* Task 2 */
     private String createStringToSign(String canonicalRequest) {
-        return String.format("%s%s%s%s%s%s%s", SIGNATURE_METHOD_V4, NEW_LINE, timestamp, NEW_LINE, getCredentialScope(), NEW_LINE, hash(canonicalRequest));
+        return String.format("%s%s%s%s%s%s%s", SIGNATURE_METHOD_V4, NEW_LINE, timestamp, NEW_LINE,
+          getCredentialScope(), NEW_LINE, hash(canonicalRequest));
     }
 
     /* Task 3 */
@@ -235,7 +235,8 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     }
 
     private static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
-        return String.format("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s", SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
+        return String.format("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+          SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
     }
 
 }
