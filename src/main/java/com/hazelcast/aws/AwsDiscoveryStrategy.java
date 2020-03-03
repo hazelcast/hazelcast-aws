@@ -15,6 +15,7 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.utility.MetadataUtil;
 import com.hazelcast.cluster.Address;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.properties.PropertyDefinition;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.AwsProperties.ACCESS_KEY;
 import static com.hazelcast.aws.AwsProperties.CONNECTION_RETRIES;
@@ -57,6 +59,10 @@ public class AwsDiscoveryStrategy
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
+    private static final String AWS_REGION_REGEX
+      = "\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)";
+
+    private static final Pattern AWS_REGION_PATTERN = Pattern.compile(AWS_REGION_REGEX);
 
     private final AwsConfig awsConfig;
     private final AwsClient awsClient;
@@ -82,7 +88,7 @@ public class AwsDiscoveryStrategy
         this.awsClient = client;
     }
 
-    private AwsConfig getAwsConfig()
+    AwsConfig getAwsConfig()
       throws IllegalArgumentException {
         final AwsConfig config = AwsConfig.builder().setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
           .setRegion(getOrDefault(REGION.getDefinition(), DEFAULT_REGION))
@@ -98,6 +104,18 @@ public class AwsDiscoveryStrategy
 
         reviewConfiguration(config);
         return config;
+    }
+
+    String getCurrentRegion(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
+        String availabilityZone = MetadataUtil.getAvailabilityZone(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
+        return availabilityZone.substring(0, availabilityZone.length() - 1);
+    }
+
+    void validateRegion(String region) {
+        if (!AWS_REGION_PATTERN.matcher(region).matches()) {
+            String message = String.format("The provided region %s is not a valid AWS region.", region);
+            throw new InvalidConfigurationException(message);
+        }
     }
 
     /**

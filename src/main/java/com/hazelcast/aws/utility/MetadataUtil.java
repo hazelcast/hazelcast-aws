@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public final class MetadataUtil {
@@ -106,16 +105,11 @@ public final class MetadataUtil {
      */
     public static String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
                                                  int retries, final int readTimeoutInSeconds) {
-        return RetryUtils.retry(new Callable<String>() {
-            @Override
-            public String call() {
-                return retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds);
-            }
-        }, retries);
+        return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds), retries);
     }
 
-    public static String getAvailabilityZone(int connectionTimeoutSeconds, int connectionRetries) {
+    public static String getAvailabilityZone(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
         String uri = INSTANCE_METADATA_URI.concat(AVAILABILITY_ZONE_URI);
-        return retrieveMetadataFromURI(uri, connectionTimeoutSeconds, connectionRetries);
+        return retrieveMetadataFromURI(uri, connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
     }
 }
