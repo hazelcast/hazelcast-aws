@@ -60,7 +60,8 @@ public class AwsDiscoveryStrategy
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
 
-    private static final Pattern AWS_REGION_PATTERN = Pattern.compile("\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
+    private static final Pattern AWS_REGION_PATTERN = Pattern.compile(
+      "\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
 
     private final AwsConfig awsConfig;
     private final AwsClient awsClient;
@@ -105,7 +106,8 @@ public class AwsDiscoveryStrategy
     }
 
     String getCurrentRegion(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
-        String availabilityZone = MetadataUtil.getAvailabilityZone(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
+        String availabilityZone = MetadataUtil.getAvailabilityZone(
+          connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
         return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 
