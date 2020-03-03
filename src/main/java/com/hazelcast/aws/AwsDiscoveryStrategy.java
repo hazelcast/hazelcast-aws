@@ -59,10 +59,8 @@ public class AwsDiscoveryStrategy
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
-    private static final String AWS_REGION_REGEX
-      = "\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)";
 
-    private static final Pattern AWS_REGION_PATTERN = Pattern.compile(AWS_REGION_REGEX);
+    private static final Pattern AWS_REGION_PATTERN = Pattern.compile("\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
 
     private final AwsConfig awsConfig;
     private final AwsClient awsClient;
