@@ -128,8 +128,7 @@ public abstract class AwsOperationClient {
 
         Aws4RequestSigner requestSigner = getRequestSigner();
 
-        final Map<String, String> enrichedHeaders = new HashMap<String, String>();
-        enrichedHeaders.putAll(awsOperation.getHeaders());
+        final Map<String, String> enrichedHeaders = new HashMap<>(awsOperation.getHeaders());
         enrichedHeaders.put("X-Amz-Date", requestSigner.getTimestamp());
 
         requestSigner.sign(awsOperation.getAttributes(), enrichedHeaders, awsOperation.getBody(), httpMethod);
@@ -235,12 +234,7 @@ public abstract class AwsOperationClient {
      * @return the response <code>InputStream</code>
      */
     private InputStream callServiceWithRetries(Map<String, String> attributes, Map<String, String> headers, String body) {
-        return RetryUtils.retry(new Callable<InputStream>() {
-            @Override
-            public InputStream call() throws Exception {
-                return callService(attributes, headers, body);
-            }
-        }, awsConfig.getConnectionRetries());
+        return RetryUtils.retry(() -> callService(attributes, headers, body), awsConfig.getConnectionRetries());
     }
 
     /**
@@ -312,8 +306,7 @@ public abstract class AwsOperationClient {
         SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         String timeStamp = df.format(new Date());
-        Aws4RequestSigner rs = new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL
+        return new Aws4RequestSignerImpl(awsConfig, awsCredentials, timeStamp, service, endpointURL
           .getHost());
-        return rs;
     }
 }

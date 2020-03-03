@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public final class MetadataUtil {
@@ -67,11 +68,11 @@ public final class MetadataUtil {
             URLConnection url = new URL(uri).openConnection();
             url.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds));
             url.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeoutInSeconds));
-            is = new InputStreamReader(url.getInputStream(), "UTF-8");
+            is = new InputStreamReader(url.getInputStream(), StandardCharsets.UTF_8);
             reader = new BufferedReader(is);
             String resp;
             while ((resp = reader.readLine()) != null) {
-                response = response.append(resp);
+                response.append(resp);
             }
             return response.toString();
         } catch (IOException io) {

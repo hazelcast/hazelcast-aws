@@ -24,6 +24,7 @@ import com.hazelcast.logging.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -110,12 +111,10 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         String payloadHash;
         try {
             MessageDigest md = MessageDigest.getInstance(ALGORITHM);
-            md.update(in.getBytes(UTF_8));
+            md.update(in.getBytes(StandardCharsets.UTF_8));
             byte[] digest = md.digest();
             payloadHash = QuickMath.bytesToHex(digest);
         } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (UnsupportedEncodingException e) {
             return null;
         }
         return payloadHash;
@@ -151,30 +150,26 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
         try {
             String key = "AWS4" + signKey;
             Mac mDate = Mac.getInstance(HMAC_SHA256);
-            SecretKeySpec skDate = new SecretKeySpec(key.getBytes(UTF_8), HMAC_SHA256);
+            SecretKeySpec skDate = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), HMAC_SHA256);
             mDate.init(skDate);
-            byte[] kDate = mDate.doFinal(dateStamp.getBytes(UTF_8));
+            byte[] kDate = mDate.doFinal(dateStamp.getBytes(StandardCharsets.UTF_8));
 
             Mac mRegion = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skRegion = new SecretKeySpec(kDate, HMAC_SHA256);
             mRegion.init(skRegion);
-            byte[] kRegion = mRegion.doFinal(config.getRegion().getBytes(UTF_8));
+            byte[] kRegion = mRegion.doFinal(config.getRegion().getBytes(StandardCharsets.UTF_8));
 
             Mac mService = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skService = new SecretKeySpec(kRegion, HMAC_SHA256);
             mService.init(skService);
-            byte[] kService = mService.doFinal(this.service.getBytes(UTF_8));
+            byte[] kService = mService.doFinal(this.service.getBytes(StandardCharsets.UTF_8));
 
             Mac mSigning = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skSigning = new SecretKeySpec(kService, HMAC_SHA256);
             mSigning.init(skSigning);
 
-            return mSigning.doFinal("aws4_request".getBytes(UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (InvalidKeyException e) {
-            return null;
-        } catch (UnsupportedEncodingException e) {
+            return mSigning.doFinal("aws4_request".getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             return null;
         }
     }
@@ -185,12 +180,8 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
             Mac signMac = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec signKS = new SecretKeySpec(signingKey, HMAC_SHA256);
             signMac.init(signKS);
-            signature = signMac.doFinal(stringToSign.getBytes(UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (InvalidKeyException e) {
-            return null;
-        } catch (UnsupportedEncodingException e) {
+            signature = signMac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             return null;
         }
         return QuickMath.bytesToHex(signature);
@@ -226,7 +217,7 @@ public class Aws4RequestSignerImpl implements Aws4RequestSigner {
     }
 
     private Map<String, String> getSortedLowercaseHeaders() {
-        Map<String, String> sortedHeaders = new TreeMap<String, String>();
+        Map<String, String> sortedHeaders = new TreeMap<>();
         for (Map.Entry<String, String> e : headers.entrySet()) {
             sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
         }

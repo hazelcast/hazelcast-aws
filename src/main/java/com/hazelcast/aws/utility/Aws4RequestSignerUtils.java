@@ -46,7 +46,7 @@ public final class Aws4RequestSignerUtils {
     }
 
     private static List<String> getListOfEntries(Map<String, String> entries) {
-        List<String> components = new ArrayList<String>();
+        List<String> components = new ArrayList<>();
         for (String key : entries.keySet()) {
             addComponents(components, entries, key);
         }

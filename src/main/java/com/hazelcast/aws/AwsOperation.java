@@ -26,10 +26,10 @@ import java.util.Map;
  */
 public abstract class AwsOperation<T> {
 
-    private final Map<String, String> attributes = new HashMap<String, String>();
-    private final Map<String, String> headers = new HashMap<String, String>();
+    private final Map<String, String> attributes = new HashMap<>();
+    private final Map<String, String> headers = new HashMap<>();
     private String body = "";
-    private AwsResponseUnmarshaller<T> unmarshaller;
+    private final AwsResponseUnmarshaller<T> unmarshaller;
 
     public AwsOperation(AwsResponseUnmarshaller<T> unmarshaller) {
         this.unmarshaller = unmarshaller;

@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class Filter {
 
-    private Map<String, String> filters = new HashMap<String, String>();
+    private final Map<String, String> filters = new HashMap<>();
 
     /**
      * Filter index, each filter need to have a sequential index, starting from 1.

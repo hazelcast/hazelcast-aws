@@ -173,7 +173,7 @@ public class AwsDiscoveryStrategy
                 LOGGER.finest(sb.toString());
             }
 
-            final ArrayList<DiscoveryNode> nodes = new ArrayList<DiscoveryNode>(privatePublicIpAddressPairs.size());
+            final ArrayList<DiscoveryNode> nodes = new ArrayList<>(privatePublicIpAddressPairs.size());
             for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
                 for (int port = awsConfig.getHzPort().getFromPort(); port <= awsConfig.getHzPort().getToPort(); port++) {
                     nodes.add(new SimpleDiscoveryNode(new Address(entry.getKey(), port), new Address(entry.getValue(), port)));

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -75,7 +76,7 @@ public final class MetadataUtils {
         try {
             URLConnection url = new URL(uri).openConnection();
             url.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(timeoutInSeconds));
-            is = new InputStreamReader(url.getInputStream(), "UTF-8");
+            is = new InputStreamReader(url.getInputStream(), StandardCharsets.UTF_8);
             reader = new BufferedReader(is);
             String resp;
             while ((resp = reader.readLine()) != null) {
@@ -111,12 +112,7 @@ public final class MetadataUtils {
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
     public static String retrieveMetadataFromURI(final String uri, final int timeoutInSeconds, int retries) {
-        return RetryUtils.retry(new Callable<String>() {
-            @Override
-            public String call() {
-                return retrieveMetadataFromURI(uri, timeoutInSeconds);
-            }
-        }, retries);
+        return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, timeoutInSeconds), retries);
     }
 
     public static String getDefaultIamRole(final int timeoutInSeconds, int retries) {
