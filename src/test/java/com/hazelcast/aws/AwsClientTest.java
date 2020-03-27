@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastParallelClassRunner.class)
-@Category({QuickTest.class, ParallelJVMTest.class})
+@Category( {QuickTest.class, ParallelJVMTest.class})
 public class AwsClientTest {
 
     private static AwsConfig.Builder predefinedAwsConfigBuilder() {
@@ -35,27 +35,49 @@ public class AwsClientTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAwsClient_whenNoAwsConfig() {
-        new AWSClient(null);
+        new AwsClient(null, null);
     }
 
     @Test
-    public void testAwsClient_getEndPoint() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").build();
-        AWSClient awsClient = new AWSClient(awsConfig);
-        assertEquals("ec2.us-east-1.amazonaws.com", awsClient.getEndpoint());
-    }
+    public void resolveEndpointEmpty() {
+        // given
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setHostHeader("ec2.amazonaws.com")
+            .setRegion("us-east-1").build();
 
-    @Test
-    public void testAwsClient_withDifferentHostHeader() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").setHostHeader("ec2.amazonaws.com.cn")
-                                                          .setRegion("cn-north-1").build();
-        AWSClient awsClient = new AWSClient(awsConfig);
-        assertEquals("ec2.cn-north-1.amazonaws.com.cn", awsClient.getEndpoint());
+        // when
+        String endpoint = AwsClient.resolveEndpoint(awsConfig);
+
+        // then
+        assertEquals("ec2.us-east-1.amazonaws.com", endpoint);
     }
 
     @Test(expected = InvalidConfigurationException.class)
-    public void testAwsClient_withInvalidHostHeader() {
-        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("test").setHostHeader("ec3.amazonaws.com.cn").build();
-        new AWSClient(awsConfig);
+    public void resolveEndpointInvalidHostHeader() {
+        // given
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setHostHeader("invalid.host.header")
+            .setRegion("us-east-1").build();
+
+        // when
+        AwsClient.resolveEndpoint(awsConfig);
+
+        // then
+        // throws exception
+    }
+
+    @Test
+    public void resolveEndpointEmptyRegion() {
+        // given
+        String hostHeader = "ec2.amazonaws";
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setHostHeader(hostHeader)
+            .setRegion(null).build();
+
+        // when
+        String endpoint = AwsClient.resolveEndpoint(awsConfig);
+
+        // then
+        assertEquals(hostHeader, endpoint);
     }
 }

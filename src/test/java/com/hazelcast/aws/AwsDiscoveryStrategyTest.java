@@ -25,7 +25,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import static com.hazelcast.spi.partitiongroup.PartitionGroupMetaData.PARTITION_GROUP_ZONE;
 import static java.util.Collections.emptyList;
@@ -39,11 +42,11 @@ import static org.mockito.Mockito.spy;
 @RunWith(HazelcastParallelClassRunner.class)
 @Category(QuickTest.class)
 public class AwsDiscoveryStrategyTest
-        extends HazelcastTestSupport {
+    extends HazelcastTestSupport {
 
-    private final AWSClient mockClient = mock(AWSClient.class);
+    private final AwsClient mockClient = mock(AwsClient.class);
     private final AwsDiscoveryStrategy awsDiscoveryStrategy = new AwsDiscoveryStrategy(getProperties(),
-            mockClient);
+        mockClient);
 
     private Map<String, Comparable> getProperties() {
         Map<String, Comparable> properties = new HashMap<>();
@@ -77,7 +80,7 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesNoAddresses()
-            throws Exception {
+        throws Exception {
         // given
         given(mockClient.getAddresses()).willReturn(Collections.<String, String>emptyMap());
 
@@ -90,7 +93,7 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesOneAddress()
-            throws Exception {
+        throws Exception {
         // given
         String privateAddress = "10.0.0.1";
         String publicAddress = "156.24.63.1";
@@ -113,7 +116,7 @@ public class AwsDiscoveryStrategyTest
 
     @Test
     public void discoverNodesOneAddressOnePort()
-            throws Exception {
+        throws Exception {
         // given
         String privateAddress = "10.0.0.1";
         String publicAddress = "156.24.63.1";

@@ -32,8 +32,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
-import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
+import static com.hazelcast.aws.AwsMetadataApi.IAM_SECURITY_CREDENTIALS_URI;
+import static com.hazelcast.aws.AwsMetadataApi.METADATA_ENDPOINT;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -73,7 +73,7 @@ public class DescribeInstancesTest {
         Environment mockedEnv = mock(Environment.class);
         when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 
-        final String uri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
+        final String uri = METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
 
         DescribeInstances descriptor = spy(new DescribeInstances(predefinedAwsConfigBuilder().build()));
         doReturn("").when(descriptor).retrieveRoleFromURI(uri);
@@ -88,9 +88,9 @@ public class DescribeInstancesTest {
         when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 
         final String defaultIamRoleName = "defaultIamRole";
-        final String uri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
+        final String uri = METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
 
-        final String roleUri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI + defaultIamRoleName;
+        final String roleUri = METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI + defaultIamRoleName;
 
         // test when <iam-role>DEFAULT</iam-role>
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("DEFAULT").build();
@@ -132,7 +132,7 @@ public class DescribeInstancesTest {
     public void test_whenIamRoleExistsInConfig()
             throws IOException {
         final String someRole = "someRole";
-        final String uri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI + someRole;
+        final String uri = METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI + someRole;
 
         AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole(someRole).build();
 
@@ -150,7 +150,7 @@ public class DescribeInstancesTest {
             throws IOException {
         final String ecsEnvVarCredsUri = "someURL";
         final String uri = DescribeInstances.IAM_TASK_ROLE_ENDPOINT + ecsEnvVarCredsUri;
-        final String defaultRoleUri = INSTANCE_METADATA_URI + IAM_SECURITY_CREDENTIALS_URI;
+        final String defaultRoleUri = METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
 
         Environment mockedEnv = mock(Environment.class);
         when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);

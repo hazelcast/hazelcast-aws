@@ -81,7 +81,7 @@ public enum AwsProperties {
     CONNECTION_TIMEOUT_SECONDS("connection-timeout-seconds", INTEGER, true),
 
     /**
-     * Number of retries while connecting to AWS Services. Its default value is 10.
+     * Number of retries while connecting to AWS Services. Its default value is 3.
      * <p>
      * Hazelcast AWS plugin uses two AWS services: Describe Instances and EC2 Instance Metadata.
      */

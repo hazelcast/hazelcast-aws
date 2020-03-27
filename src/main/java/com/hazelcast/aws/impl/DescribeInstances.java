@@ -20,7 +20,7 @@ import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
 import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.MetadataUtil;
+import com.hazelcast.aws.AwsMetadataApi;
 import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.json.Json;
@@ -37,15 +37,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.utility.MetadataUtil.IAM_SECURITY_CREDENTIALS_URI;
-import static com.hazelcast.aws.utility.MetadataUtil.INSTANCE_METADATA_URI;
+import static com.hazelcast.aws.AwsMetadataApi.IAM_SECURITY_CREDENTIALS_URI;
+import static com.hazelcast.aws.AwsMetadataApi.METADATA_ENDPOINT;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static com.hazelcast.internal.nio.IOUtil.closeResource;
@@ -71,8 +70,7 @@ public class DescribeInstances {
     private String endpoint;
     private Map<String, String> attributes = new HashMap<String, String>();
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint)
-            throws IOException {
+    public DescribeInstances(AwsConfig awsConfig, String endpoint) {
         this.awsConfig = awsConfig;
         this.endpoint = endpoint;
     }
@@ -120,14 +118,14 @@ public class DescribeInstances {
 
     private String getDefaultIamRole()
             throws IOException {
-        String uri = INSTANCE_METADATA_URI.concat(IAM_SECURITY_CREDENTIALS_URI);
+        String uri = METADATA_ENDPOINT.concat(IAM_SECURITY_CREDENTIALS_URI);
         return retrieveRoleFromURI(uri);
     }
 
     private void fillKeysFromIamRole() {
         try {
             String query = IAM_SECURITY_CREDENTIALS_URI.concat(awsConfig.getIamRole());
-            String uri = INSTANCE_METADATA_URI.concat(query);
+            String uri = METADATA_ENDPOINT.concat(query);
             String json = retrieveRoleFromURI(uri);
             parseAndStoreRoleCreds(json);
         } catch (Exception io) {
@@ -166,7 +164,7 @@ public class DescribeInstances {
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
     String retrieveRoleFromURI(String uri) {
-        return MetadataUtil
+        return new AwsMetadataApi()
                 .retrieveMetadataFromURI(uri,
                         awsConfig.getConnectionTimeoutSeconds(),
                         awsConfig.getConnectionRetries(),
@@ -252,8 +250,7 @@ public class DescribeInstances {
      * @return map from private to public IP or empty map in case of failed response unmarshalling
      * @throws Exception if there is an exception invoking the service
      */
-    public Map<String, String> execute()
-            throws Exception {
+    public Map<String, String> execute() throws IOException {
         if (isNotEmpty(awsConfig.getIamRole()) || isEmpty(awsConfig.getAccessKey())) {
             fillKeysFromIamRoles();
         }
@@ -271,15 +268,8 @@ public class DescribeInstances {
         }
     }
 
-    private InputStream callServiceWithRetries(final String endpoint)
-            throws Exception {
-        return RetryUtils.retry(new Callable<InputStream>() {
-            @Override
-            public InputStream call()
-                    throws Exception {
-                return callService(endpoint);
-            }
-        }, awsConfig.getConnectionRetries());
+    private InputStream callServiceWithRetries(final String endpoint) {
+        return RetryUtils.retry(() -> callService(endpoint), awsConfig.getConnectionRetries());
     }
 
     // visible for testing
