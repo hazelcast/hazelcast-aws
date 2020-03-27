@@ -17,6 +17,8 @@ package com.hazelcast.aws;
 
 import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.internal.json.Json;
+import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -33,31 +35,53 @@ import java.util.concurrent.TimeUnit;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">EC2 Instance Metatadata</a>
  */
 public final class AwsMetadataApi {
-    public static final String METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data/";
+    public static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
+    public static final String ECS_METADATA_ENDPOINT = "http://169.254.170.2";
 
-    private final String endpoint;
+    private final String ec2Endpoint;
+    private final String ecsEndpoint;
+    private final AwsConfig awsConfig;
 
     /**
      * Post-fix URI to fetch IAM role details
      */
-    public static final String IAM_SECURITY_CREDENTIALS_URI = "iam/security-credentials/";
+    public static final String IAM_SECURITY_CREDENTIALS_URI = "/iam/security-credentials/";
 
     /**
      * Post-fix URI to fetch availability-zone info.
      */
-    private static final String AVAILABILITY_ZONE_URI = "placement/availability-zone/";
+    private static final String AVAILABILITY_ZONE_URI = "/placement/availability-zone/";
 
     private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);
 
-    public AwsMetadataApi() {
-        this.endpoint = METADATA_ENDPOINT;
+    /**
+     * For test purposes only.
+     */
+    AwsMetadataApi(String ec2Endpoint, String ecsEndpoint) {
+        this.ec2Endpoint = ec2Endpoint;
+        this.ecsEndpoint = ecsEndpoint;
+        this.awsConfig = null;
     }
 
     /**
      * For test purposes only.
      */
-    AwsMetadataApi(String endpoint) {
-        this.endpoint = endpoint;
+    AwsMetadataApi(String ec2Endpoint, String ecsEndpoint, AwsConfig awsConfig) {
+        this.ec2Endpoint = ec2Endpoint;
+        this.ecsEndpoint = ecsEndpoint;
+        this.awsConfig = awsConfig;
+    }
+
+    public AwsMetadataApi(AwsConfig awsConfig) {
+        this.ec2Endpoint = EC2_METADATA_ENDPOINT;
+        this.ecsEndpoint = ECS_METADATA_ENDPOINT;
+        this.awsConfig = awsConfig;
+    }
+
+    AwsMetadataApi() {
+        this.ec2Endpoint = EC2_METADATA_ENDPOINT;
+        this.ecsEndpoint = ECS_METADATA_ENDPOINT;
+        this.awsConfig = null;
     }
 
     /**
@@ -113,13 +137,52 @@ public final class AwsMetadataApi {
      * @param readTimeoutInSeconds    read timeout for the AWS service call
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    public String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
+    private String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
                                           final int retries, final int readTimeoutInSeconds) {
         return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds), retries);
     }
 
-    String getAvailabilityZone(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
-        String uri = endpoint.concat(AVAILABILITY_ZONE_URI);
+    private String retrieveMetadataFromURI(String uri) {
+        return retrieveMetadataFromURI(uri,
+            awsConfig.getConnectionTimeoutSeconds(),
+            awsConfig.getConnectionRetries(),
+            awsConfig.getReadTimeoutSeconds());
+    }
+
+    String availabilityZone(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
+        String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
         return retrieveMetadataFromURI(uri, connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
+    }
+
+    String availabilityZone() {
+        String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
+        return retrieveMetadataFromURI(uri);
+    }
+
+    public String defaultIamRole() {
+        String uri = ec2Endpoint.concat(IAM_SECURITY_CREDENTIALS_URI);
+        return retrieveMetadataFromURI(uri);
+    }
+
+    public AwsCredentials credentials(String iamRole) {
+        String uri = ec2Endpoint.concat(IAM_SECURITY_CREDENTIALS_URI).concat(iamRole);
+        String response = retrieveMetadataFromURI(uri);
+        return parseAwsCredentials(response);
+    }
+
+    public AwsCredentials credentialsFromEcs(String relativeUrl) {
+        String uri = ecsEndpoint + relativeUrl;
+        String response = retrieveMetadataFromURI(uri);
+        return parseAwsCredentials(response);
+    }
+
+    private static AwsCredentials parseAwsCredentials(String response) {
+        JsonObject role = Json.parse(response).asObject();
+        AwsCredentials awsCredentials = new AwsCredentials();
+        awsCredentials.setAccessKey(role.getString("AccessKeyId", null));
+        awsCredentials.setSecretKey(role.getString("SecretAccessKey", null));
+        awsCredentials.setToken(role.getString("Token", null));
+
+        return awsCredentials;
     }
 }

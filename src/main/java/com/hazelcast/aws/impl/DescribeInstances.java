@@ -16,6 +16,7 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
+import com.hazelcast.aws.AwsCredentials;
 import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
@@ -43,8 +44,6 @@ import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.impl.Constants.DOC_VERSION;
 import static com.hazelcast.aws.impl.Constants.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.AwsMetadataApi.IAM_SECURITY_CREDENTIALS_URI;
-import static com.hazelcast.aws.AwsMetadataApi.METADATA_ENDPOINT;
 import static com.hazelcast.aws.utility.StringUtil.isEmpty;
 import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
 import static com.hazelcast.internal.nio.IOUtil.closeResource;
@@ -59,8 +58,6 @@ public class DescribeInstances {
      * <p>
      * see http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
      */
-    public static final String IAM_TASK_ROLE_ENDPOINT = "http://169.254.170.2";
-
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
     private static final String UTF8_ENCODING = "UTF-8";
@@ -104,7 +101,7 @@ public class DescribeInstances {
     void fillKeysFromIamRoles()
             throws IOException {
         if (isEmpty(awsConfig.getIamRole()) || "DEFAULT".equals(awsConfig.getIamRole())) {
-            String defaultIAMRole = getDefaultIamRole();
+            String defaultIAMRole = new AwsMetadataApi(awsConfig).defaultIamRole();
             awsConfig.setIamRole(defaultIAMRole);
         }
 
@@ -116,18 +113,12 @@ public class DescribeInstances {
 
     }
 
-    private String getDefaultIamRole()
-            throws IOException {
-        String uri = METADATA_ENDPOINT.concat(IAM_SECURITY_CREDENTIALS_URI);
-        return retrieveRoleFromURI(uri);
-    }
-
     private void fillKeysFromIamRole() {
         try {
-            String query = IAM_SECURITY_CREDENTIALS_URI.concat(awsConfig.getIamRole());
-            String uri = METADATA_ENDPOINT.concat(query);
-            String json = retrieveRoleFromURI(uri);
-            parseAndStoreRoleCreds(json);
+            AwsCredentials awsCredentials = new AwsMetadataApi(awsConfig).credentials(awsConfig.getIamRole());
+            awsConfig.setAccessKey(awsCredentials.getAccessKey());
+            awsConfig.setSecretKey(awsCredentials.getSecretKey());
+            attributes.put("X-Amz-Security-Token", awsCredentials.getToken());
         } catch (Exception io) {
             throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsConfig.getIamRole(),
                     io);
@@ -138,51 +129,20 @@ public class DescribeInstances {
             throws IOException {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
-        String uri = env.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
-        if (uri == null) {
+        String relativePath = env.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
+        if (relativePath == null) {
             throw new IllegalArgumentException("Could not acquire credentials! "
                     + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
         }
-        uri = IAM_TASK_ROLE_ENDPOINT + uri;
-
-        String json = "";
         try {
-            json = retrieveRoleFromURI(uri);
-            parseAndStoreRoleCreds(json);
+            AwsCredentials awsCredentials = new AwsMetadataApi(awsConfig).credentialsFromEcs(relativePath);
+            awsConfig.setAccessKey(awsCredentials.getAccessKey());
+            awsConfig.setSecretKey(awsCredentials.getSecretKey());
+            attributes.put("X-Amz-Security-Token", awsCredentials.getToken());
         } catch (Exception io) {
             throw new InvalidConfigurationException(
-                    "Unable to retrieve credentials from IAM Task Role. " + "URI: " + uri + ". \n HTTP Response content: " + json,
-                    io);
+                    "Unable to retrieve credentials from IAM Task Role. " + "URI: " + relativePath);
         }
-    }
-
-    /**
-     * This is a helper method that simply performs the HTTP request to retrieve the role, from a given URI.
-     * (It allows us to cleanly separate the network calls out of our main code logic, so we can mock in our UT.)
-     *
-     * @param uri the full URI where a `GET` request will retrieve the role information, represented as JSON.
-     * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
-     */
-    String retrieveRoleFromURI(String uri) {
-        return new AwsMetadataApi()
-                .retrieveMetadataFromURI(uri,
-                        awsConfig.getConnectionTimeoutSeconds(),
-                        awsConfig.getConnectionRetries(),
-                        awsConfig.getReadTimeoutSeconds()
-                );
-    }
-
-    /**
-     * This helper method is responsible for just parsing the content of the HTTP response and
-     * storing the access keys and token it finds there.
-     *
-     * @param json The JSON representation of the IAM (Task) Role.
-     */
-    private void parseAndStoreRoleCreds(String json) {
-        JsonObject roleAsJson = Json.parse(json).asObject();
-        awsConfig.setAccessKey(roleAsJson.getString("AccessKeyId", null));
-        awsConfig.setSecretKey(roleAsJson.getString("SecretAccessKey", null));
-        attributes.put("X-Amz-Security-Token", roleAsJson.getString("Token", null));
     }
 
     /**

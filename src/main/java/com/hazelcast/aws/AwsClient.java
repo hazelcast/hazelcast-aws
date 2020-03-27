@@ -53,11 +53,7 @@ public class AwsClient {
     }
 
     String getAvailabilityZone() {
-        return awsMetadataApi.getAvailabilityZone(
-            awsConfig.getConnectionTimeoutSeconds(),
-            awsConfig.getConnectionRetries(),
-            awsConfig.getReadTimeoutSeconds()
-        );
+        return awsMetadataApi.availabilityZone();
     }
 
 }

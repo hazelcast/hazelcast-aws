@@ -70,7 +70,7 @@ public class AwsDiscoveryStrategy
     AwsDiscoveryStrategy(Map<String, Comparable> properties) {
         super(LOGGER, properties);
         this.awsConfig = getAwsConfig();
-        AwsMetadataApi awsMetadataApi = new AwsMetadataApi();
+        AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
         try {
             this.awsClient = new AwsClient(awsMetadataApi, awsConfig);
         } catch (IllegalArgumentException e) {
@@ -128,7 +128,7 @@ public class AwsDiscoveryStrategy
 
     String getCurrentRegion(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
         String availabilityZone =
-            new AwsMetadataApi().getAvailabilityZone(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
+            new AwsMetadataApi().availabilityZone(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
         return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 
