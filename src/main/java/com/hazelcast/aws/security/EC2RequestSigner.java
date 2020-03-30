@@ -48,19 +48,21 @@ public class EC2RequestSigner {
 
     private String service;
     private Map<String, String> attributes;
+    private String region;
     private String endpoint;
 
-    public EC2RequestSigner(AwsConfig config, String timeStamp, String endpoint) {
+    public EC2RequestSigner(AwsConfig config, String timeStamp, String region, String endpoint) {
         this.config = config;
         this.timestamp = timeStamp;
         this.service = null;
+        this.region = region;
         this.endpoint = endpoint;
     }
 
     public String getCredentialScope() {
         // datestamp/region/service/API_TERMINATOR
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
-        return format("%s/%s/%s/%s", dateStamp, config.getRegion(), this.service, API_TERMINATOR);
+        return format("%s/%s/%s/%s", dateStamp, region, this.service, API_TERMINATOR);
     }
 
     public String getSignedHeaders() {
@@ -107,7 +109,7 @@ public class EC2RequestSigner {
             Mac mRegion = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skRegion = new SecretKeySpec(kDate, HMAC_SHA256);
             mRegion.init(skRegion);
-            byte[] kRegion = mRegion.doFinal(config.getRegion().getBytes(UTF_8));
+            byte[] kRegion = mRegion.doFinal(region.getBytes(UTF_8));
 
             Mac mService = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skService = new SecretKeySpec(kRegion, HMAC_SHA256);
@@ -192,7 +194,7 @@ public class EC2RequestSigner {
     }
 
     public String createFormattedCredential() {
-        return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + config.getRegion() + '/'
+        return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
                 + "ec2/aws4_request";
     }
 }

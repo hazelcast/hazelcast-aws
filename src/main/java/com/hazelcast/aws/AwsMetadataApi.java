@@ -138,7 +138,7 @@ public final class AwsMetadataApi {
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
     private String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
-                                          final int retries, final int readTimeoutInSeconds) {
+                                           final int retries, final int readTimeoutInSeconds) {
         return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds), retries);
     }
 

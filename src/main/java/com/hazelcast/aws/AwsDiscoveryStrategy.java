@@ -59,8 +59,6 @@ public class AwsDiscoveryStrategy
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
-    private static final Pattern AWS_REGION_PATTERN =
-        Pattern.compile("\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
 
     private final AwsConfig awsConfig;
     private final AwsClient awsClient;
@@ -98,45 +96,21 @@ public class AwsDiscoveryStrategy
 
     AwsConfig getAwsConfig()
         throws IllegalArgumentException {
-        Integer connectionRetries = getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES);
-        Integer connectionTimeoutSeconds = getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(),
-            DEFAULT_CONNECTION_TIMEOUT_SECONDS);
-        Integer readTimeoutSeconds = getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS);
-        String region = getOrDefault(REGION.getDefinition(), null);
-        //to prevent unnecessary metadata call when region is set
-        if (region == null) {
-            region = getCurrentRegion(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
-            LOGGER.info("Region not set, using the current region: " + region);
-        }
-
-        validateRegion(region);
 
         final AwsConfig config = AwsConfig.builder().setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
-            .setRegion(region)
+            .setRegion(getOrDefault(REGION.getDefinition(), null))
             .setIamRole(getOrNull(IAM_ROLE))
             .setHostHeader(getOrDefault(HOST_HEADER.getDefinition(), DEFAULT_HOST_HEADER))
             .setSecurityGroupName(getOrNull(SECURITY_GROUP_NAME)).setTagKey(getOrNull(TAG_KEY))
             .setTagValue(getOrNull(TAG_VALUE))
-            .setConnectionTimeoutSeconds(connectionTimeoutSeconds)
-            .setConnectionRetries(connectionRetries)
-            .setReadTimeoutSeconds(readTimeoutSeconds)
+            .setConnectionTimeoutSeconds(getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(),
+                DEFAULT_CONNECTION_TIMEOUT_SECONDS))
+            .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
+            .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
             .setHzPort(new PortRange(getPortRange())).build();
 
         reviewConfiguration(config);
         return config;
-    }
-
-    String getCurrentRegion(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
-        String availabilityZone =
-            new AwsMetadataApi().availabilityZone(connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
-        return availabilityZone.substring(0, availabilityZone.length() - 1);
-    }
-
-    void validateRegion(String region) {
-        if (!AWS_REGION_PATTERN.matcher(region).matches()) {
-            String message = String.format("The provided region %s is not a valid AWS region.", region);
-            throw new InvalidConfigurationException(message);
-        }
     }
 
     /**

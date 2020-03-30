@@ -21,35 +21,56 @@ import com.hazelcast.config.InvalidConfigurationException;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class AwsClient {
+    private static final Pattern AWS_REGION_PATTERN =
+        Pattern.compile("\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
 
-    private final AwsConfig awsConfig;
-    private final String endpoint;
     private final AwsMetadataApi awsMetadataApi;
+    private final AwsConfig awsConfig;
+
+    private final String region;
+    private final String endpoint;
 
     AwsClient(AwsMetadataApi awsMetadataApi, AwsConfig awsConfig) {
         this.awsMetadataApi = awsMetadataApi;
-
-        if (awsConfig == null) {
-            throw new IllegalArgumentException("AwsConfig is required!");
-        }
         this.awsConfig = awsConfig;
-        this.endpoint = resolveEndpoint(awsConfig);
+
+        this.region = regionFromConfigOrMetadataApi();
+        this.endpoint = resolveEndpoint();
+
+        validateRegion(region);
     }
 
-    static String resolveEndpoint(AwsConfig awsConfig) {
+    String resolveEndpoint() {
         if (!awsConfig.getHostHeader().startsWith("ec2.")) {
             throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" prefix");
         }
-        if (StringUtil.isNotEmpty(awsConfig.getRegion())) {
-            return awsConfig.getHostHeader().replace("ec2.", "ec2." + awsConfig.getRegion() + ".");
+        if (StringUtil.isNotEmpty(region)) {
+            return awsConfig.getHostHeader().replace("ec2.", "ec2." + region + ".");
         }
         return awsConfig.getHostHeader();
     }
 
+    private String regionFromConfigOrMetadataApi() {
+        if (StringUtil.isNotEmpty(awsConfig.getRegion())) {
+            return awsConfig.getRegion();
+        }
+
+        String availabilityZone = awsMetadataApi.availabilityZone();
+        return availabilityZone.substring(0, availabilityZone.length() - 1);
+    }
+
+    static void validateRegion(String region) {
+        if (!AWS_REGION_PATTERN.matcher(region).matches()) {
+            String message = String.format("The provided region %s is not a valid AWS region.", region);
+            throw new InvalidConfigurationException(message);
+        }
+    }
+
     Map<String, String> getAddresses() throws IOException {
-        return new DescribeInstances(awsConfig, endpoint).execute();
+        return new DescribeInstances(awsConfig, region, endpoint).execute();
     }
 
     String getAvailabilityZone() {

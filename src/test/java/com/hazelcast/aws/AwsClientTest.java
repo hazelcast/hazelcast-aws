@@ -23,20 +23,61 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 @RunWith(HazelcastParallelClassRunner.class)
 @Category( {QuickTest.class, ParallelJVMTest.class})
 public class AwsClientTest {
 
-    private static AwsConfig.Builder predefinedAwsConfigBuilder() {
-        return AwsConfig.builder().setHostHeader("ec2.amazonaws.com").setRegion("us-east-1").setConnectionTimeoutSeconds(5);
-    }
+//    @Test
+//    public void useCurrentRegion() {
+//        // given
+//        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
+//        doReturn("us-east-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3, 10);
+//        // when
+//        AwsConfig awsConfig = awsDiscoveryStrategy.getAwsConfig();
+//
+//        // then
+//        assertEquals("us-east-1", awsConfig.getRegion());
+//    }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testAwsClient_whenNoAwsConfig() {
-        new AwsClient(null, null);
-    }
+//    @Test
+//    public void validateValidRegion() {
+//        awsDiscoveryStrategy.validateRegion("us-west-1");
+//        awsDiscoveryStrategy.validateRegion("us-gov-east-1");
+//    }
+//
+//    @Test
+//    public void validateInvalidRegion() {
+//        // given
+//        String region = "us-wrong-1";
+//        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
+//
+//        //when
+//        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+//
+//        //then
+//        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
+//        assertEquals(expectedMessage, thrownEx.getMessage());
+//    }
+//
+//    @Test
+//    public void validateInvalidGovRegion() {
+//        // given
+//        String region = "us-gov-wrong-1";
+//        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
+//
+//        // when
+//        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
+//
+//        //then
+//        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
+//        assertEquals(expectedMessage, thrownEx.getMessage());
+//    }
 
     @Test
     public void resolveEndpointEmpty() {
@@ -46,7 +87,7 @@ public class AwsClientTest {
             .setRegion("us-east-1").build();
 
         // when
-        String endpoint = AwsClient.resolveEndpoint(awsConfig);
+        String endpoint = new AwsClient(null, awsConfig).resolveEndpoint();
 
         // then
         assertEquals("ec2.us-east-1.amazonaws.com", endpoint);
@@ -60,24 +101,24 @@ public class AwsClientTest {
             .setRegion("us-east-1").build();
 
         // when
-        AwsClient.resolveEndpoint(awsConfig);
+        new AwsClient(null, awsConfig).resolveEndpoint();
 
         // then
         // throws exception
     }
 
-    @Test
-    public void resolveEndpointEmptyRegion() {
-        // given
-        String hostHeader = "ec2.amazonaws";
-        AwsConfig awsConfig = AwsConfig.builder()
-            .setHostHeader(hostHeader)
-            .setRegion(null).build();
-
-        // when
-        String endpoint = AwsClient.resolveEndpoint(awsConfig);
-
-        // then
-        assertEquals(hostHeader, endpoint);
-    }
+//    @Test
+//    public void resolveEndpointEmptyRegion() {
+//        // given
+//        String hostHeader = "ec2.amazonaws";
+//        AwsConfig awsConfig = AwsConfig.builder()
+//            .setHostHeader(hostHeader)
+//            .setRegion(null).build();
+//
+//        // when
+//        String endpoint = new AwsClient(null, awsConfig).resolveEndpoint();
+//
+//        // then
+//        assertEquals(hostHeader, endpoint);
+//    }
 }

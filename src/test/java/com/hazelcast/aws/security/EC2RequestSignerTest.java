@@ -52,7 +52,7 @@ public class EC2RequestSignerTest {
                                                setAccessKey(TEST_ACCESS_KEY).
                                                setSecretKey(TEST_SECRET_KEY).build();
 
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
+        DescribeInstances di = new DescribeInstances(awsConfig, TEST_REGION, TEST_HOST);
         // Override the attributes map. We need to change values. Not pretty, but
         // no real alternative, and in this case : testing only
 
@@ -63,7 +63,7 @@ public class EC2RequestSignerTest {
         field.set(di, attributes);
 
         // Override private method
-        EC2RequestSigner rs = new EC2RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
+        EC2RequestSigner rs = new EC2RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_REGION, TEST_HOST);
         field = rs.getClass().getDeclaredField("service");
         field.setAccessible(true);
         field.set(rs, "ec2");
@@ -83,7 +83,7 @@ public class EC2RequestSignerTest {
                                                setAccessKey(TEST_ACCESS_KEY).
                                                setSecretKey(TEST_SECRET_KEY).build();
 
-        DescribeInstances di = new DescribeInstances(awsConfig, TEST_HOST);
+        DescribeInstances di = new DescribeInstances(awsConfig, TEST_REGION, TEST_HOST);
         di.getRequestSigner();
 
         Field attributesField = di.getClass().getDeclaredField("attributes");
@@ -91,7 +91,7 @@ public class EC2RequestSignerTest {
         Map<String, String> attributes = (Map<String, String>) attributesField.get(di);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-        EC2RequestSigner actual = new EC2RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_HOST);
+        EC2RequestSigner actual = new EC2RequestSigner(awsConfig, TEST_REQUEST_DATE, TEST_REGION, TEST_HOST);
         attributes.put("X-Amz-Credential", actual.createFormattedCredential());
         String signature = actual.sign(TEST_SERVICE, attributes);
 

@@ -64,11 +64,13 @@ public class DescribeInstances {
 
     private EC2RequestSigner rs;
     private AwsConfig awsConfig;
+    private String region;
     private String endpoint;
     private Map<String, String> attributes = new HashMap<String, String>();
 
-    public DescribeInstances(AwsConfig awsConfig, String endpoint) {
+    public DescribeInstances(AwsConfig awsConfig, String region, String endpoint) {
         this.awsConfig = awsConfig;
+        this.region = region;
         this.endpoint = endpoint;
     }
 
@@ -263,7 +265,7 @@ public class DescribeInstances {
     public EC2RequestSigner getRequestSigner() {
         if (null == rs) {
             String timeStamp = getFormattedTimestamp();
-            rs = new EC2RequestSigner(awsConfig, timeStamp, endpoint);
+            rs = new EC2RequestSigner(awsConfig, timeStamp, region, endpoint);
             attributes.put("Action", this.getClass().getSimpleName());
             attributes.put("Version", DOC_VERSION);
             attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);

@@ -55,18 +55,6 @@ public class AwsDiscoveryStrategyTest
     }
 
     @Test
-    public void useCurrentRegion() {
-        // given
-        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-        doReturn("us-east-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3, 10);
-        // when
-        AwsConfig awsConfig = awsDiscoveryStrategy.getAwsConfig();
-
-        // then
-        assertEquals("us-east-1", awsConfig.getRegion());
-    }
-
-    @Test
     public void discoverLocalMetadata() {
         // given
         given(mockClient.getAvailabilityZone()).willReturn("us-east-1a");
@@ -135,39 +123,5 @@ public class AwsDiscoveryStrategyTest
         assertEquals(new Address(privateAddress, port), node.getPrivateAddress());
         assertEquals(new Address(publicAddress, port), node.getPublicAddress());
         assertFalse(iterator.hasNext());
-    }
-
-    @Test
-    public void validateValidRegion() {
-        awsDiscoveryStrategy.validateRegion("us-west-1");
-        awsDiscoveryStrategy.validateRegion("us-gov-east-1");
-    }
-
-    @Test
-    public void validateInvalidRegion() {
-        // given
-        String region = "us-wrong-1";
-        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-
-        //when
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-
-        //then
-        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-        assertEquals(expectedMessage, thrownEx.getMessage());
-    }
-
-    @Test
-    public void validateInvalidGovRegion() {
-        // given
-        String region = "us-gov-wrong-1";
-        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-
-        // when
-        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-
-        //then
-        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-        assertEquals(expectedMessage, thrownEx.getMessage());
     }
 }

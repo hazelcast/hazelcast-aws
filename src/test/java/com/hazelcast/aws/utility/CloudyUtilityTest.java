@@ -164,7 +164,7 @@ public class CloudyUtilityTest
         BufferedReader br = new BufferedReader(sr);
         AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
                                         .setSecurityGroupName("hazelcast").build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig, "");
+        DescribeInstances describeInstances = new DescribeInstances(awsConfig,"", "");
 
         Map map = describeInstances.parseIamRole(br);
         assertEquals("Success", map.get("Code"));
