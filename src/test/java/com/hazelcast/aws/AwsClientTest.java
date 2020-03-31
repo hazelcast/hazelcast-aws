@@ -87,7 +87,7 @@ public class AwsClientTest {
             .setRegion("us-east-1").build();
 
         // when
-        String endpoint = new AwsClient(null, awsConfig).resolveEndpoint();
+        String endpoint = new AwsClient(null, null, awsConfig).resolveEndpoint();
 
         // then
         assertEquals("ec2.us-east-1.amazonaws.com", endpoint);
@@ -101,7 +101,7 @@ public class AwsClientTest {
             .setRegion("us-east-1").build();
 
         // when
-        new AwsClient(null, awsConfig).resolveEndpoint();
+        new AwsClient(null, null, awsConfig).resolveEndpoint();
 
         // then
         // throws exception

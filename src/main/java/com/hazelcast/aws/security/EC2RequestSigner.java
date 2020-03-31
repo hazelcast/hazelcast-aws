@@ -16,7 +16,8 @@
 package com.hazelcast.aws.security;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.Constants;
+import com.hazelcast.aws.AwsCredentials;
+import com.hazelcast.aws.Constants;
 import com.hazelcast.aws.utility.AwsURLEncoder;
 import com.hazelcast.internal.util.QuickMath;
 
@@ -43,20 +44,19 @@ public class EC2RequestSigner {
     private static final int DATE_LENGTH = 8;
     private static final int LAST_INDEX = 8;
 
-    private final AwsConfig config;
     private final String timestamp;
 
     private String service;
     private Map<String, String> attributes;
     private String region;
     private String endpoint;
+    private AwsCredentials credentials;
 
-    public EC2RequestSigner(AwsConfig config, String timeStamp, String region, String endpoint) {
-        this.config = config;
-        this.timestamp = timeStamp;
-        this.service = null;
+    public EC2RequestSigner(String timestamp, String region, String endpoint, AwsCredentials credentials) {
+        this.timestamp = timestamp;
         this.region = region;
         this.endpoint = endpoint;
+        this.credentials = credentials;
     }
 
     public String getCredentialScope() {
@@ -94,7 +94,7 @@ public class EC2RequestSigner {
 
     /* Task 3 */
     private byte[] deriveSigningKey() {
-        String signKey = config.getSecretKey();
+        String signKey = credentials.getSecretKey();
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
         // this is derived from
         // http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-python
@@ -194,7 +194,7 @@ public class EC2RequestSigner {
     }
 
     public String createFormattedCredential() {
-        return config.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
+        return credentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
                 + "ec2/aws4_request";
     }
 }

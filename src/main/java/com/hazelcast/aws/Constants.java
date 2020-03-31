@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.impl;
+package com.hazelcast.aws;
 
 public final class Constants {
 

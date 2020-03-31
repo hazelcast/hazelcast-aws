@@ -15,30 +15,40 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.aws.utility.StringUtil;
 import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static com.hazelcast.aws.utility.StringUtil.isEmpty;
+
 public class AwsClient {
+    private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
     private static final Pattern AWS_REGION_PATTERN =
         Pattern.compile("\\w{2}(-gov-|-)(north|northeast|east|southeast|south|southwest|west|northwest|central)-\\d(?!.+)");
 
     private final AwsMetadataApi awsMetadataApi;
+    private final AwsDescribeInstancesApi awsDescribeInstancesApi;
     private final AwsConfig awsConfig;
 
     private final String region;
     private final String endpoint;
+    private String iamRole;
 
-    AwsClient(AwsMetadataApi awsMetadataApi, AwsConfig awsConfig) {
+    AwsClient(AwsMetadataApi awsMetadataApi, AwsDescribeInstancesApi awsDescribeInstancesApi, AwsConfig awsConfig) {
         this.awsMetadataApi = awsMetadataApi;
+        this.awsDescribeInstancesApi = awsDescribeInstancesApi;
         this.awsConfig = awsConfig;
 
         this.region = regionFromConfigOrMetadataApi();
         this.endpoint = resolveEndpoint();
+        this.iamRole = resolveIamRole();
 
         validateRegion(region);
     }
@@ -70,7 +80,63 @@ public class AwsClient {
     }
 
     Map<String, String> getAddresses() throws IOException {
-        return new DescribeInstances(awsConfig, region, endpoint).execute();
+        return awsDescribeInstancesApi.addresses(region, endpoint, prepareCredentials());
+    }
+
+    private AwsCredentials prepareCredentials() {
+        if (StringUtil.isNotEmpty(awsConfig.getAccessKey())) {
+            // authenticate using access key and secret key from the configuration
+            return AwsCredentials.builder()
+                .setAccessKey(awsConfig.getAccessKey())
+                .setSecretKey(awsConfig.getSecretKey())
+                .build();
+        }
+
+        if (iamRole == null) {
+            iamRole = resolveIamRole();
+        }
+
+        if (StringUtil.isNotEmpty(iamRole)) {
+            // authenticate using IAM Role
+            LOGGER.info(String.format("Fetching credentials using IAM Role: %s", iamRole));
+            try {
+                return awsMetadataApi.credentials(iamRole);
+            } catch (Exception io) {
+                throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsConfig.getIamRole(),
+                    io);
+            }
+        }
+
+        // authenticate using ECS Endpoint
+        return fetchCredentialsFromEcs();
+    }
+
+    private AwsCredentials fetchCredentialsFromEcs() {
+        // before giving up, attempt to discover whether we're running in an ECS Container,
+        // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
+        String relativePath = getEnvironment().getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME);
+        if (relativePath == null) {
+            throw new IllegalArgumentException("Could not acquire credentials! "
+                + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
+        }
+        try {
+            return awsMetadataApi.credentialsFromEcs(relativePath);
+        } catch (Exception io) {
+            throw new InvalidConfigurationException(
+                "Unable to retrieve credentials from IAM Task Role. " + "URI: " + relativePath);
+        }
+    }
+
+    //Added for testing (mocking) purposes.
+    Environment getEnvironment() {
+        return new Environment();
+    }
+
+    private String resolveIamRole() {
+        if (StringUtil.isNotEmpty(awsConfig.getIamRole()) && !"DEFAULT".equals(awsConfig.getIamRole())) {
+            return awsConfig.getIamRole();
+        }
+        return awsMetadataApi.defaultIamRole();
     }
 
     String getAvailabilityZone() {

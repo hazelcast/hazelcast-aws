@@ -178,11 +178,10 @@ public final class AwsMetadataApi {
 
     private static AwsCredentials parseAwsCredentials(String response) {
         JsonObject role = Json.parse(response).asObject();
-        AwsCredentials awsCredentials = new AwsCredentials();
-        awsCredentials.setAccessKey(role.getString("AccessKeyId", null));
-        awsCredentials.setSecretKey(role.getString("SecretAccessKey", null));
-        awsCredentials.setToken(role.getString("Token", null));
-
-        return awsCredentials;
+        return AwsCredentials.builder()
+            .setAccessKey(role.getString("AccessKeyId", null))
+            .setSecretKey(role.getString("SecretAccessKey", null))
+            .setToken(role.getString("Token", null))
+            .build();
     }
 }

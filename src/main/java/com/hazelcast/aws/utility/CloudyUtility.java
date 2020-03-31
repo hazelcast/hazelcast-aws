@@ -45,7 +45,7 @@ public final class CloudyUtility {
     }
 
     /**
-     * Unmarshal the response from {@link com.hazelcast.aws.impl.DescribeInstances} and return the discovered node map.
+     * Unmarshal the response from {@link com.hazelcast.aws.AwsDescribeInstancesApi} and return the discovered node map.
      * The map contains mappings from private to public IP and all contained nodes match the filtering rules defined by
      * the {@code awsConfig}.
      * If there is an exception while unmarshalling the response, returns an empty map.
@@ -147,7 +147,7 @@ public final class CloudyUtility {
         }
 
         /**
-         * Unmarshal the response from the {@link com.hazelcast.aws.impl.DescribeInstances} service and
+         * Unmarshal the response from the {@link com.hazelcast.aws.AwsDescribeInstancesApi} service and
          * return the map from private to public IP.
          * This method expects that the DOM containing the XML has been positioned at the node containing the addresses.
          *

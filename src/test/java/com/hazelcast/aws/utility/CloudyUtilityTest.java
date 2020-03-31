@@ -16,7 +16,7 @@
 package com.hazelcast.aws.utility;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.impl.DescribeInstances;
+import com.hazelcast.aws.AwsDescribeInstancesApi;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.QuickTest;
@@ -164,9 +164,9 @@ public class CloudyUtilityTest
         BufferedReader br = new BufferedReader(sr);
         AwsConfig awsConfig1 = AwsConfig.builder().setAccessKey("some-access-key").setSecretKey("some-secret-key")
                                         .setSecurityGroupName("hazelcast").build();
-        DescribeInstances describeInstances = new DescribeInstances(awsConfig,"", "");
+        AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig);
 
-        Map map = describeInstances.parseIamRole(br);
+        Map map = awsDescribeInstancesApi.parseIamRole(br);
         assertEquals("Success", map.get("Code"));
         assertEquals("2015-09-06T21:17:26Z", map.get("LastUpdated"));
         assertEquals("AWS-HMAC", map.get("Type"));

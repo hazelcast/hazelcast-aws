@@ -69,8 +69,9 @@ public class AwsDiscoveryStrategy
         super(LOGGER, properties);
         this.awsConfig = getAwsConfig();
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
+        AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig);
         try {
-            this.awsClient = new AwsClient(awsMetadataApi, awsConfig);
+            this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig);
         } catch (IllegalArgumentException e) {
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
@@ -133,10 +134,10 @@ public class AwsDiscoveryStrategy
 
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
                 LOGGER.info("Describe instances will be queried with iam-role, "
-                    + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
+                    + "please make sure given iam-role have ec2:AwsDescribeInstancesApi policy attached.");
             } else {
-                LOGGER.warning("Describe instances will be queried with iam-role assigned to EC2 instance, "
-                    + "please make sure given iam-role have ec2:DescribeInstances policy attached.");
+                LOGGER.info("Describe instances will be queried with iam-role assigned to EC2 instance, "
+                    + "please make sure given iam-role have ec2:AwsDescribeInstancesApi policy attached.");
             }
         } else {
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
