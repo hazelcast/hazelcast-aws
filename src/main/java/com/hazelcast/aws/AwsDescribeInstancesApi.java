@@ -16,9 +16,8 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.exception.AwsConnectionException;
-import com.hazelcast.aws.security.EC2RequestSigner;
 import com.hazelcast.aws.utility.CloudyUtility;
-import com.hazelcast.aws.utility.Environment;
+import com.hazelcast.aws.utility.EC2RequestSigner;
 import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.aws.utility.StringUtil;
 

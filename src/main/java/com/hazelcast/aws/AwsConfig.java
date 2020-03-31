@@ -18,6 +18,8 @@ package com.hazelcast.aws;
 /**
  * AWS Discovery Strategy configuration that corresponds to the properties passed in the Hazelcast configuration and listed in
  * {@link AwsProperties}.
+ * <p>
+ * This class is immutable.
  */
 public final class AwsConfig {
     private final String region;
@@ -29,9 +31,9 @@ public final class AwsConfig {
     private final int connectionRetries;
     private final int readTimeoutSeconds;
     private final PortRange hzPort;
-    private String accessKey;
-    private String secretKey;
-    private String iamRole;
+    private final String accessKey;
+    private final String secretKey;
+    private final String iamRole;
 
     @SuppressWarnings("checkstyle:parameternumber")
     // Constructor has a lot of parameters, but it's private.
@@ -72,16 +74,6 @@ public final class AwsConfig {
         return iamRole;
     }
 
-    /**
-     * Sets {@code iamRole}.
-     *
-     * @deprecated It violates the immutability of {@link AwsConfig}.
-     */
-    @Deprecated
-    public void setIamRole(String iamRole) {
-        this.iamRole = iamRole;
-    }
-
     public String getHostHeader() {
         return hostHeader;
     }
@@ -117,10 +109,10 @@ public final class AwsConfig {
     @Override
     public String toString() {
         return "AwsConfig{" + "accessKey='***', secretKey='***', region='" + region + '\'' + ", iamRole='" + iamRole + '\''
-                + ", hostHeader='" + hostHeader + '\'' + ", securityGroupName='" + securityGroupName + '\'' + ", tagKey='"
-                + tagKey + '\'' + ", tagValue='" + tagValue + '\'' + ", connectionTimeoutSeconds=" + connectionTimeoutSeconds
-                + ", readTimeoutSeconds=" + readTimeoutSeconds + ", connectionRetries=" + connectionRetries
-                + ", hzPort=" + hzPort + '}';
+            + ", hostHeader='" + hostHeader + '\'' + ", securityGroupName='" + securityGroupName + '\'' + ", tagKey='"
+            + tagKey + '\'' + ", tagValue='" + tagValue + '\'' + ", connectionTimeoutSeconds=" + connectionTimeoutSeconds
+            + ", readTimeoutSeconds=" + readTimeoutSeconds + ", connectionRetries=" + connectionRetries
+            + ", hzPort=" + hzPort + '}';
     }
 
     public static class Builder {
@@ -199,7 +191,7 @@ public final class AwsConfig {
 
         public AwsConfig build() {
             return new AwsConfig(accessKey, secretKey, region, iamRole, hostHeader, securityGroupName, tagKey, tagValue,
-                    connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort);
+                connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort);
         }
     }
 }

@@ -17,7 +17,6 @@ package com.hazelcast.aws;
 
 import com.hazelcast.cluster.Address;
 import com.hazelcast.config.InvalidConfigurationException;
-import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.internal.util.StringUtil;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.hazelcast.aws.AwsProperties.ACCESS_KEY;
 import static com.hazelcast.aws.AwsProperties.CONNECTION_RETRIES;
@@ -60,21 +58,22 @@ public class AwsDiscoveryStrategy
     private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
     private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
 
-    private final AwsConfig awsConfig;
     private final AwsClient awsClient;
+    private final PortRange portRange;
 
     private final Map<String, String> memberMetadata = new HashMap<>();
 
     AwsDiscoveryStrategy(Map<String, Comparable> properties) {
         super(LOGGER, properties);
-        this.awsConfig = getAwsConfig();
+
+        AwsConfig awsConfig = getAwsConfig();
+        logConfiguration(awsConfig);
+
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
         AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig);
-        try {
-            this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidConfigurationException("AWS configuration is not valid", e);
-        }
+
+        this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig);
+        this.portRange = awsConfig.getHzPort();
     }
 
     /**
@@ -82,53 +81,32 @@ public class AwsDiscoveryStrategy
      */
     AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsClient client) {
         super(LOGGER, properties);
-        this.awsConfig = getAwsConfig();
         this.awsClient = client;
+        this.portRange = getAwsConfig().getHzPort();
     }
 
-    /**
-     * For test purposes only.
-     */
-    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsConfig awsConfig, AwsClient client) {
-        super(LOGGER, properties);
-        this.awsConfig = awsConfig;
-        this.awsClient = client;
-    }
+    AwsConfig getAwsConfig() {
+        try {
+            return AwsConfig.builder()
+                .setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
+                .setRegion(getOrDefault(REGION.getDefinition(), null))
+                .setIamRole(getOrNull(IAM_ROLE))
+                .setHostHeader(getOrDefault(HOST_HEADER.getDefinition(), DEFAULT_HOST_HEADER))
+                .setSecurityGroupName(getOrNull(SECURITY_GROUP_NAME)).setTagKey(getOrNull(TAG_KEY))
+                .setTagValue(getOrNull(TAG_VALUE))
+                .setConnectionTimeoutSeconds(getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(),
+                    DEFAULT_CONNECTION_TIMEOUT_SECONDS))
+                .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
+                .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
+                .setHzPort(new PortRange(getOrDefault(PORT.getDefinition(), DEFAULT_PORT_RANGE)))
+                .build();
 
-    AwsConfig getAwsConfig()
-        throws IllegalArgumentException {
-
-        final AwsConfig config = AwsConfig.builder().setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
-            .setRegion(getOrDefault(REGION.getDefinition(), null))
-            .setIamRole(getOrNull(IAM_ROLE))
-            .setHostHeader(getOrDefault(HOST_HEADER.getDefinition(), DEFAULT_HOST_HEADER))
-            .setSecurityGroupName(getOrNull(SECURITY_GROUP_NAME)).setTagKey(getOrNull(TAG_KEY))
-            .setTagValue(getOrNull(TAG_VALUE))
-            .setConnectionTimeoutSeconds(getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(),
-                DEFAULT_CONNECTION_TIMEOUT_SECONDS))
-            .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
-            .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
-            .setHzPort(new PortRange(getPortRange())).build();
-
-        reviewConfiguration(config);
-        return config;
-    }
-
-    /**
-     * Returns port range from properties or default value if the property does not exist.
-     * <p>
-     * Note that {@link AbstractDiscoveryStrategy#getOrDefault(PropertyDefinition, Comparable)} cannot be reused, since
-     * the "hz-port" property can be either {@code String} or {@code Integer}.
-     */
-    private String getPortRange() {
-        Object portRange = getOrNull(PORT.getDefinition());
-        if (portRange == null) {
-            return DEFAULT_PORT_RANGE;
+        } catch (IllegalArgumentException e) {
+            throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
-        return portRange.toString();
     }
 
-    private void reviewConfiguration(AwsConfig config) {
+    private void logConfiguration(AwsConfig config) {
         if (StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey()) || StringUtil
             .isNullOrEmptyAfterTrim(config.getAccessKey())) {
 
@@ -173,7 +151,7 @@ public class AwsDiscoveryStrategy
 
             final ArrayList<DiscoveryNode> nodes = new ArrayList<>(privatePublicIpAddressPairs.size());
             for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
-                for (int port = awsConfig.getHzPort().getFromPort(); port <= awsConfig.getHzPort().getToPort(); port++) {
+                for (int port = portRange.getFromPort(); port <= portRange.getToPort(); port++) {
                     nodes.add(new SimpleDiscoveryNode(new Address(entry.getKey(), port), new Address(entry.getValue(), port)));
                 }
             }
