@@ -13,11 +13,9 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws;
+package com.hazelcast.aws.utility;
 
 public final class Constants {
-
-    public static final String DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
     public static final String DOC_VERSION = "2016-11-15";
     public static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     public static final String GET = "GET";

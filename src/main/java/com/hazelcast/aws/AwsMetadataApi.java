@@ -30,9 +30,10 @@ import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Responsible for connecting to AWS EC2 Instance Metadata API.
+ * Responsible for connecting to AWS EC2 and ECS Instance Metadata API.
  *
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">EC2 Instance Metatadata</a>
+ * @see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html">ECS Task Metadata</a>
  */
 class AwsMetadataApi {
     private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);

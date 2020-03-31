@@ -1,13 +1,14 @@
 package com.hazelcast.aws;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public final class AwsCredentials {
     private String accessKey;
     private String secretKey;
-    private String token;
+    private Optional<String> token;
 
-    private AwsCredentials(String accessKey, String secretKey, String token) {
+    private AwsCredentials(String accessKey, String secretKey, Optional<String> token) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.token = token;
@@ -21,7 +22,7 @@ public final class AwsCredentials {
         return secretKey;
     }
 
-    public String getToken() {
+    public Optional<String> getToken() {
         return token;
     }
 
@@ -50,7 +51,7 @@ public final class AwsCredentials {
         }
 
         public AwsCredentials build() {
-            return new AwsCredentials(accessKey, secretKey, token);
+            return new AwsCredentials(accessKey, secretKey, Optional.ofNullable(token));
         }
     }
 

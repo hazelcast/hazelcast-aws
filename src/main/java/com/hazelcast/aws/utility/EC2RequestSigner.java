@@ -15,10 +15,7 @@
 
 package com.hazelcast.aws.utility;
 
-import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.AwsCredentials;
-import com.hazelcast.aws.Constants;
-import com.hazelcast.aws.utility.AwsURLEncoder;
 import com.hazelcast.internal.util.QuickMath;
 
 import javax.crypto.Mac;

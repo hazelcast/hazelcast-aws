@@ -15,7 +15,7 @@
 
 package com.hazelcast.aws.impl;
 
-import com.hazelcast.aws.Constants;
+import com.hazelcast.aws.utility.Constants;
 import com.hazelcast.test.HazelcastTestSupport;
 import org.junit.Test;
 
