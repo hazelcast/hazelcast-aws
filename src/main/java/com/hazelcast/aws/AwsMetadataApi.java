@@ -34,33 +34,23 @@ import java.util.concurrent.TimeUnit;
  *
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">EC2 Instance Metatadata</a>
  */
-public final class AwsMetadataApi {
-    public static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
-    public static final String ECS_METADATA_ENDPOINT = "http://169.254.170.2";
+class AwsMetadataApi {
+    private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);
+
+    private static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
+    private static final String ECS_METADATA_ENDPOINT = "http://169.254.170.2";
+
+    private static final String SECURITY_CREDENTIALS_URI = "/iam/security-credentials/";
+    private static final String AVAILABILITY_ZONE_URI = "/placement/availability-zone/";
 
     private final String ec2Endpoint;
     private final String ecsEndpoint;
     private final AwsConfig awsConfig;
 
-    /**
-     * Post-fix URI to fetch IAM role details
-     */
-    public static final String IAM_SECURITY_CREDENTIALS_URI = "/iam/security-credentials/";
-
-    /**
-     * Post-fix URI to fetch availability-zone info.
-     */
-    private static final String AVAILABILITY_ZONE_URI = "/placement/availability-zone/";
-
-    private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);
-
-    /**
-     * For test purposes only.
-     */
-    AwsMetadataApi(String ec2Endpoint, String ecsEndpoint) {
-        this.ec2Endpoint = ec2Endpoint;
-        this.ecsEndpoint = ecsEndpoint;
-        this.awsConfig = null;
+    AwsMetadataApi(AwsConfig awsConfig) {
+        this.ec2Endpoint = EC2_METADATA_ENDPOINT;
+        this.ecsEndpoint = ECS_METADATA_ENDPOINT;
+        this.awsConfig = awsConfig;
     }
 
     /**
@@ -72,16 +62,56 @@ public final class AwsMetadataApi {
         this.awsConfig = awsConfig;
     }
 
-    public AwsMetadataApi(AwsConfig awsConfig) {
-        this.ec2Endpoint = EC2_METADATA_ENDPOINT;
-        this.ecsEndpoint = ECS_METADATA_ENDPOINT;
-        this.awsConfig = awsConfig;
+    private String retrieveMetadataFromURI(String uri) {
+        return retrieveMetadataFromURI(uri,
+            awsConfig.getConnectionTimeoutSeconds(),
+            awsConfig.getConnectionRetries(),
+            awsConfig.getReadTimeoutSeconds());
     }
 
-    AwsMetadataApi() {
-        this.ec2Endpoint = EC2_METADATA_ENDPOINT;
-        this.ecsEndpoint = ECS_METADATA_ENDPOINT;
-        this.awsConfig = null;
+    String availabilityZone() {
+        String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
+        return retrieveMetadataFromURI(uri);
+    }
+
+    String defaultIamRole() {
+        String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI);
+        return retrieveMetadataFromURI(uri);
+    }
+
+    AwsCredentials credentials(String iamRole) {
+        String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI).concat(iamRole);
+        String response = retrieveMetadataFromURI(uri);
+        return parseCredentials(response);
+    }
+
+    AwsCredentials credentialsFromEcs(String relativeUrl) {
+        String uri = ecsEndpoint + relativeUrl;
+        String response = retrieveMetadataFromURI(uri);
+        return parseCredentials(response);
+    }
+
+    private static AwsCredentials parseCredentials(String response) {
+        JsonObject role = Json.parse(response).asObject();
+        return AwsCredentials.builder()
+            .setAccessKey(role.getString("AccessKeyId", null))
+            .setSecretKey(role.getString("SecretAccessKey", null))
+            .setToken(role.getString("Token", null))
+            .build();
+    }
+
+    /**
+     * Performs the HTTP request to retrieve AWS Instance Metadata from the given URI.
+     *
+     * @param uri                     the full URI where a `GET` request will retrieve the metadata information, represented as JSON.
+     * @param connectTimeoutInSeconds connect timeout for the AWS service call
+     * @param retries                 number of retries in case the AWS request fails
+     * @param readTimeoutInSeconds    read timeout for the AWS service call
+     * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
+     */
+    private static String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
+                                                  final int retries, final int readTimeoutInSeconds) {
+        return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds), retries);
     }
 
     /**
@@ -92,7 +122,7 @@ public final class AwsMetadataApi {
      * @param readTimeoutSeconds      read timeout for the AWS service call
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
      */
-    private String retrieveMetadataFromURI(String uri, int connectTimeoutInSeconds, int readTimeoutSeconds) {
+    private static String retrieveMetadataFromURI(String uri, int connectTimeoutInSeconds, int readTimeoutSeconds) {
         StringBuilder response = new StringBuilder();
 
         InputStreamReader is = null;
@@ -126,62 +156,5 @@ public final class AwsMetadataApi {
                 }
             }
         }
-    }
-
-    /**
-     * Performs the HTTP request to retrieve AWS Instance Metadata from the given URI.
-     *
-     * @param uri                     the full URI where a `GET` request will retrieve the metadata information, represented as JSON.
-     * @param connectTimeoutInSeconds connect timeout for the AWS service call
-     * @param retries                 number of retries in case the AWS request fails
-     * @param readTimeoutInSeconds    read timeout for the AWS service call
-     * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.
-     */
-    private String retrieveMetadataFromURI(final String uri, final int connectTimeoutInSeconds,
-                                           final int retries, final int readTimeoutInSeconds) {
-        return RetryUtils.retry(() -> retrieveMetadataFromURI(uri, connectTimeoutInSeconds, readTimeoutInSeconds), retries);
-    }
-
-    private String retrieveMetadataFromURI(String uri) {
-        return retrieveMetadataFromURI(uri,
-            awsConfig.getConnectionTimeoutSeconds(),
-            awsConfig.getConnectionRetries(),
-            awsConfig.getReadTimeoutSeconds());
-    }
-
-    String availabilityZone(int connectionTimeoutSeconds, int connectionRetries, int readTimeoutSeconds) {
-        String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
-        return retrieveMetadataFromURI(uri, connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds);
-    }
-
-    String availabilityZone() {
-        String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
-        return retrieveMetadataFromURI(uri);
-    }
-
-    public String defaultIamRole() {
-        String uri = ec2Endpoint.concat(IAM_SECURITY_CREDENTIALS_URI);
-        return retrieveMetadataFromURI(uri);
-    }
-
-    public AwsCredentials credentials(String iamRole) {
-        String uri = ec2Endpoint.concat(IAM_SECURITY_CREDENTIALS_URI).concat(iamRole);
-        String response = retrieveMetadataFromURI(uri);
-        return parseAwsCredentials(response);
-    }
-
-    public AwsCredentials credentialsFromEcs(String relativeUrl) {
-        String uri = ecsEndpoint + relativeUrl;
-        String response = retrieveMetadataFromURI(uri);
-        return parseAwsCredentials(response);
-    }
-
-    private static AwsCredentials parseAwsCredentials(String response) {
-        JsonObject role = Json.parse(response).asObject();
-        return AwsCredentials.builder()
-            .setAccessKey(role.getString("AccessKeyId", null))
-            .setSecretKey(role.getString("SecretAccessKey", null))
-            .setToken(role.getString("Token", null))
-            .build();
     }
 }

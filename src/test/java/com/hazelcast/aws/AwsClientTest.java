@@ -15,110 +15,238 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.config.InvalidConfigurationException;
-import com.hazelcast.test.HazelcastParallelClassRunner;
-import com.hazelcast.test.annotation.ParallelJVMTest;
-import com.hazelcast.test.annotation.QuickTest;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.Map;
 
+import static com.hazelcast.aws.AwsClient.ECS_CREDENTIALS_ENV_VAR_NAME;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.BDDMockito.given;
 
-@RunWith(HazelcastParallelClassRunner.class)
-@Category( {QuickTest.class, ParallelJVMTest.class})
+@RunWith(MockitoJUnitRunner.class)
 public class AwsClientTest {
+    private static final String REGION = "us-east-1";
+    private static final String ENDPOINT = "ec2.us-east-1.amazonaws.com";
+    private static final AwsCredentials CREDENTIALS =
+        AwsCredentials.builder()
+            .setAccessKey("access-key")
+            .setSecretKey("secret-key")
+            .build();
+    private static final String IAM_ROLE = "iam-role";
+    private static final Map<String, String> ADDRESSES = Collections.singletonMap("192.168.1.2", "12.56.345.2");
 
-//    @Test
-//    public void useCurrentRegion() {
-//        // given
-//        AwsDiscoveryStrategy awsDiscoveryStrategy = spy(new AwsDiscoveryStrategy(Collections.emptyMap(), null, mockClient));
-//        doReturn("us-east-1").when(awsDiscoveryStrategy).getCurrentRegion(10, 3, 10);
-//        // when
-//        AwsConfig awsConfig = awsDiscoveryStrategy.getAwsConfig();
-//
-//        // then
-//        assertEquals("us-east-1", awsConfig.getRegion());
-//    }
+    @Mock
+    private AwsMetadataApi awsMetadataApi;
 
-//    @Test
-//    public void validateValidRegion() {
-//        awsDiscoveryStrategy.validateRegion("us-west-1");
-//        awsDiscoveryStrategy.validateRegion("us-gov-east-1");
-//    }
-//
-//    @Test
-//    public void validateInvalidRegion() {
-//        // given
-//        String region = "us-wrong-1";
-//        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-//
-//        //when
-//        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-//
-//        //then
-//        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-//        assertEquals(expectedMessage, thrownEx.getMessage());
-//    }
-//
-//    @Test
-//    public void validateInvalidGovRegion() {
-//        // given
-//        String region = "us-gov-wrong-1";
-//        String expectedMessage = String.format("The provided region %s is not a valid AWS region.", region);
-//
-//        // when
-//        Runnable validateRegion = () -> awsDiscoveryStrategy.validateRegion(region);
-//
-//        //then
-//        InvalidConfigurationException thrownEx = assertThrows(InvalidConfigurationException.class, validateRegion);
-//        assertEquals(expectedMessage, thrownEx.getMessage());
-//    }
+    @Mock
+    private AwsDescribeInstancesApi awsDescribeInstancesApi;
 
-    @Test
-    public void resolveEndpointEmpty() {
-        // given
-        AwsConfig awsConfig = AwsConfig.builder()
+    @Mock
+    private Environment environment;
+
+    @Before
+    public void setUp() {
+        given(awsDescribeInstancesApi.addresses(REGION, ENDPOINT, CREDENTIALS)).willReturn(ADDRESSES);
+        given(awsMetadataApi.credentials(IAM_ROLE)).willReturn(CREDENTIALS);
+    }
+
+    private static AwsConfig.Builder predefinedAwsConfig() {
+        return AwsConfig.builder()
             .setHostHeader("ec2.amazonaws.com")
-            .setRegion("us-east-1").build();
-
-        // when
-        String endpoint = new AwsClient(null, null, awsConfig).resolveEndpoint();
-
-        // then
-        assertEquals("ec2.us-east-1.amazonaws.com", endpoint);
+            .setAccessKey("access-key")
+            .setSecretKey("secret-key")
+            .setRegion("us-east-1");
     }
 
     @Test(expected = InvalidConfigurationException.class)
-    public void resolveEndpointInvalidHostHeader() {
+    public void newInvalidRegion() {
         // given
-        AwsConfig awsConfig = AwsConfig.builder()
-            .setHostHeader("invalid.host.header")
-            .setRegion("us-east-1").build();
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setRegion("invalid-region")
+            .build();
 
         // when
-        new AwsClient(null, null, awsConfig).resolveEndpoint();
+        new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // then
         // throws exception
     }
 
-//    @Test
-//    public void resolveEndpointEmptyRegion() {
-//        // given
-//        String hostHeader = "ec2.amazonaws";
-//        AwsConfig awsConfig = AwsConfig.builder()
-//            .setHostHeader(hostHeader)
-//            .setRegion(null).build();
-//
-//        // when
-//        String endpoint = new AwsClient(null, awsConfig).resolveEndpoint();
-//
-//        // then
-//        assertEquals(hostHeader, endpoint);
-//    }
+    @Test(expected = InvalidConfigurationException.class)
+    public void newInvalidHostHeader() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setHostHeader("invalid-host-header")
+            .build();
+
+        // when
+        new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // then
+        // throws exception
+    }
+
+    @Test
+    public void getAddresses() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig().build();
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        Map<String, String> result = awsClient.getAddresses();
+
+        // then
+        assertEquals(ADDRESSES, result);
+    }
+
+    @Test
+    public void getAddressesNoRegionConfigured() {
+        // given
+        given(awsMetadataApi.availabilityZone()).willReturn("us-east-1a");
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setRegion("")
+            .build();
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        Map<String, String> result = awsClient.getAddresses();
+
+        // then
+        assertEquals(ADDRESSES, result);
+    }
+
+    @Test
+    public void getAddressesNoAccessKey() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole(IAM_ROLE)
+            .build();
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        Map<String, String> result = awsClient.getAddresses();
+
+        // then
+        assertEquals(ADDRESSES, result);
+    }
+
+    @Test
+    public void getAddressesNoAccessKeyNoIamRole() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole("")
+            .build();
+        given(awsMetadataApi.defaultIamRole()).willReturn(IAM_ROLE);
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        Map<String, String> result = awsClient.getAddresses();
+
+        // then
+        assertEquals(ADDRESSES, result);
+    }
+
+    @Test(expected = InvalidConfigurationException.class)
+    public void getAddressesInvalidIamRole() {
+        // given
+        String iamRole = "invalid-iam-role";
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole(iamRole)
+            .build();
+        given(awsMetadataApi.credentials(iamRole)).willThrow(new RuntimeException("Invalid IAM Role"));
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        awsClient.getAddresses();
+
+        // then
+        // throws exception
+    }
+
+    @Test
+    public void getAddressesEcs() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole("")
+            .build();
+        String relativePath = "/some/relative/path";
+        given(environment.getEnvVar(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(relativePath);
+        given(awsMetadataApi.credentialsFromEcs(relativePath)).willReturn(CREDENTIALS);
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        Map<String, String> result = awsClient.getAddresses();
+
+        // then
+        assertEquals(ADDRESSES, result);
+    }
+
+    @Test(expected = InvalidConfigurationException.class)
+    public void getAddressesEcsInvalidRelativePath() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole("")
+            .build();
+        String invalidPath = "/some/relative/path";
+        given(environment.getEnvVar(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(invalidPath);
+        given(awsMetadataApi.credentialsFromEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata "
+            + "Path"));
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        awsClient.getAddresses();
+
+        // then
+        // throws exception
+
+    }
+
+    @Test(expected = InvalidConfigurationException.class)
+    public void getAddressesNoCorrectConfiguration() {
+        // given
+        AwsConfig awsConfig = predefinedAwsConfig()
+            .setAccessKey("")
+            .setSecretKey("")
+            .setIamRole("")
+            .build();
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+
+        // when
+        awsClient.getAddresses();
+
+        // then
+        // throws exception
+    }
+
+    @Test
+    public void getAvailabilityZone() {
+        // given
+        String availabilityZone = "us-east-1a";
+        given(awsMetadataApi.availabilityZone()).willReturn(availabilityZone);
+        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, predefinedAwsConfig().build(),
+            environment);
+
+        // when
+        String result = awsClient.getAvailabilityZone();
+
+        // then
+        assertEquals(availabilityZone, result);
+    }
 }

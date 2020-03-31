@@ -1,5 +1,7 @@
 package com.hazelcast.aws;
 
+import java.util.Objects;
+
 public final class AwsCredentials {
     private String accessKey;
     private String secretKey;
@@ -9,14 +11,6 @@ public final class AwsCredentials {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.token = token;
-    }
-
-    public void setAccessKey(String accessKey) {
-        this.accessKey = accessKey;
-    }
-
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
     }
 
     public String getAccessKey() {
@@ -29,10 +23,6 @@ public final class AwsCredentials {
 
     public String getToken() {
         return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
     }
 
     public static Builder builder() {
@@ -65,11 +55,21 @@ public final class AwsCredentials {
     }
 
     @Override
-    public String toString() {
-        return "AwsCredentials{" +
-            "accessKey='" + accessKey + '\'' +
-            ", secretKey='" + secretKey + '\'' +
-            ", token='" + token + '\'' +
-            '}';
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AwsCredentials that = (AwsCredentials) o;
+        return Objects.equals(accessKey, that.accessKey) &&
+            Objects.equals(secretKey, that.secretKey) &&
+            Objects.equals(token, that.token);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accessKey, secretKey, token);
     }
 }

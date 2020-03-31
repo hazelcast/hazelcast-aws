@@ -15,6 +15,7 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.cluster.Address;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.util.StringUtil;
@@ -72,7 +73,7 @@ public class AwsDiscoveryStrategy
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
         AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig);
 
-        this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig);
+        this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, new Environment());
         this.portRange = awsConfig.getHzPort();
     }
 

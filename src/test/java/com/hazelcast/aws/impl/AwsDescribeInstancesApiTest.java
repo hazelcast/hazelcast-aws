@@ -16,10 +16,6 @@
 package com.hazelcast.aws.impl;
 
 import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.AwsDescribeInstancesApi;
-import com.hazelcast.aws.Constants;
-import com.hazelcast.aws.exception.AwsConnectionException;
-import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.annotation.ParallelJVMTest;
 import com.hazelcast.test.annotation.QuickTest;
@@ -30,19 +26,12 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 
-import static com.hazelcast.aws.AwsMetadataApi.IAM_SECURITY_CREDENTIALS_URI;
-import static com.hazelcast.aws.AwsMetadataApi.EC2_METADATA_ENDPOINT;
-import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 @RunWith(HazelcastParallelClassRunner.class)
 @Category({QuickTest.class, ParallelJVMTest.class})
@@ -73,7 +62,7 @@ public class AwsDescribeInstancesApiTest {
 //        Environment mockedEnv = mock(Environment.class);
 //        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 //
-//        final String uri = EC2_METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
+//        final String uri = EC2_METADATA_ENDPOINT + SECURITY_CREDENTIALS_URI;
 //
 //        AwsDescribeInstancesApi descriptor = spy(new AwsDescribeInstancesApi(predefinedAwsConfigBuilder().build()));
 //        doReturn("").when(descriptor).retrieveRoleFromURI(uri);
@@ -88,9 +77,9 @@ public class AwsDescribeInstancesApiTest {
 //        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(null);
 //
 //        final String defaultIamRoleName = "defaultIamRole";
-//        final String uri = EC2_METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
+//        final String uri = EC2_METADATA_ENDPOINT + SECURITY_CREDENTIALS_URI;
 //
-//        final String roleUri = EC2_METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI + defaultIamRoleName;
+//        final String roleUri = EC2_METADATA_ENDPOINT + SECURITY_CREDENTIALS_URI + defaultIamRoleName;
 //
 //        // test when <iam-role>DEFAULT</iam-role>
 //        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole("DEFAULT").build();
@@ -132,7 +121,7 @@ public class AwsDescribeInstancesApiTest {
     public void test_whenIamRoleExistsInConfig()
             throws IOException {
 //        final String someRole = "someRole";
-//        final String uri = EC2_METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI + someRole;
+//        final String uri = EC2_METADATA_ENDPOINT + SECURITY_CREDENTIALS_URI + someRole;
 //
 //        AwsConfig awsConfig = predefinedAwsConfigBuilder().setIamRole(someRole).build();
 //
@@ -150,7 +139,7 @@ public class AwsDescribeInstancesApiTest {
             throws IOException {
 //        final String ecsEnvVarCredsUri = "someURL";
 //        final String uri = AwsDescribeInstancesApi.IAM_TASK_ROLE_ENDPOINT + ecsEnvVarCredsUri;
-//        final String defaultRoleUri = EC2_METADATA_ENDPOINT + IAM_SECURITY_CREDENTIALS_URI;
+//        final String defaultRoleUri = EC2_METADATA_ENDPOINT + SECURITY_CREDENTIALS_URI;
 //
 //        Environment mockedEnv = mock(Environment.class);
 //        when(mockedEnv.getEnvVar(Constants.ECS_CREDENTIALS_ENV_VAR_NAME)).thenReturn(ecsEnvVarCredsUri);
