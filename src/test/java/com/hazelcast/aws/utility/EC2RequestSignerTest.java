@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.security;
+package com.hazelcast.aws.utility;
 
 import com.hazelcast.aws.AwsConfig;
 import com.hazelcast.aws.AwsCredentials;

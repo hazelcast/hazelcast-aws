@@ -99,12 +99,26 @@ public class AwsDiscoveryStrategy
                     DEFAULT_CONNECTION_TIMEOUT_SECONDS))
                 .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
                 .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
-                .setHzPort(new PortRange(getOrDefault(PORT.getDefinition(), DEFAULT_PORT_RANGE)))
+                .setHzPort(new PortRange(getPortRange()))
                 .build();
 
         } catch (IllegalArgumentException e) {
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
+    }
+
+    /**
+     * Returns port range from properties or default value if the property does not exist.
+     * <p>
+     * Note that {@code AbstractDiscoveryStrategy#getOrDefault(PropertyDefinition, Comparable)} cannot be reused, since
+     * the "hz-port" property can be either {@code String} or {@code Integer}.
+     */
+    private String getPortRange() {
+        Object portRange = getOrNull(PORT.getDefinition());
+        if (portRange == null) {
+            return DEFAULT_PORT_RANGE;
+        }
+        return portRange.toString();
     }
 
     private void logConfiguration(AwsConfig config) {
