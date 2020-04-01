@@ -78,7 +78,7 @@ public class AwsMetadataApiTest {
         // then
         assertEquals("Access1234", result.getAccessKey());
         assertEquals("Secret1234", result.getSecretKey());
-        assertEquals("Token1234", result.getToken().get());
+        assertEquals("Token1234", result.getToken());
     }
 
     @Test
@@ -101,6 +101,6 @@ public class AwsMetadataApiTest {
         // then
         assertEquals("Access1234", result.getAccessKey());
         assertEquals("Secret1234", result.getSecretKey());
-        assertEquals("Token1234", result.getToken().get());
+        assertEquals("Token1234", result.getToken());
     }
 }

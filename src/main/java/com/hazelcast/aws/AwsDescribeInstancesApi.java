@@ -49,7 +49,7 @@ public class AwsDescribeInstancesApi {
 
     private final AwsConfig awsConfig;
 
-    public AwsDescribeInstancesApi(AwsConfig awsConfig) {
+    AwsDescribeInstancesApi(AwsConfig awsConfig) {
         this.awsConfig = awsConfig;
     }
 
@@ -62,7 +62,9 @@ public class AwsDescribeInstancesApi {
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = new HashMap<>();
-        credentials.getToken().ifPresent(token -> attributes.put("X-Amz-Security-Token", token));
+        if (credentials.getToken() != null) {
+            attributes.put("X-Amz-Security-Token", credentials.getToken());
+        }
 
         EC2RequestSigner requestSigner = getRequestSigner(attributes, region, endpoint, credentials);
         attributes.put("X-Amz-Signature", requestSigner.sign("ec2", attributes));

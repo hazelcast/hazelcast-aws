@@ -86,7 +86,7 @@ public class AwsDiscoveryStrategy
         this.portRange = getAwsConfig().getHzPort();
     }
 
-    AwsConfig getAwsConfig() {
+    private AwsConfig getAwsConfig() {
         try {
             return AwsConfig.builder()
                 .setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
