@@ -107,6 +107,7 @@ class AwsClient {
         }
 
         // authenticate using ECS Endpoint
+        // TODO: I believe this part is never executed, but it's to be sorted out while working on ECS/Fargate
         return fetchCredentialsFromEcs();
     }
 
