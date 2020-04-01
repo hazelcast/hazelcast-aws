@@ -67,7 +67,7 @@ public class AwsDiscoveryStrategy
     AwsDiscoveryStrategy(Map<String, Comparable> properties) {
         super(LOGGER, properties);
 
-        AwsConfig awsConfig = getAwsConfig();
+        AwsConfig awsConfig = createAwsConfig();
         logConfiguration(awsConfig);
 
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
@@ -83,10 +83,10 @@ public class AwsDiscoveryStrategy
     AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsClient client) {
         super(LOGGER, properties);
         this.awsClient = client;
-        this.portRange = getAwsConfig().getHzPort();
+        this.portRange = createAwsConfig().getHzPort();
     }
 
-    private AwsConfig getAwsConfig() {
+    private AwsConfig createAwsConfig() {
         try {
             return AwsConfig.builder()
                 .setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))

@@ -74,7 +74,7 @@ class AwsClient {
 
     private String resolveIamRole() {
         if (StringUtil.isNotEmpty(awsConfig.getAccessKey())) {
-            // no need to resolve IAM Role, since AWS Credentials are present in the configuration
+            // no need to resolve IAM Role, since using hardcoded Access/Secret keys takes precedence
             return null;
         }
         if (StringUtil.isNotEmpty(awsConfig.getIamRole()) && !"DEFAULT".equals(awsConfig.getIamRole())) {

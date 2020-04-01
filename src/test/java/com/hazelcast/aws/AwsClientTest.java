@@ -57,14 +57,6 @@ public class AwsClientTest {
         given(awsMetadataApi.credentials(IAM_ROLE)).willReturn(CREDENTIALS);
     }
 
-    private static AwsConfig.Builder predefinedAwsConfig() {
-        return AwsConfig.builder()
-            .setHostHeader("ec2.amazonaws.com")
-            .setAccessKey("access-key")
-            .setSecretKey("secret-key")
-            .setRegion("us-east-1");
-    }
-
     @Test(expected = InvalidConfigurationException.class)
     public void newInvalidRegion() {
         // given
@@ -206,8 +198,7 @@ public class AwsClientTest {
             .build();
         String invalidPath = "/some/relative/path";
         given(environment.getEnvVar(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(invalidPath);
-        given(awsMetadataApi.credentialsFromEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata "
-            + "Path"));
+        given(awsMetadataApi.credentialsFromEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata"));
         AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
@@ -248,5 +239,13 @@ public class AwsClientTest {
 
         // then
         assertEquals(availabilityZone, result);
+    }
+
+    private static AwsConfig.Builder predefinedAwsConfig() {
+        return AwsConfig.builder()
+            .setHostHeader("ec2.amazonaws.com")
+            .setAccessKey("access-key")
+            .setSecretKey("secret-key")
+            .setRegion("us-east-1");
     }
 }
