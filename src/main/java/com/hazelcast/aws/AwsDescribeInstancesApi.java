@@ -15,12 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.exception.AwsConnectionException;
-import com.hazelcast.aws.utility.CloudyUtility;
-import com.hazelcast.aws.utility.Constants;
-import com.hazelcast.aws.utility.EC2RequestSigner;
-import com.hazelcast.aws.utility.RetryUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -33,9 +27,9 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.aws.utility.Constants.DOC_VERSION;
-import static com.hazelcast.aws.utility.Constants.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.utility.StringUtil.isNotEmpty;
+import static com.hazelcast.aws.Constants.DOC_VERSION;
+import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
+import static com.hazelcast.aws.StringUtil.isNotEmpty;
 import static com.hazelcast.internal.nio.IOUtil.closeResource;
 
 /**
@@ -43,7 +37,7 @@ import static com.hazelcast.internal.nio.IOUtil.closeResource;
  *
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
-public class AwsDescribeInstancesApi {
+class AwsDescribeInstancesApi {
     private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
 

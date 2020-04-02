@@ -19,7 +19,6 @@ import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.config.properties.PropertyTypeConverter;
 import com.hazelcast.config.properties.SimplePropertyDefinition;
-import com.hazelcast.config.properties.ValueValidator;
 
 import static com.hazelcast.config.properties.PropertyTypeConverter.INTEGER;
 import static com.hazelcast.config.properties.PropertyTypeConverter.STRING;
@@ -103,10 +102,6 @@ public enum AwsProperties {
     PORT("hz-port", STRING, true);
 
     private final PropertyDefinition propertyDefinition;
-
-    AwsProperties(String key, PropertyTypeConverter typeConverter, boolean optional, ValueValidator validator) {
-        this.propertyDefinition = new SimplePropertyDefinition(key, optional, typeConverter, validator);
-    }
 
     AwsProperties(String key, PropertyTypeConverter typeConverter, boolean optional) {
         this.propertyDefinition = new SimplePropertyDefinition(key, optional, typeConverter);

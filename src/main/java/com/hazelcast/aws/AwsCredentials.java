@@ -2,7 +2,7 @@ package com.hazelcast.aws;
 
 import java.util.Objects;
 
-public final class AwsCredentials {
+final class AwsCredentials {
     private String accessKey;
     private String secretKey;
     private String token;
@@ -13,43 +13,43 @@ public final class AwsCredentials {
         this.token = token;
     }
 
-    public String getAccessKey() {
+    String getAccessKey() {
         return accessKey;
     }
 
-    public String getSecretKey() {
+    String getSecretKey() {
         return secretKey;
     }
 
-    public String getToken() {
+    String getToken() {
         return token;
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    static class Builder {
         private String accessKey;
         private String secretKey;
         private String token;
 
-        public Builder setAccessKey(String accessKey) {
+        Builder setAccessKey(String accessKey) {
             this.accessKey = accessKey;
             return this;
         }
 
-        public Builder setSecretKey(String secretKey) {
+        Builder setSecretKey(String secretKey) {
             this.secretKey = secretKey;
             return this;
         }
 
-        public Builder setToken(String token) {
+        Builder setToken(String token) {
             this.token = token;
             return this;
         }
 
-        public AwsCredentials build() {
+        AwsCredentials build() {
             return new AwsCredentials(accessKey, secretKey, token);
         }
     }

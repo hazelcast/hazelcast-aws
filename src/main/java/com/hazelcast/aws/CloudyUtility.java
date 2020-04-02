@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
@@ -33,7 +33,7 @@ import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
 import static java.lang.String.format;
 
-public final class CloudyUtility {
+final class CloudyUtility {
 
     private static final String NODE_ITEM = "item";
     private static final String NODE_VALUE = "value";
@@ -53,7 +53,7 @@ public final class CloudyUtility {
      * @param stream the response XML stream
      * @return map from private to public IP or empty map in case of exceptions
      */
-    public static Map<String, String> unmarshalTheResponse(InputStream stream) {
+    static Map<String, String> unmarshalTheResponse(InputStream stream) {
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

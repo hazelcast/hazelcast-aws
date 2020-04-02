@@ -13,16 +13,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
-/**
- * This class is used to lookup env vars, so that we can use mocks in our tests,
- * when checking for the presence of an env var.
- */
-public class Environment {
+import com.hazelcast.test.HazelcastTestSupport;
+import org.junit.Test;
 
-    public String getEnvVar(String name) {
-        return System.getenv(name);
+public class AwsURLEncoderTest
+        extends HazelcastTestSupport {
+
+    @Test
+    public void testConstructor() {
+        assertUtilityConstructor(AwsURLEncoder.class);
     }
-
 }

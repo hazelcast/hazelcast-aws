@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.cluster.Address;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.util.StringUtil;

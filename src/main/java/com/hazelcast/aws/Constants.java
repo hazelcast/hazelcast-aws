@@ -13,7 +13,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-/**
- * Provides Exceptions for Hazelcast AWS Plugin.
- */
-package com.hazelcast.aws.exception;
+package com.hazelcast.aws;
+
+final class Constants {
+    static final String DOC_VERSION = "2016-11-15";
+    static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
+    static final String GET = "GET";
+
+    private Constants() {
+    }
+}

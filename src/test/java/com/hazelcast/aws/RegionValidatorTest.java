@@ -1,4 +1,4 @@
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
 import com.hazelcast.config.InvalidConfigurationException;
 import org.junit.Test;

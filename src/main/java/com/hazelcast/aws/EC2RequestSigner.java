@@ -13,9 +13,8 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
-import com.hazelcast.aws.AwsCredentials;
 import com.hazelcast.internal.util.QuickMath;
 
 import javax.crypto.Mac;
@@ -32,7 +31,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 
-public class EC2RequestSigner {
+class EC2RequestSigner {
 
     private static final String NEW_LINE = "\n";
     private static final String API_TERMINATOR = "aws4_request";
@@ -49,24 +48,24 @@ public class EC2RequestSigner {
     private final String endpoint;
     private final AwsCredentials credentials;
 
-    public EC2RequestSigner(String timestamp, String region, String endpoint, AwsCredentials credentials) {
+    EC2RequestSigner(String timestamp, String region, String endpoint, AwsCredentials credentials) {
         this.timestamp = timestamp;
         this.region = region;
         this.endpoint = endpoint;
         this.credentials = credentials;
     }
 
-    public String getCredentialScope() {
+    private String getCredentialScope() {
         // datestamp/region/service/API_TERMINATOR
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
         return format("%s/%s/%s/%s", dateStamp, region, this.service, API_TERMINATOR);
     }
 
-    public String getSignedHeaders() {
+    private String getSignedHeaders() {
         return "host";
     }
 
-    public String sign(String service, Map<String, String> attributes) {
+    String sign(String service, Map<String, String> attributes) {
         this.service = service;
         this.attributes = attributes;
 
@@ -80,13 +79,13 @@ public class EC2RequestSigner {
     /* Task 1 */
     private String getCanonicalizedRequest() {
         return Constants.GET + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(this.attributes) + NEW_LINE
-                + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
+            + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
     }
 
     /* Task 2 */
     private String createStringToSign(String canonicalRequest) {
         return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE + sha256Hashhex(
-                canonicalRequest);
+            canonicalRequest);
     }
 
     /* Task 3 */
@@ -144,17 +143,17 @@ public class EC2RequestSigner {
         return QuickMath.bytesToHex(signature);
     }
 
-    protected String getCanonicalHeaders() {
+    private String getCanonicalHeaders() {
         return format("host:%s%s", endpoint, NEW_LINE);
     }
 
-    public String getCanonicalizedQueryString(Map<String, String> attributes) {
+    String getCanonicalizedQueryString(Map<String, String> attributes) {
         List<String> components = getListOfEntries(attributes);
         Collections.sort(components);
         return getCanonicalizedQueryString(components);
     }
 
-    protected String getCanonicalizedQueryString(List<String> list) {
+    private String getCanonicalizedQueryString(List<String> list) {
         Iterator<String> it = list.iterator();
         StringBuilder result = new StringBuilder(it.next());
         while (it.hasNext()) {
@@ -163,11 +162,11 @@ public class EC2RequestSigner {
         return result.toString();
     }
 
-    protected void addComponents(List<String> components, Map<String, String> attributes, String key) {
+    private void addComponents(List<String> components, Map<String, String> attributes, String key) {
         components.add(AwsURLEncoder.urlEncode(key) + '=' + AwsURLEncoder.urlEncode(attributes.get(key)));
     }
 
-    protected List<String> getListOfEntries(Map<String, String> entries) {
+    private List<String> getListOfEntries(Map<String, String> entries) {
         List<String> components = new ArrayList<String>();
         for (String key : entries.keySet()) {
             addComponents(components, entries, key);
@@ -190,8 +189,8 @@ public class EC2RequestSigner {
         return payloadHash;
     }
 
-    public String createFormattedCredential() {
+    String createFormattedCredential() {
         return credentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
-                + "ec2/aws4_request";
+            + "ec2/aws4_request";
     }
 }

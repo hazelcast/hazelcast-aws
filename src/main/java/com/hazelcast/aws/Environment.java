@@ -13,13 +13,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
-public final class Constants {
-    public static final String DOC_VERSION = "2016-11-15";
-    public static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
-    public static final String GET = "GET";
+/**
+ * This class is used to lookup env vars, so that we can use mocks in our tests,
+ * when checking for the presence of an env var.
+ */
+class Environment {
 
-    private Constants() {
+    String getEnvVar(String name) {
+        return System.getenv(name);
     }
+
 }

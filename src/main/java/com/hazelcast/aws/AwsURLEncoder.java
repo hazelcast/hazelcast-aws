@@ -13,7 +13,25 @@
  * specific language governing permissions and limitations under the License.
  */
 
-/**
- * Provides utility classes for Hazelcast AWS.
- */
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
+
+import com.hazelcast.core.HazelcastException;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+final class AwsURLEncoder {
+
+    private AwsURLEncoder() {
+    }
+
+    static String urlEncode(String string) {
+        String encoded;
+        try {
+            encoded = URLEncoder.encode(string, "UTF-8").replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            throw new HazelcastException(e);
+        }
+        return encoded;
+    }
+}

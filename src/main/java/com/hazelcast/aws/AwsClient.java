@@ -15,15 +15,13 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.utility.Environment;
-import com.hazelcast.aws.utility.StringUtil;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
 import java.util.Map;
 
-import static com.hazelcast.aws.utility.RegionValidator.validateRegion;
+import static com.hazelcast.aws.RegionValidator.validateRegion;
 
 /**
  * Responsible for fetching discovery information from AWS APIs.

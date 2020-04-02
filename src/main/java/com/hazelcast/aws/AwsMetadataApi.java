@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.utility.RetryUtils;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;

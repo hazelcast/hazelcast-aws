@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.utility.Environment;
 import com.hazelcast.config.InvalidConfigurationException;
 import org.junit.Before;
 import org.junit.Test;

@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.exception.AwsConnectionException;
 import com.hazelcast.test.HazelcastParallelClassRunner;
 import com.hazelcast.test.annotation.ParallelJVMTest;
 import com.hazelcast.test.annotation.QuickTest;

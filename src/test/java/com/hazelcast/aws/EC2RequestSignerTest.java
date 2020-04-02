@@ -13,12 +13,8 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.hazelcast.aws.utility;
+package com.hazelcast.aws;
 
-import com.hazelcast.aws.AwsConfig;
-import com.hazelcast.aws.AwsCredentials;
-import com.hazelcast.aws.Filter;
-import com.hazelcast.aws.utility.EC2RequestSigner;
 import com.hazelcast.test.HazelcastSerialClassRunner;
 import com.hazelcast.test.annotation.QuickTest;
 import org.junit.Test;
@@ -31,8 +27,8 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hazelcast.aws.utility.Constants.DOC_VERSION;
-import static com.hazelcast.aws.utility.Constants.SIGNATURE_METHOD_V4;
+import static com.hazelcast.aws.Constants.DOC_VERSION;
+import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
