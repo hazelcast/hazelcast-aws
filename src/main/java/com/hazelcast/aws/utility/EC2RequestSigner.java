@@ -45,9 +45,9 @@ public class EC2RequestSigner {
 
     private String service;
     private Map<String, String> attributes;
-    private String region;
-    private String endpoint;
-    private AwsCredentials credentials;
+    private final String region;
+    private final String endpoint;
+    private final AwsCredentials credentials;
 
     public EC2RequestSigner(String timestamp, String region, String endpoint, AwsCredentials credentials) {
         this.timestamp = timestamp;
