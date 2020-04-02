@@ -26,9 +26,9 @@ import java.util.concurrent.Callable;
  * Static utility class to retry operations related to connecting to AWS Services.
  */
 final class RetryUtils {
-    static final long INITIAL_BACKOFF_MS = 1500L;
+    private static final long INITIAL_BACKOFF_MS = 1500L;
     private static final long MAX_BACKOFF_MS = 5 * 60 * 1000L;
-    static final double BACKOFF_MULTIPLIER = 1.5;
+    private static final double BACKOFF_MULTIPLIER = 1.5;
 
     private static final ILogger LOGGER = Logger.getLogger(RetryUtils.class);
 
