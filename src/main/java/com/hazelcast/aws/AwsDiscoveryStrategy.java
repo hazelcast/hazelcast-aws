@@ -110,7 +110,7 @@ public class AwsDiscoveryStrategy
     /**
      * Returns port range from properties or default value if the property does not exist.
      * <p>
-     * Note that {@code AbstractDiscoveryStrategy#getOrDefault(PropertyDefinition, Comparable)} cannot be reused, since
+     * Note that {@link AbstractDiscoveryStrategy#getOrDefault(PropertyDefinition, Comparable)} cannot be reused, since
      * the "hz-port" property can be either {@code String} or {@code Integer}.
      */
     private String getPortRange() {
