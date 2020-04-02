@@ -29,7 +29,7 @@ import static com.hazelcast.aws.RegionValidator.validateRegion;
 class AwsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
 
-    static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
+    private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
 
     private final AwsMetadataApi awsMetadataApi;
     private final AwsDescribeInstancesApi awsDescribeInstancesApi;
@@ -100,7 +100,8 @@ class AwsClient {
             try {
                 return awsMetadataApi.credentials(iamRole);
             } catch (Exception e) {
-                throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: " + awsConfig.getIamRole(), e);
+                throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: "
+                    + awsConfig.getIamRole(), e);
             }
         }
 

@@ -25,12 +25,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.Map;
 
-import static com.hazelcast.aws.AwsClient.ECS_CREDENTIALS_ENV_VAR_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsClientTest {
+    private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
     private static final String REGION = "us-east-1";
     private static final String ENDPOINT = "ec2.us-east-1.amazonaws.com";
     private static final AwsCredentials CREDENTIALS =

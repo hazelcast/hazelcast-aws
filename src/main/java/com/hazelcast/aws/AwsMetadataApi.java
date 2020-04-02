@@ -104,7 +104,8 @@ class AwsMetadataApi {
     /**
      * Performs the HTTP request to retrieve AWS Instance Metadata from the given URI.
      *
-     * @param uri                     the full URI where a `GET` request will retrieve the metadata information, represented as JSON.
+     * @param uri                     the full URI where a `GET` request will retrieve the metadata information,
+     *                                represented as JSON.
      * @param connectTimeoutInSeconds connect timeout for the AWS service call
      * @param retries                 number of retries in case the AWS request fails
      * @param readTimeoutInSeconds    read timeout for the AWS service call
@@ -118,7 +119,8 @@ class AwsMetadataApi {
     /**
      * Performs the HTTP request to retrieve AWS Instance Metadata from the given URI.
      *
-     * @param uri                     the full URI where a `GET` request will retrieve the metadata information, represented as JSON.
+     * @param uri                     the full URI where a `GET` request will retrieve the metadata information,
+     *                                represented as JSON.
      * @param connectTimeoutInSeconds connect timeout for the AWS service call
      * @param readTimeoutSeconds      read timeout for the AWS service call
      * @return The content of the HTTP response, as a String. NOTE: This is NEVER null.

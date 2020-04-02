@@ -72,7 +72,8 @@ class AwsDescribeInstancesApi {
         }
     }
 
-    private EC2RequestSigner getRequestSigner(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials) {
+    private EC2RequestSigner getRequestSigner(Map<String, String> attributes, String region, String endpoint,
+                                              AwsCredentials credentials) {
         String timeStamp = getFormattedTimestamp();
         EC2RequestSigner rs = new EC2RequestSigner(timeStamp, region, endpoint, credentials);
         attributes.put("Action", "DescribeInstances");
