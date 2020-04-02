@@ -27,7 +27,7 @@ import static com.hazelcast.config.properties.PropertyTypeConverter.STRING;
  * Configuration properties for the Hazelcast Discovery Plugin for AWS. For more information
  * see {@link AwsConfig}.
  */
-public enum AwsProperties {
+enum AwsProperties {
 
     /**
      * Access key of your account on EC2
