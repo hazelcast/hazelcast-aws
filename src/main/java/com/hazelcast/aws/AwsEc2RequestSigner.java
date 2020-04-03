@@ -25,7 +25,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import static com.hazelcast.aws.CloudyUtility.prepareCanonicalizedQueryString;
+import static com.hazelcast.aws.AwsUrlUtils.prepareCanonicalizedQueryString;
 import static java.lang.String.format;
 
 class AwsEc2RequestSigner {

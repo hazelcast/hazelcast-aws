@@ -25,8 +25,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,40 +35,32 @@ import static java.lang.String.format;
 
 final class CloudyUtility {
 
-    private static final String NODE_ITEM = "item";
-    private static final String NODE_VALUE = "value";
-    private static final String NODE_KEY = "key";
-    private static final int LAST_INDEX = 8;
-
     private static final ILogger LOGGER = Logger.getLogger(CloudyUtility.class);
 
     private CloudyUtility() {
     }
 
     /**
-     * Unmarshal the response from {@link com.hazelcast.aws.AwsDescribeInstancesApi} and return the discovered node map.
-     * The map contains mappings from private to public IP and all contained nodes match the filtering rules defined by
-     * the {@code awsConfig}.
-     * If there is an exception while unmarshalling the response, returns an empty map.
+     * Parses the response from DescribeInstances API.
      *
-     * @param stream the response XML stream
+     * @param xmlResponse the response XML stream
      * @return map from private to public IP or empty map in case of exceptions
      */
-    static Map<String, String> parseResponse(String response) {
+    static Map<String, String> parse(String xmlResponse) {
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             builder = dbf.newDocumentBuilder();
-            Document doc = builder.parse(new ByteArrayInputStream(response.getBytes()));
+            Document doc = builder.parse(new ByteArrayInputStream(xmlResponse.getBytes()));
 
             Element element = doc.getDocumentElement();
             NodeHolder elementNodeHolder = new NodeHolder(element);
-            Map<String, String> addresses = new LinkedHashMap<String, String>();
+            Map<String, String> addresses = new LinkedHashMap<>();
             List<NodeHolder> reservationSet = elementNodeHolder.getSubNodes("reservationset");
             for (NodeHolder reservation : reservationSet) {
-                List<NodeHolder> items = reservation.getSubNodes(NODE_ITEM);
+                List<NodeHolder> items = reservation.getSubNodes("item");
                 for (NodeHolder item : items) {
                     NodeHolder instancesSet = item.getFirstSubNode("instancesset");
                     addresses.putAll(instancesSet.getAddresses());
@@ -84,7 +74,6 @@ final class CloudyUtility {
     }
 
     private static class NodeHolder {
-
         private final Node node;
 
         NodeHolder(Node node) {
@@ -96,8 +85,8 @@ final class CloudyUtility {
             if (tagSetHolder.getNode() == null) {
                 return null;
             }
-            for (NodeHolder itemHolder : tagSetHolder.getSubNodes(NODE_ITEM)) {
-                Node keyNode = itemHolder.getFirstSubNode(NODE_KEY).getNode();
+            for (NodeHolder itemHolder : tagSetHolder.getSubNodes("item")) {
+                Node keyNode = itemHolder.getFirstSubNode("key").getNode();
                 if (keyNode == null || keyNode.getFirstChild() == null) {
                     continue;
                 }
@@ -106,7 +95,7 @@ final class CloudyUtility {
                     continue;
                 }
 
-                Node valueNode = itemHolder.getFirstSubNode(NODE_VALUE).getNode();
+                Node valueNode = itemHolder.getFirstSubNode("value").getNode();
                 if (valueNode == null || valueNode.getFirstChild() == null) {
                     continue;
                 }
@@ -163,7 +152,7 @@ final class CloudyUtility {
                 return privatePublicPairs;
             }
 
-            for (NodeHolder childHolder : getSubNodes(NODE_ITEM)) {
+            for (NodeHolder childHolder : getSubNodes("item")) {
                 String privateIp = getIp("privateipaddress", childHolder);
                 String publicIp = getIp("ipaddress", childHolder);
                 String instanceName = getInstanceName(childHolder);
@@ -172,36 +161,8 @@ final class CloudyUtility {
                     privatePublicPairs.put(privateIp, publicIp);
                     LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
                 }
-
             }
             return privatePublicPairs;
         }
-    }
-
-    static String prepareCanonicalizedQueryString(Map<String, String> attributes) {
-        List<String> components = getListOfEntries(attributes);
-        Collections.sort(components);
-        return prepareCanonicalizedQueryString(components);
-    }
-
-    private static String prepareCanonicalizedQueryString(List<String> list) {
-        Iterator<String> it = list.iterator();
-        StringBuilder result = new StringBuilder(it.next());
-        while (it.hasNext()) {
-            result.append('&').append(it.next());
-        }
-        return result.toString();
-    }
-
-    private static void addComponents(List<String> components, Map<String, String> attributes, String key) {
-        components.add(AwsURLEncoder.urlEncode(key) + '=' + AwsURLEncoder.urlEncode(attributes.get(key)));
-    }
-
-    private static List<String> getListOfEntries(Map<String, String> entries) {
-        List<String> components = new ArrayList<String>();
-        for (String key : entries.keySet()) {
-            addComponents(components, entries, key);
-        }
-        return components;
     }
 }

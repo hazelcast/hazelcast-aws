@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.CloudyUtility.prepareCanonicalizedQueryString;
+import static com.hazelcast.aws.AwsUrlUtils.prepareCanonicalizedQueryString;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
 
 /**
@@ -51,7 +51,7 @@ class AwsDescribeInstancesApi {
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributes(region, endpoint, credentials);
         String response = callServiceWithRetries(endpoint, attributes);
-        return CloudyUtility.parseResponse(response);
+        return CloudyUtility.parse(response);
     }
 
     private Map<String, String> createAttributes(String region, String endpoint, AwsCredentials credentials) {

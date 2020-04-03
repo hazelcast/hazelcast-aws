@@ -18,11 +18,11 @@ package com.hazelcast.aws;
 import com.hazelcast.test.HazelcastTestSupport;
 import org.junit.Test;
 
-public class AwsURLEncoderTest
+public class AwsUrlUtilsTest
         extends HazelcastTestSupport {
 
     @Test
     public void testConstructor() {
-        assertUtilityConstructor(AwsURLEncoder.class);
+        assertUtilityConstructor(AwsUrlUtils.class);
     }
 }
