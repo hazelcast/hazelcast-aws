@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.AwsUrlUtils.prepareCanonicalizedQueryString;
+import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
 import static java.lang.String.format;
 
@@ -122,7 +122,7 @@ class AwsDescribeInstancesApi {
     }
 
     private String callService(String endpoint, Map<String, String> attributes) {
-        String query = prepareCanonicalizedQueryString(attributes);
+        String query = canonicalQueryString(attributes);
         return RestClient.create(urlFor(endpoint, query))
             .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
             .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())

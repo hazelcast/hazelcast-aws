@@ -30,10 +30,10 @@ final class AwsUrlUtils {
     private AwsUrlUtils() {
     }
 
-    static String prepareCanonicalizedQueryString(Map<String, String> attributes) {
+    static String canonicalQueryString(Map<String, String> attributes) {
         List<String> components = getListOfEntries(attributes);
         Collections.sort(components);
-        return prepareCanonicalizedQueryString(components);
+        return canonicalQueryString(components);
     }
 
     private static List<String> getListOfEntries(Map<String, String> entries) {
@@ -44,7 +44,7 @@ final class AwsUrlUtils {
         return components;
     }
 
-    private static String prepareCanonicalizedQueryString(List<String> list) {
+    private static String canonicalQueryString(List<String> list) {
         Iterator<String> it = list.iterator();
         StringBuilder result = new StringBuilder(it.next());
         while (it.hasNext()) {
