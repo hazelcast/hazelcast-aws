@@ -22,10 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
-import static com.hazelcast.aws.CloudyUtility.createFormattedCredential;
+import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
-import static com.hazelcast.aws.Constants.DOC_VERSION;
-import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
 
 /**
@@ -34,6 +32,7 @@ import static com.hazelcast.aws.StringUtil.isNotEmpty;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
 class AwsDescribeInstancesApi {
+
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
     private final Calendar calendar;
@@ -52,37 +51,46 @@ class AwsDescribeInstancesApi {
      * @return map from private to public IP or empty map in case of failed response unmarshalling
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
+        Map<String, String> attributes = createAttributes(region, endpoint, credentials);
+        String response = callServiceWithRetries(attributes, endpoint);
+        return CloudyUtility.parseResponse(response);
+    }
+
+    private Map<String, String> createAttributes(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = new HashMap<>();
+
         if (credentials.getToken() != null) {
             attributes.put("X-Amz-Security-Token", credentials.getToken());
         }
 
-        fillAttributes(attributes, region, endpoint, credentials);
-        String signature = requestSigner.sign(attributes, region, endpoint, credentials, getFormattedTimestamp());
-        attributes.put("X-Amz-Signature", signature);
-
-        String response = callServiceWithRetries(attributes, endpoint);
-        return CloudyUtility.unmarshalTheResponse(response);
-    }
-
-    private void fillAttributes(Map<String, String> attributes, String region, String endpoint,
-                                AwsCredentials credentials) {
-        String timeStamp = getFormattedTimestamp();
         attributes.put("Action", "DescribeInstances");
-        attributes.put("Version", DOC_VERSION);
-        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-        String formattedCredential = createFormattedCredential(credentials, timeStamp, region);
-        attributes.put("X-Amz-Credential", formattedCredential);
-        attributes.put("X-Amz-Date", timeStamp);
+        attributes.put("Version", "2016-11-15");
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
+        String timestamp = formatCurrentTimestamp();
+        attributes.put("X-Amz-Date", timestamp);
+        attributes.put("X-Amz-Credential", formatCredentials(region, credentials, timestamp));
+
         addFilters(attributes);
+        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
+        attributes.put("X-Amz-Signature", requestSigner.sign(attributes, region, endpoint, credentials, timestamp));
+
+        return attributes;
     }
 
-    private String getFormattedTimestamp() {
+    private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
+        return String.format("%s/%s/%s/ec2/aws4_request",
+            credentials.getAccessKey(),
+            timestamp.substring(0, 8),
+            region);
+    }
+
+
+    private String formatCurrentTimestamp() {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date date = calendar.getTime();
+        // TODO: Change to custom time provider, date should be retrieved here, not at the beginning!
         return df.format(date);
     }
 

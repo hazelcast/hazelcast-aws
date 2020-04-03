@@ -60,7 +60,7 @@ final class CloudyUtility {
      * @param stream the response XML stream
      * @return map from private to public IP or empty map in case of exceptions
      */
-    static Map<String, String> unmarshalTheResponse(String response) {
+    static Map<String, String> parseResponse(String response) {
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -207,10 +207,5 @@ final class CloudyUtility {
             addComponents(components, entries, key);
         }
         return components;
-    }
-
-    static String createFormattedCredential(AwsCredentials credentials, String timestamp, String region) {
-        return credentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
-            + "ec2/aws4_request";
     }
 }

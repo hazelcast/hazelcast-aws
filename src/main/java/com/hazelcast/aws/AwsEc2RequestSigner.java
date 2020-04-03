@@ -33,14 +33,13 @@ import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
 import static java.lang.String.format;
 
 class AwsEc2RequestSigner {
-
     private static final String NEW_LINE = "\n";
     private static final String API_TERMINATOR = "aws4_request";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final String UTF_8 = "UTF-8";
     private static final int DATE_LENGTH = 8;
-    private static final int LAST_INDEX = 8;
     private static final String EC2_SERVICE = "ec2";
+    static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
 
 
     AwsEc2RequestSigner() {
@@ -70,13 +69,13 @@ class AwsEc2RequestSigner {
 
     /* Task 1 */
     private String getCanonicalizedRequest(Map<String, String> attributes, String endpoint) {
-        return Constants.GET + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(attributes) + NEW_LINE
+        return "GET" + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(attributes) + NEW_LINE
             + getCanonicalHeaders(endpoint) + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
     }
 
     /* Task 2 */
     private String createStringToSign(String canonicalRequest, String region, String timestamp) {
-        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope(region,
+        return SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope(region,
             timestamp) + NEW_LINE + sha256Hashhex(
             canonicalRequest);
     }

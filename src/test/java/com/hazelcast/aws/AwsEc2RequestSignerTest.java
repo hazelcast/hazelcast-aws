@@ -22,14 +22,11 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hazelcast.aws.CloudyUtility.createFormattedCredential;
-import static com.hazelcast.aws.Constants.DOC_VERSION;
-import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
+import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
@@ -78,7 +75,7 @@ public class AwsEc2RequestSignerTest {
         Map<String, String> attributes = new HashMap<>();
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
         attributes.put("Action", "DescribeInstances");
-        attributes.put("Version", DOC_VERSION);
+        attributes.put("Version", "2016-11-15");
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
         attributes.put("X-Amz-Date", TEST_REQUEST_DATE);
         attributes.put("X-Amz-SignedHeaders", "host");
@@ -88,7 +85,7 @@ public class AwsEc2RequestSignerTest {
         attributes.putAll(filter.getFilters());
 
         AwsEc2RequestSigner actual = new AwsEc2RequestSigner();
-        attributes.put("X-Amz-Credential", createFormattedCredential(credentials, TEST_REQUEST_DATE, TEST_REGION));
+//        attributes.put("X-Amz-Credential", createFormattedCredential(credentials, TEST_REQUEST_DATE, TEST_REGION));
         String signature = actual.sign(attributes, TEST_REGION, TEST_HOST, credentials, TEST_REQUEST_DATE);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
