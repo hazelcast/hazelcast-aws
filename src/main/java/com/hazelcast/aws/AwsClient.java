@@ -96,7 +96,7 @@ class AwsClient {
 
         if (StringUtil.isNotEmpty(iamRole)) {
             // authenticate using IAM Role
-            LOGGER.info(String.format("Fetching credentials using IAM Role: %s", iamRole));
+            LOGGER.fine(String.format("Fetching credentials using IAM Role: %s", iamRole));
             try {
                 return awsMetadataApi.credentials(iamRole);
             } catch (Exception e) {
