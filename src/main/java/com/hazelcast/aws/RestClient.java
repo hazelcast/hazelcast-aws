@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class for making REST calls.
@@ -39,6 +40,8 @@ final class RestClient {
     private final String url;
     private final List<Header> headers = new ArrayList<>();
     private String body;
+    private int readTimeoutSeconds = 0; // infinite timeout
+    private int connectTimeoutSeconds = 0; // infinite timeout
 
     private RestClient(String url) {
         this.url = url;
@@ -58,6 +61,16 @@ final class RestClient {
         return this;
     }
 
+    RestClient withReadTimeoutSeconds(int readTimeoutSeconds) {
+        this.readTimeoutSeconds = readTimeoutSeconds;
+        return this;
+    }
+
+    RestClient withConnectTimeoutSeconds(int connectTimeoutSeconds) {
+        this.connectTimeoutSeconds = connectTimeoutSeconds;
+        return this;
+    }
+
     String get() {
         return call("GET");
     }
@@ -72,6 +85,8 @@ final class RestClient {
         try {
             URL urlToConnect = new URL(url);
             connection = (HttpURLConnection) urlToConnect.openConnection();
+            connection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds));
+            connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds));
             connection.setRequestMethod(method);
             for (Header header : headers) {
                 connection.setRequestProperty(header.getKey(), header.getValue());
