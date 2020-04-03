@@ -15,14 +15,20 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
+import org.w3c.dom.Node;
+
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.AwsUrlUtils.prepareCanonicalizedQueryString;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
+import static java.lang.String.format;
 
 /**
  * Responsible for connecting to AWS EC2 Describe Instances API.
@@ -30,6 +36,7 @@ import static com.hazelcast.aws.StringUtil.isNotEmpty;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
 class AwsDescribeInstancesApi {
+    private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
 
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
@@ -51,7 +58,7 @@ class AwsDescribeInstancesApi {
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributes(region, endpoint, credentials);
         String response = callServiceWithRetries(endpoint, attributes);
-        return CloudyUtility.parse(response);
+        return parse(response);
     }
 
     private Map<String, String> createAttributes(String region, String endpoint, AwsCredentials credentials) {
@@ -127,5 +134,73 @@ class AwsDescribeInstancesApi {
             return endpoint + "/?" + query;
         }
         return "https://" + endpoint + "/?" + query;
+    }
+
+    private static Map<String, String> parse(String xmlResponse) {
+        try {
+            return tryParse(xmlResponse);
+        } catch (Exception e) {
+            LOGGER.warning(e);
+        }
+        return new HashMap<>();
+    }
+
+    private static Map<String, String> tryParse(String xmlResponse) throws Exception {
+        XmlNode root = XmlNode.create(xmlResponse);
+
+        Map<String, String> addresses = new HashMap<>();
+        List<XmlNode> reservationSet = root.getSubNodes("reservationset");
+        for (XmlNode reservation : reservationSet) {
+            List<XmlNode> items = reservation.getSubNodes("item");
+            for (XmlNode item : items) {
+                XmlNode instancesSet = item.getFirstSubNode("instancesset");
+                addresses.putAll(parseAddresses(instancesSet));
+            }
+        }
+        return addresses;
+
+    }
+
+    private static Map<String, String> parseAddresses(XmlNode instancesSet) {
+        Map<String, String> addresses = new HashMap<>();
+        if (instancesSet == null) {
+            return addresses;
+        }
+
+        for (XmlNode item : instancesSet.getSubNodes("item")) {
+            String privateIp = item.getValue("privateipaddress");
+            String publicIp = item.getValue("ipaddress");
+            String instanceName = parseInstanceName(item);
+
+            if (privateIp != null) {
+                addresses.put(privateIp, publicIp);
+                LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
+            }
+        }
+        return addresses;
+    }
+
+    private static String parseInstanceName(XmlNode nodeHolder) {
+        XmlNode tagSetHolder = nodeHolder.getFirstSubNode("tagset");
+        if (tagSetHolder.getNode() == null) {
+            return null;
+        }
+        for (XmlNode itemHolder : tagSetHolder.getSubNodes("item")) {
+            Node keyNode = itemHolder.getFirstSubNode("key").getNode();
+            if (keyNode == null || keyNode.getFirstChild() == null) {
+                continue;
+            }
+            String nodeValue = keyNode.getFirstChild().getNodeValue();
+            if (!"Name".equals(nodeValue)) {
+                continue;
+            }
+
+            Node valueNode = itemHolder.getFirstSubNode("value").getNode();
+            if (valueNode == null || valueNode.getFirstChild() == null) {
+                continue;
+            }
+            return valueNode.getFirstChild().getNodeValue();
+        }
+        return null;
     }
 }
