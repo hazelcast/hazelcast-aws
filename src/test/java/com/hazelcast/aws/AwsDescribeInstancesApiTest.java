@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -39,7 +39,7 @@ import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsDescribeInstancesApiTest {
-    private static final long CURRENT_TIME = 1585909518929L;
+    private static final long CURRENT_TIME_MS = 1585909518929L;
     private static final String SIGNATURE = "032264a26b2b3bd7c021603233dd7822b571750e174fb1e47b8e0784dd160fb6";
     private static final AwsConfig AWS_CONFIG = AwsConfig.builder()
         .setSecurityGroupName("hazelcast")
@@ -55,6 +55,9 @@ public class AwsDescribeInstancesApiTest {
     private static String endpoint;
 
     @Mock
+    private Environment environment;
+
+    @Mock
     private AwsEc2RequestSigner requestSigner;
 
     private AwsDescribeInstancesApi awsDescribeInstancesApi;
@@ -64,13 +67,11 @@ public class AwsDescribeInstancesApiTest {
 
     @Before
     public void setUp() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(CURRENT_TIME);
-        awsDescribeInstancesApi = new AwsDescribeInstancesApi(AWS_CONFIG, requestSigner, calendar);
+        given(requestSigner.sign(any(), any(), any(), any(), any())).willReturn(SIGNATURE);
+        given(environment.date()).willReturn(new Date(CURRENT_TIME_MS));
+        awsDescribeInstancesApi = new AwsDescribeInstancesApi(AWS_CONFIG, requestSigner, environment);
 
         endpoint = String.format("http://localhost:%s", wireMockRule.port());
-
-        given(requestSigner.sign(any(), any(), any(), any(), any())).willReturn(SIGNATURE);
     }
 
     @Test
@@ -91,7 +92,7 @@ public class AwsDescribeInstancesApiTest {
     @Test
     public void addressesAwsError() {
         // given
-        Integer errorCode = 401;
+        int errorCode = 401;
         String errorMessage = "Error message retrieved from AWS";
         stubFor(get(urlEqualTo(requestUrl()))
             .willReturn(aResponse().withStatus(errorCode).withBody(errorMessage)));
@@ -101,7 +102,7 @@ public class AwsDescribeInstancesApiTest {
             () -> awsDescribeInstancesApi.addresses(REGION, endpoint, CREDENTIALS));
 
         // then
-        assertTrue(exception.getCause().getMessage().contains(errorCode.toString()));
+        assertTrue(exception.getCause().getMessage().contains(Integer.toString(errorCode)));
         assertTrue(exception.getCause().getMessage().contains(errorMessage));
     }
 

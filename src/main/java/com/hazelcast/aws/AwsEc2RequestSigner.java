@@ -23,13 +23,9 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
+import static com.hazelcast.aws.CloudyUtility.prepareCanonicalizedQueryString;
 import static java.lang.String.format;
 
 class AwsEc2RequestSigner {
@@ -69,7 +65,7 @@ class AwsEc2RequestSigner {
 
     /* Task 1 */
     private String getCanonicalizedRequest(Map<String, String> attributes, String endpoint) {
-        return "GET" + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(attributes) + NEW_LINE
+        return "GET" + NEW_LINE + '/' + NEW_LINE + prepareCanonicalizedQueryString(attributes) + NEW_LINE
             + getCanonicalHeaders(endpoint) + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
     }
 

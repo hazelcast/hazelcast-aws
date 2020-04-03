@@ -16,14 +16,12 @@
 package com.hazelcast.aws;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
-import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
+import static com.hazelcast.aws.CloudyUtility.prepareCanonicalizedQueryString;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
 
 /**
@@ -35,12 +33,12 @@ class AwsDescribeInstancesApi {
 
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
-    private final Calendar calendar;
+    private final Environment environment;
 
-    AwsDescribeInstancesApi(AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Calendar calendar) {
+    AwsDescribeInstancesApi(AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Environment environment) {
         this.awsConfig = awsConfig;
         this.requestSigner = requestSigner;
-        this.calendar = calendar;
+        this.environment = environment;
     }
 
     /**
@@ -52,7 +50,7 @@ class AwsDescribeInstancesApi {
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributes(region, endpoint, credentials);
-        String response = callServiceWithRetries(attributes, endpoint);
+        String response = callServiceWithRetries(endpoint, attributes);
         return CloudyUtility.parseResponse(response);
     }
 
@@ -62,20 +60,26 @@ class AwsDescribeInstancesApi {
         if (credentials.getToken() != null) {
             attributes.put("X-Amz-Security-Token", credentials.getToken());
         }
-
         attributes.put("Action", "DescribeInstances");
         attributes.put("Version", "2016-11-15");
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
+
         String timestamp = formatCurrentTimestamp();
         attributes.put("X-Amz-Date", timestamp);
         attributes.put("X-Amz-Credential", formatCredentials(region, credentials, timestamp));
 
-        addFilters(attributes);
+        attributes.putAll(filterAttributes());
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
         attributes.put("X-Amz-Signature", requestSigner.sign(attributes, region, endpoint, credentials, timestamp));
 
         return attributes;
+    }
+
+    private String formatCurrentTimestamp() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return df.format(environment.date());
     }
 
     private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
@@ -85,19 +89,7 @@ class AwsDescribeInstancesApi {
             region);
     }
 
-
-    private String formatCurrentTimestamp() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = calendar.getTime();
-        // TODO: Change to custom time provider, date should be retrieved here, not at the beginning!
-        return df.format(date);
-    }
-
-    /**
-     * Add available filters to narrow down the scope of the query
-     */
-    private void addFilters(Map<String, String> attributes) {
+    private Map<String, String> filterAttributes() {
         Filter filter = new Filter();
         if (isNotEmpty(awsConfig.getTagKey())) {
             if (isNotEmpty(awsConfig.getTagValue())) {
@@ -114,16 +106,16 @@ class AwsDescribeInstancesApi {
         }
 
         filter.addFilter("instance-state-name", "running");
-        attributes.putAll(filter.getFilters());
+        return filter.getFilterAttributes();
     }
 
-    private String callServiceWithRetries(Map<String, String> attributes, String endpoint) {
-        return RetryUtils.retry(() -> callService(attributes, endpoint),
+    private String callServiceWithRetries(String endpoint, Map<String, String> attributes) {
+        return RetryUtils.retry(() -> callService(endpoint, attributes),
             awsConfig.getConnectionRetries());
     }
 
-    private String callService(Map<String, String> attributes, String endpoint) {
-        String query = getCanonicalizedQueryString(attributes);
+    private String callService(String endpoint, Map<String, String> attributes) {
+        String query = prepareCanonicalizedQueryString(attributes);
         return RestClient.create(urlFor(endpoint, query))
             .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
             .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())

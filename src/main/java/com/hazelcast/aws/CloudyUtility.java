@@ -20,20 +20,16 @@ import com.hazelcast.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
@@ -182,13 +178,13 @@ final class CloudyUtility {
         }
     }
 
-    static String getCanonicalizedQueryString(Map<String, String> attributes) {
+    static String prepareCanonicalizedQueryString(Map<String, String> attributes) {
         List<String> components = getListOfEntries(attributes);
         Collections.sort(components);
-        return getCanonicalizedQueryString(components);
+        return prepareCanonicalizedQueryString(components);
     }
 
-    private static String getCanonicalizedQueryString(List<String> list) {
+    private static String prepareCanonicalizedQueryString(List<String> list) {
         Iterator<String> it = list.iterator();
         StringBuilder result = new StringBuilder(it.next());
         while (it.hasNext()) {

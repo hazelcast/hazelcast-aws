@@ -15,14 +15,21 @@
 
 package com.hazelcast.aws;
 
+import java.util.Date;
+
 /**
- * This class is used to lookup env vars, so that we can use mocks in our tests,
- * when checking for the presence of an env var.
+ * This class is introduced used to lookup system variables.
+ *
+ * It is
  */
 class Environment {
 
-    String getEnvVar(String name) {
+    String getenv(String name) {
         return System.getenv(name);
+    }
+
+    Date date() {
+        return new Date();
     }
 
 }

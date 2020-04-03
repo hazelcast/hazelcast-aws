@@ -72,7 +72,7 @@ public class AwsDiscoveryStrategy
 
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
         AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig,
-            new AwsEc2RequestSigner(), Calendar.getInstance());
+            new AwsEc2RequestSigner(), new Environment());
 
         this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, new Environment());
         this.portRange = awsConfig.getHzPort();

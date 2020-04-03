@@ -82,7 +82,7 @@ public class AwsEc2RequestSignerTest {
         attributes.put("X-Amz-Expires", "30");
         Filter filter = new Filter();
         filter.addFilter("instance-state-name", "running");
-        attributes.putAll(filter.getFilters());
+        attributes.putAll(filter.getFilterAttributes());
 
         AwsEc2RequestSigner actual = new AwsEc2RequestSigner();
 //        attributes.put("X-Amz-Credential", createFormattedCredential(credentials, TEST_REQUEST_DATE, TEST_REGION));
