@@ -32,6 +32,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 
@@ -86,17 +88,21 @@ public class AwsDescribeInstancesApiTest {
         assertEquals("18.196.228.248", result.get("172.31.14.42"));
     }
 
-    @Test(expected = AwsConnectionException.class)
+    @Test
     public void addressesAwsError() {
         // given
+        Integer errorCode = 401;
+        String errorMessage = "Error message retrieved from AWS";
         stubFor(get(urlEqualTo(requestUrl()))
-            .willReturn(aResponse().withStatus(401).withBody("Error message retrieved from AWS")));
+            .willReturn(aResponse().withStatus(errorCode).withBody(errorMessage)));
 
         // when
-        awsDescribeInstancesApi.addresses(REGION, endpoint, CREDENTIALS);
+        RestClientException exception = assertThrows(RestClientException.class,
+            () -> awsDescribeInstancesApi.addresses(REGION, endpoint, CREDENTIALS));
 
         // then
-        // throws error
+        assertTrue(exception.getCause().getMessage().contains(errorCode.toString()));
+        assertTrue(exception.getCause().getMessage().contains(errorMessage));
     }
 
     private static String requestUrl() {

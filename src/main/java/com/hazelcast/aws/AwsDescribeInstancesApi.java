@@ -15,25 +15,18 @@
 
 package com.hazelcast.aws;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.aws.CloudyUtility.createFormattedCredential;
 import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
 import static com.hazelcast.aws.Constants.DOC_VERSION;
 import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
-import static com.hazelcast.internal.nio.IOUtil.closeResource;
 
 /**
  * Responsible for connecting to AWS EC2 Describe Instances API.
@@ -41,9 +34,6 @@ import static com.hazelcast.internal.nio.IOUtil.closeResource;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
 class AwsDescribeInstancesApi {
-    private static final int MIN_HTTP_CODE_FOR_AWS_ERROR = 400;
-    private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
-
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
     private final Calendar calendar;
@@ -62,11 +52,6 @@ class AwsDescribeInstancesApi {
      * @return map from private to public IP or empty map in case of failed response unmarshalling
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
-        System.out.println("### Credentials ");
-        System.out.println("access-key: " + credentials.getAccessKey());
-        System.out.println("secret-key: " + credentials.getSecretKey());
-        System.out.println("token: " + credentials.getToken());
-        System.out.println();
         Map<String, String> attributes = new HashMap<>();
         if (credentials.getToken() != null) {
             attributes.put("X-Amz-Security-Token", credentials.getToken());
@@ -74,28 +59,20 @@ class AwsDescribeInstancesApi {
 
         fillAttributes(attributes, region, endpoint, credentials);
         String signature = requestSigner.sign(attributes, region, endpoint, credentials, getFormattedTimestamp());
-        System.out.println("### Attribute X-Amz-Signature: " + signature);
         attributes.put("X-Amz-Signature", signature);
 
-        InputStream stream = null;
-        try {
-            stream = callServiceWithRetries(attributes, endpoint);
-            return CloudyUtility.unmarshalTheResponse(stream);
-        } finally {
-            closeResource(stream);
-        }
+        String response = callServiceWithRetries(attributes, endpoint);
+        return CloudyUtility.unmarshalTheResponse(response);
     }
 
     private void fillAttributes(Map<String, String> attributes, String region, String endpoint,
-                                               AwsCredentials credentials) {
+                                AwsCredentials credentials) {
         String timeStamp = getFormattedTimestamp();
         attributes.put("Action", "DescribeInstances");
         attributes.put("Version", DOC_VERSION);
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
         String formattedCredential = createFormattedCredential(credentials, timeStamp, region);
-        System.out.println("### Attribute X-Amz-Credential: " + formattedCredential);
         attributes.put("X-Amz-Credential", formattedCredential);
-        System.out.println("### Attribute X-Amz-Date: " + timeStamp);
         attributes.put("X-Amz-Date", timeStamp);
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
@@ -106,7 +83,6 @@ class AwsDescribeInstancesApi {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date date = calendar.getTime();
-        System.out.println("### Date time: " + date.getTime());
         return df.format(date);
     }
 
@@ -133,29 +109,17 @@ class AwsDescribeInstancesApi {
         attributes.putAll(filter.getFilters());
     }
 
-    private InputStream callServiceWithRetries(Map<String, String> attributes, String endpoint) {
+    private String callServiceWithRetries(Map<String, String> attributes, String endpoint) {
         return RetryUtils.retry(() -> callService(attributes, endpoint),
             awsConfig.getConnectionRetries());
     }
 
-    // visible for testing
-    InputStream callService(Map<String, String> attributes, String endpoint)
-        throws Exception {
+    private String callService(Map<String, String> attributes, String endpoint) {
         String query = getCanonicalizedQueryString(attributes);
-
-        URL url = new URL(urlFor(endpoint, query));
-        System.out.println("Request URL: " + urlFor(endpoint, query));
-
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestMethod(Constants.GET);
-        httpConnection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getReadTimeoutSeconds()));
-        httpConnection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(awsConfig.getConnectionTimeoutSeconds()));
-        httpConnection.setDoOutput(false);
-        httpConnection.connect();
-
-        checkNoAwsErrors(httpConnection);
-
-        return httpConnection.getInputStream();
+        return RestClient.create(urlFor(endpoint, query))
+            .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
+            .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
+            .get();
     }
 
     private static String urlFor(String endpoint, String query) {
@@ -163,36 +127,5 @@ class AwsDescribeInstancesApi {
             return endpoint + "/?" + query;
         }
         return "https://" + endpoint + "/?" + query;
-    }
-
-    // visible for testing
-    void checkNoAwsErrors(HttpURLConnection httpConnection)
-        throws IOException {
-        int responseCode = httpConnection.getResponseCode();
-        if (isAwsError(responseCode)) {
-            String errorMessage = extractErrorMessage(httpConnection);
-            throw new AwsConnectionException(responseCode, errorMessage);
-        }
-    }
-
-    /**
-     * AWS response codes for client and server errors are specified here:
-     * {@see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html}.
-     */
-    private static boolean isAwsError(int responseCode) {
-        return responseCode >= MIN_HTTP_CODE_FOR_AWS_ERROR && responseCode < MAX_HTTP_CODE_FOR_AWS_ERROR;
-    }
-
-    private static String extractErrorMessage(HttpURLConnection httpConnection) {
-        InputStream errorStream = httpConnection.getErrorStream();
-        if (errorStream == null) {
-            return "";
-        }
-        return readFrom(errorStream);
-    }
-
-    private static String readFrom(InputStream stream) {
-        Scanner scanner = new Scanner(stream, "UTF-8").useDelimiter("\\A");
-        return scanner.hasNext() ? scanner.next() : "";
     }
 }

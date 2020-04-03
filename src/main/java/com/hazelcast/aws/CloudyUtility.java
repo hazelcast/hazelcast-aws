@@ -20,10 +20,13 @@ import com.hazelcast.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -57,20 +60,14 @@ final class CloudyUtility {
      * @param stream the response XML stream
      * @return map from private to public IP or empty map in case of exceptions
      */
-    static Map<String, String> unmarshalTheResponse(InputStream stream) {
-//        System.out.println("RESPONSE");
-//        System.out.println("######################");
-//        System.out.println();
-//
-//        System.out.println(read(stream));
-
+    static Map<String, String> unmarshalTheResponse(String response) {
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             builder = dbf.newDocumentBuilder();
-            Document doc = builder.parse(stream);
+            Document doc = builder.parse(new ByteArrayInputStream(response.getBytes()));
 
             Element element = doc.getDocumentElement();
             NodeHolder elementNodeHolder = new NodeHolder(element);
@@ -87,16 +84,7 @@ final class CloudyUtility {
         } catch (Exception e) {
             LOGGER.warning(e);
         }
-        return new LinkedHashMap<String, String>();
-    }
-
-    private static String read(InputStream stream) {
-        if (stream == null) {
-            return "";
-        }
-        Scanner scanner = new Scanner(stream, "UTF-8");
-        scanner.useDelimiter("\\Z");
-        return scanner.next();
+        return new LinkedHashMap<>();
     }
 
     private static class NodeHolder {

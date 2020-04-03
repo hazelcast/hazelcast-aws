@@ -62,12 +62,8 @@ class AwsEc2RequestSigner {
                 String timestamp) {
 
         String canonicalRequest = getCanonicalizedRequest(attributes, endpoint);
-        System.out.println("#### ");
-        System.out.println("canonicalRequest: " + canonicalRequest);
         String stringToSign = createStringToSign(canonicalRequest, region, timestamp);
-        System.out.println("stringToSign: " + stringToSign);
         byte[] signingKey = deriveSigningKey(region, credentials, timestamp);
-        System.out.println("signingKey: " + signingKey);
 
         return createSignature(stringToSign, signingKey);
     }
