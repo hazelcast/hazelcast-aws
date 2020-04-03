@@ -41,7 +41,6 @@ public class AwsEc2RequestSignerTest {
         attributes.put("Action", "DescribeInstances");
         attributes.put("Version", "2016-11-15");
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-        attributes.put("X-Amz-Date", REQUEST_DATE);
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
         attributes.put("Filter.1.Value.1", "running");
