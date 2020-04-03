@@ -27,13 +27,14 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.hazelcast.aws.CloudyUtility.createFormattedCredential;
 import static com.hazelcast.aws.Constants.DOC_VERSION;
 import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(HazelcastSerialClassRunner.class)
 @Category(QuickTest.class)
-public class EC2RequestSignerTest {
+public class AwsEc2RequestSignerTest {
 
     private final static String TEST_REGION = "eu-central-1";
     private final static String TEST_HOST = "ec2.eu-central-1.amazonaws.com";
@@ -54,10 +55,7 @@ public class EC2RequestSignerTest {
             .build();
 
         // Override private method
-        EC2RequestSigner rs = new EC2RequestSigner(TEST_REQUEST_DATE, TEST_REGION, TEST_HOST, credentials);
-        Field field = rs.getClass().getDeclaredField("service");
-        field.setAccessible(true);
-        field.set(rs, "ec2");
+        AwsEc2RequestSigner rs = new AwsEc2RequestSigner();
 
         Method method = rs.getClass().getDeclaredMethod("deriveSigningKey", null);
         method.setAccessible(true);
@@ -89,9 +87,9 @@ public class EC2RequestSignerTest {
         filter.addFilter("instance-state-name", "running");
         attributes.putAll(filter.getFilters());
 
-        EC2RequestSigner actual = new EC2RequestSigner(TEST_REQUEST_DATE, TEST_REGION, TEST_HOST, credentials);
-        attributes.put("X-Amz-Credential", actual.createFormattedCredential());
-        String signature = actual.sign(TEST_SERVICE, attributes);
+        AwsEc2RequestSigner actual = new AwsEc2RequestSigner();
+        attributes.put("X-Amz-Credential", createFormattedCredential(credentials, TEST_REQUEST_DATE, TEST_REGION));
+        String signature = actual.sign(attributes, TEST_REGION, TEST_HOST, credentials, TEST_REQUEST_DATE);
 
         assertEquals(TEST_SIGNATURE_EXPECTED, signature);
     }

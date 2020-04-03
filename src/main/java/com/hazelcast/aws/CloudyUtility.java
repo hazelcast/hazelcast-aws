@@ -25,9 +25,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
@@ -38,6 +41,7 @@ final class CloudyUtility {
     private static final String NODE_ITEM = "item";
     private static final String NODE_VALUE = "value";
     private static final String NODE_KEY = "key";
+    private static final int LAST_INDEX = 8;
 
     private static final ILogger LOGGER = Logger.getLogger(CloudyUtility.class);
 
@@ -54,6 +58,12 @@ final class CloudyUtility {
      * @return map from private to public IP or empty map in case of exceptions
      */
     static Map<String, String> unmarshalTheResponse(InputStream stream) {
+//        System.out.println("RESPONSE");
+//        System.out.println("######################");
+//        System.out.println();
+//
+//        System.out.println(read(stream));
+
         DocumentBuilder builder;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -78,6 +88,15 @@ final class CloudyUtility {
             LOGGER.warning(e);
         }
         return new LinkedHashMap<String, String>();
+    }
+
+    private static String read(InputStream stream) {
+        if (stream == null) {
+            return "";
+        }
+        Scanner scanner = new Scanner(stream, "UTF-8");
+        scanner.useDelimiter("\\Z");
+        return scanner.next();
     }
 
     private static class NodeHolder {
@@ -173,5 +192,37 @@ final class CloudyUtility {
             }
             return privatePublicPairs;
         }
+    }
+
+    static String getCanonicalizedQueryString(Map<String, String> attributes) {
+        List<String> components = getListOfEntries(attributes);
+        Collections.sort(components);
+        return getCanonicalizedQueryString(components);
+    }
+
+    private static String getCanonicalizedQueryString(List<String> list) {
+        Iterator<String> it = list.iterator();
+        StringBuilder result = new StringBuilder(it.next());
+        while (it.hasNext()) {
+            result.append('&').append(it.next());
+        }
+        return result.toString();
+    }
+
+    private static void addComponents(List<String> components, Map<String, String> attributes, String key) {
+        components.add(AwsURLEncoder.urlEncode(key) + '=' + AwsURLEncoder.urlEncode(attributes.get(key)));
+    }
+
+    private static List<String> getListOfEntries(Map<String, String> entries) {
+        List<String> components = new ArrayList<String>();
+        for (String key : entries.keySet()) {
+            addComponents(components, entries, key);
+        }
+        return components;
+    }
+
+    static String createFormattedCredential(AwsCredentials credentials, String timestamp, String region) {
+        return credentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
+            + "ec2/aws4_request";
     }
 }

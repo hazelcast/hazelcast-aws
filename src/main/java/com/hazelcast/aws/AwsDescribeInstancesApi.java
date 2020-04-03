@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,8 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import static com.hazelcast.aws.CloudyUtility.createFormattedCredential;
+import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
 import static com.hazelcast.aws.Constants.DOC_VERSION;
 import static com.hazelcast.aws.Constants.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.StringUtil.isNotEmpty;
@@ -42,9 +45,13 @@ class AwsDescribeInstancesApi {
     private static final int MAX_HTTP_CODE_FOR_AWS_ERROR = 600;
 
     private final AwsConfig awsConfig;
+    private final AwsEc2RequestSigner requestSigner;
+    private final Calendar calendar;
 
-    AwsDescribeInstancesApi(AwsConfig awsConfig) {
+    AwsDescribeInstancesApi(AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Calendar calendar) {
         this.awsConfig = awsConfig;
+        this.requestSigner = requestSigner;
+        this.calendar = calendar;
     }
 
     /**
@@ -55,42 +62,52 @@ class AwsDescribeInstancesApi {
      * @return map from private to public IP or empty map in case of failed response unmarshalling
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
+        System.out.println("### Credentials ");
+        System.out.println("access-key: " + credentials.getAccessKey());
+        System.out.println("secret-key: " + credentials.getSecretKey());
+        System.out.println("token: " + credentials.getToken());
+        System.out.println();
         Map<String, String> attributes = new HashMap<>();
         if (credentials.getToken() != null) {
             attributes.put("X-Amz-Security-Token", credentials.getToken());
         }
 
-        EC2RequestSigner requestSigner = getRequestSigner(attributes, region, endpoint, credentials);
-        attributes.put("X-Amz-Signature", requestSigner.sign("ec2", attributes));
+        fillAttributes(attributes, region, endpoint, credentials);
+        String signature = requestSigner.sign(attributes, region, endpoint, credentials, getFormattedTimestamp());
+        System.out.println("### Attribute X-Amz-Signature: " + signature);
+        attributes.put("X-Amz-Signature", signature);
 
         InputStream stream = null;
         try {
-            stream = callServiceWithRetries(attributes, endpoint, requestSigner);
+            stream = callServiceWithRetries(attributes, endpoint);
             return CloudyUtility.unmarshalTheResponse(stream);
         } finally {
             closeResource(stream);
         }
     }
 
-    private EC2RequestSigner getRequestSigner(Map<String, String> attributes, String region, String endpoint,
-                                              AwsCredentials credentials) {
+    private void fillAttributes(Map<String, String> attributes, String region, String endpoint,
+                                               AwsCredentials credentials) {
         String timeStamp = getFormattedTimestamp();
-        EC2RequestSigner rs = new EC2RequestSigner(timeStamp, region, endpoint, credentials);
         attributes.put("Action", "DescribeInstances");
         attributes.put("Version", DOC_VERSION);
         attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-        attributes.put("X-Amz-Credential", rs.createFormattedCredential());
+        String formattedCredential = createFormattedCredential(credentials, timeStamp, region);
+        System.out.println("### Attribute X-Amz-Credential: " + formattedCredential);
+        attributes.put("X-Amz-Credential", formattedCredential);
+        System.out.println("### Attribute X-Amz-Date: " + timeStamp);
         attributes.put("X-Amz-Date", timeStamp);
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
         addFilters(attributes);
-        return rs;
     }
 
-    private static String getFormattedTimestamp() {
+    private String getFormattedTimestamp() {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return df.format(new Date());
+        Date date = calendar.getTime();
+        System.out.println("### Date time: " + date.getTime());
+        return df.format(date);
     }
 
     /**
@@ -116,16 +133,18 @@ class AwsDescribeInstancesApi {
         attributes.putAll(filter.getFilters());
     }
 
-    private InputStream callServiceWithRetries(Map<String, String> attributes, String endpoint, EC2RequestSigner requestSigner) {
-        return RetryUtils.retry(() -> callService(attributes, endpoint, requestSigner),
+    private InputStream callServiceWithRetries(Map<String, String> attributes, String endpoint) {
+        return RetryUtils.retry(() -> callService(attributes, endpoint),
             awsConfig.getConnectionRetries());
     }
 
     // visible for testing
-    InputStream callService(Map<String, String> attributes, String endpoint, EC2RequestSigner requestSigner)
+    InputStream callService(Map<String, String> attributes, String endpoint)
         throws Exception {
-        String query = requestSigner.getCanonicalizedQueryString(attributes);
-        URL url = new URL("https", endpoint, -1, "/?" + query);
+        String query = getCanonicalizedQueryString(attributes);
+
+        URL url = new URL(urlFor(endpoint, query));
+        System.out.println("Request URL: " + urlFor(endpoint, query));
 
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         httpConnection.setRequestMethod(Constants.GET);
@@ -137,6 +156,13 @@ class AwsDescribeInstancesApi {
         checkNoAwsErrors(httpConnection);
 
         return httpConnection.getInputStream();
+    }
+
+    private static String urlFor(String endpoint, String query) {
+        if (endpoint.startsWith("http")) {
+            return endpoint + "/?" + query;
+        }
+        return "https://" + endpoint + "/?" + query;
     }
 
     // visible for testing

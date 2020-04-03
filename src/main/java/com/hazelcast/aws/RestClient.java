@@ -38,7 +38,8 @@ final class RestClient {
     private static final int HTTP_OK = 200;
 
     private final String url;
-    private final List<Header> headers = new ArrayList<>();
+    private final List<Parameter> headers = new ArrayList<>();
+    private final List<Parameter> queryParams = new ArrayList<>();
     private String body;
     private int readTimeoutSeconds = 0; // infinite timeout
     private int connectTimeoutSeconds = 0; // infinite timeout
@@ -52,7 +53,11 @@ final class RestClient {
     }
 
     RestClient withHeader(String key, String value) {
-        headers.add(new Header(key, value));
+        headers.add(new Parameter(key, value));
+        return this;
+    }
+
+    RestClient withQueryParam(String key, String value) {
         return this;
     }
 
@@ -88,7 +93,7 @@ final class RestClient {
             connection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds));
             connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds));
             connection.setRequestMethod(method);
-            for (Header header : headers) {
+            for (Parameter header : headers) {
                 connection.setRequestProperty(header.getKey(), header.getValue());
             }
             if (body != null) {
@@ -104,8 +109,9 @@ final class RestClient {
             }
 
             if (connection.getResponseCode() != HTTP_OK) {
-                throw new RestClientException(String.format("Failure executing: %s at: %s. Message: %s,", method, url,
-                        read(connection.getErrorStream())));
+                throw new RestClientException(String.format("Failure executing: %s at: %s. HTTP Response Code: %s, "
+                        + "Message: \"%s\",", method, url, connection.getResponseCode(),
+                    read(connection.getErrorStream())));
             }
             return read(connection.getInputStream());
         } catch (Exception e) {
@@ -133,11 +139,11 @@ final class RestClient {
         return scanner.next();
     }
 
-    private static final class Header {
+    private static final class Parameter {
         private final String key;
         private final String value;
 
-        private Header(String key, String value) {
+        private Parameter(String key, String value) {
             this.key = key;
             this.value = value;
         }

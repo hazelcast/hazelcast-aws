@@ -29,9 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static com.hazelcast.aws.CloudyUtility.getCanonicalizedQueryString;
 import static java.lang.String.format;
 
-class EC2RequestSigner {
+class AwsEc2RequestSigner {
 
     private static final String NEW_LINE = "\n";
     private static final String API_TERMINATOR = "aws4_request";
@@ -39,57 +40,53 @@ class EC2RequestSigner {
     private static final String UTF_8 = "UTF-8";
     private static final int DATE_LENGTH = 8;
     private static final int LAST_INDEX = 8;
+    private static final String EC2_SERVICE = "ec2";
 
-    private final String timestamp;
 
-    private String service;
-    private Map<String, String> attributes;
-    private final String region;
-    private final String endpoint;
-    private final AwsCredentials credentials;
+    AwsEc2RequestSigner() {
 
-    EC2RequestSigner(String timestamp, String region, String endpoint, AwsCredentials credentials) {
-        this.timestamp = timestamp;
-        this.region = region;
-        this.endpoint = endpoint;
-        this.credentials = credentials;
     }
 
-    private String getCredentialScope() {
+
+    private String getCredentialScope(String region, String timestamp) {
         // datestamp/region/service/API_TERMINATOR
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
-        return format("%s/%s/%s/%s", dateStamp, region, this.service, API_TERMINATOR);
+        return format("%s/%s/%s/%s", dateStamp, region, EC2_SERVICE, API_TERMINATOR);
     }
 
     private String getSignedHeaders() {
         return "host";
     }
 
-    String sign(String service, Map<String, String> attributes) {
-        this.service = service;
-        this.attributes = attributes;
+    String sign(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials,
+                String timestamp) {
 
-        String canonicalRequest = getCanonicalizedRequest();
-        String stringToSign = createStringToSign(canonicalRequest);
-        byte[] signingKey = deriveSigningKey();
+        String canonicalRequest = getCanonicalizedRequest(attributes, endpoint);
+        System.out.println("#### ");
+        System.out.println("canonicalRequest: " + canonicalRequest);
+        String stringToSign = createStringToSign(canonicalRequest, region, timestamp);
+        System.out.println("stringToSign: " + stringToSign);
+        byte[] signingKey = deriveSigningKey(region, credentials, timestamp);
+        System.out.println("signingKey: " + signingKey);
 
         return createSignature(stringToSign, signingKey);
     }
 
     /* Task 1 */
-    private String getCanonicalizedRequest() {
-        return Constants.GET + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(this.attributes) + NEW_LINE
-            + getCanonicalHeaders() + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
+    private String getCanonicalizedRequest(Map<String, String> attributes, String endpoint) {
+        return Constants.GET + NEW_LINE + '/' + NEW_LINE + getCanonicalizedQueryString(attributes) + NEW_LINE
+            + getCanonicalHeaders(endpoint) + NEW_LINE + getSignedHeaders() + NEW_LINE + sha256Hashhex("");
     }
 
     /* Task 2 */
-    private String createStringToSign(String canonicalRequest) {
-        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope() + NEW_LINE + sha256Hashhex(
+    private String createStringToSign(String canonicalRequest, String region, String timestamp) {
+        return Constants.SIGNATURE_METHOD_V4 + NEW_LINE + timestamp + NEW_LINE + getCredentialScope(region,
+            timestamp) + NEW_LINE + sha256Hashhex(
             canonicalRequest);
     }
 
     /* Task 3 */
-    private byte[] deriveSigningKey() {
+    private byte[] deriveSigningKey(String region, AwsCredentials credentials, String timestamp) {
         String signKey = credentials.getSecretKey();
         String dateStamp = timestamp.substring(0, DATE_LENGTH);
         // this is derived from
@@ -110,7 +107,7 @@ class EC2RequestSigner {
             Mac mService = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skService = new SecretKeySpec(kRegion, HMAC_SHA256);
             mService.init(skService);
-            byte[] kService = mService.doFinal(this.service.getBytes(UTF_8));
+            byte[] kService = mService.doFinal(EC2_SERVICE.getBytes(UTF_8));
 
             Mac mSigning = Mac.getInstance(HMAC_SHA256);
             SecretKeySpec skSigning = new SecretKeySpec(kService, HMAC_SHA256);
@@ -143,35 +140,8 @@ class EC2RequestSigner {
         return QuickMath.bytesToHex(signature);
     }
 
-    private String getCanonicalHeaders() {
+    private String getCanonicalHeaders(String endpoint) {
         return format("host:%s%s", endpoint, NEW_LINE);
-    }
-
-    String getCanonicalizedQueryString(Map<String, String> attributes) {
-        List<String> components = getListOfEntries(attributes);
-        Collections.sort(components);
-        return getCanonicalizedQueryString(components);
-    }
-
-    private String getCanonicalizedQueryString(List<String> list) {
-        Iterator<String> it = list.iterator();
-        StringBuilder result = new StringBuilder(it.next());
-        while (it.hasNext()) {
-            result.append('&').append(it.next());
-        }
-        return result.toString();
-    }
-
-    private void addComponents(List<String> components, Map<String, String> attributes, String key) {
-        components.add(AwsURLEncoder.urlEncode(key) + '=' + AwsURLEncoder.urlEncode(attributes.get(key)));
-    }
-
-    private List<String> getListOfEntries(Map<String, String> entries) {
-        List<String> components = new ArrayList<String>();
-        for (String key : entries.keySet()) {
-            addComponents(components, entries, key);
-        }
-        return components;
     }
 
     private String sha256Hashhex(String in) {
@@ -187,10 +157,5 @@ class EC2RequestSigner {
             return null;
         }
         return payloadHash;
-    }
-
-    String createFormattedCredential() {
-        return credentials.getAccessKey() + '/' + timestamp.substring(0, LAST_INDEX) + '/' + region + '/'
-            + "ec2/aws4_request";
     }
 }
