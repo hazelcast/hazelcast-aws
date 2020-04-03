@@ -89,7 +89,7 @@ class AwsDescribeInstancesApi {
         return df.format(environment.date());
     }
 
-    private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
+    public static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
         return String.format("%s/%s/%s/ec2/aws4_request",
             credentials.getAccessKey(),
             timestamp.substring(0, 8),
