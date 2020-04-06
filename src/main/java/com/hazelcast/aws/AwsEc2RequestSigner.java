@@ -33,7 +33,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <p>
  * The signing steps are described in the AWS Documentation.
  *
- * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">Signature Version 4 Signing Process</a>
+ * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">
+ *     Signature Version 4 Signing Process</a>
  */
 class AwsEc2RequestSigner {
     static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
