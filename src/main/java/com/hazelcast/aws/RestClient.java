@@ -16,6 +16,7 @@
 package com.hazelcast.aws;
 
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -98,7 +99,7 @@ final class RestClient {
                     read(connection.getErrorStream())));
             }
             return read(connection.getInputStream());
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RestClientException("Failure in executing REST call", e);
         } finally {
             if (connection != null) {
