@@ -23,8 +23,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
@@ -53,34 +54,19 @@ final class XmlNode {
         return node;
     }
 
-    XmlNode getFirstSubNode(String name) {
-        if (node == null) {
-            return new XmlNode(null);
-        }
-        for (Node child : childElements(node)) {
-            if (name.equals(cleanNodeName(child))) {
-                return new XmlNode(child);
-            }
-        }
-        return new XmlNode(null);
-    }
-
     List<XmlNode> getSubNodes(String name) {
-        List<XmlNode> result = new ArrayList<>();
-        if (node == null) {
-            return result;
-        }
-        for (Node child : childElements(node)) {
-            if (name.equals(cleanNodeName(child))) {
-                result.add(new XmlNode(child));
-            }
-        }
-        return result;
+        return StreamSupport.stream(childElements(node).spliterator(), false)
+            .filter(e -> name.equals(cleanNodeName(e)))
+            .map(XmlNode::new)
+            .collect(Collectors.toList());
     }
 
     String getValue(String name) {
-        Node child = getFirstSubNode(name).getNode();
-        return (child == null ? null : child.getFirstChild().getNodeValue());
+        return getSubNodes(name).stream()
+            .map(XmlNode::getNode)
+            .map(Node::getFirstChild)
+            .map(Node::getNodeValue)
+            .findFirst()
+            .orElse(null);
     }
-
 }

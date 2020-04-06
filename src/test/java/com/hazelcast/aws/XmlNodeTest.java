@@ -46,9 +46,8 @@ public class XmlNodeTest {
 
         // when
         List<String> itemValues = XmlNode.create(xml)
-            .getFirstSubNode("parent")
-            .getSubNodes("item")
-            .stream()
+            .getSubNodes("parent").stream()
+            .flatMap(e -> e.getSubNodes("item").stream())
             .map(item -> item.getValue("key"))
             .collect(Collectors.toList());
 

@@ -15,15 +15,17 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 import org.w3c.dom.Node;
 
 import java.text.SimpleDateFormat;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
@@ -35,7 +37,7 @@ import static com.hazelcast.aws.StringUtils.isNotEmpty;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
 class AwsDescribeInstancesApi {
-//    private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
+    private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
 
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
@@ -146,61 +148,44 @@ class AwsDescribeInstancesApi {
     }
 
     private static Map<String, String> tryParse(String xmlResponse) throws Exception {
-        XmlNode root = XmlNode.create(xmlResponse);
-
-        Map<String, String> addresses = new HashMap<>();
-        List<XmlNode> reservationSet = root.getSubNodes("reservationset");
-        for (XmlNode reservation : reservationSet) {
-            List<XmlNode> items = reservation.getSubNodes("item");
-            for (XmlNode item : items) {
-                XmlNode instancesSet = item.getFirstSubNode("instancesset");
-                addresses.putAll(parseAddresses(instancesSet));
-            }
-        }
-        return addresses;
-
+        return XmlNode.create(xmlResponse)
+            .getSubNodes("reservationset").stream()
+            .flatMap(e -> e.getSubNodes("item").stream())
+            .flatMap(e -> e.getSubNodes("instancesset").stream())
+            .flatMap(e -> e.getSubNodes("item").stream())
+            .filter(e -> e.getValue("privateipaddress") != null)
+            .peek(AwsDescribeInstancesApi::logInstanceName)
+            .collect(Collectors.toMap(
+                e -> e.getValue("privateipaddress"),
+                e -> e.getValue("ipaddress"))
+            );
     }
 
-    private static Map<String, String> parseAddresses(XmlNode instancesSet) {
-        Map<String, String> addresses = new HashMap<>();
-        if (instancesSet == null) {
-            return addresses;
-        }
-
-        for (XmlNode item : instancesSet.getSubNodes("item")) {
-            String privateIp = item.getValue("privateipaddress");
-            String publicIp = item.getValue("ipaddress");
-            String instanceName = parseInstanceName(item);
-
-            if (privateIp != null) {
-                addresses.put(privateIp, publicIp);
-//                LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
-            }
-        }
-        return addresses;
+    private static void logInstanceName(XmlNode item) {
+        LOGGER.fine(String.format("Accepting EC2 instance [%s][%s]",
+            parseInstanceName(item),
+            item.getValue("privateipaddress")));
     }
 
     private static String parseInstanceName(XmlNode nodeHolder) {
-        XmlNode tagSetHolder = nodeHolder.getFirstSubNode("tagset");
-        if (tagSetHolder.getNode() == null) {
-            return null;
-        }
-        for (XmlNode itemHolder : tagSetHolder.getSubNodes("item")) {
-            Node keyNode = itemHolder.getFirstSubNode("key").getNode();
-            if (keyNode == null || keyNode.getFirstChild() == null) {
-                continue;
-            }
-            String nodeValue = keyNode.getFirstChild().getNodeValue();
-            if (!"Name".equals(nodeValue)) {
-                continue;
-            }
+        return nodeHolder.getSubNodes("tagset").stream()
+            .flatMap(e -> e.getSubNodes("item").stream())
+            .filter(AwsDescribeInstancesApi::isNameField)
+            .flatMap(e -> e.getSubNodes("value").stream())
+            .map(XmlNode::getNode)
+            .map(Node::getFirstChild)
+            .map(Node::getNodeValue)
+            .findFirst()
+            .orElse(null);
+    }
 
-            Node valueNode = itemHolder.getFirstSubNode("value").getNode();
-            if (valueNode == null || valueNode.getFirstChild() == null) {
-                continue;
-            }
-            return valueNode.getFirstChild().getNodeValue();
-        }
-        return null;
+    private static boolean isNameField(XmlNode item) {
+        return item.getSubNodes("key").stream()
+            .map(XmlNode::getNode)
+            .map(Node::getFirstChild)
+            .map(Node::getNodeValue)
+            .map("Name"::equals)
+            .findFirst()
+            .orElse(false);
     }
 }
