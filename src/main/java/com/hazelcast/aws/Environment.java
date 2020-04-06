@@ -24,7 +24,7 @@ import java.util.Date;
  */
 class Environment {
 
-    String getenv(String name) {
+    String getEnv(String name) {
         return System.getenv(name);
     }
 

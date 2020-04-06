@@ -59,8 +59,7 @@ class AwsDescribeInstancesApi {
      */
     Map<String, String> addresses(String region, String endpoint, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributes(region, endpoint, credentials);
-        String response = callServiceWithRetries(endpoint, attributes);
-        return parse(response);
+        return callServiceWithRetries(endpoint, attributes);
     }
 
     private Map<String, String> createAttributes(String region, String endpoint, AwsCredentials credentials) {
@@ -118,17 +117,18 @@ class AwsDescribeInstancesApi {
         return filter.getFilterAttributes();
     }
 
-    private String callServiceWithRetries(String endpoint, Map<String, String> attributes) {
+    private Map<String, String> callServiceWithRetries(String endpoint, Map<String, String> attributes) {
         return RetryUtils.retry(() -> callService(endpoint, attributes),
             awsConfig.getConnectionRetries());
     }
 
-    private String callService(String endpoint, Map<String, String> attributes) {
+    private Map<String, String> callService(String endpoint, Map<String, String> attributes) {
         String query = canonicalQueryString(attributes);
-        return RestClient.create(urlFor(endpoint, query))
+        String response = RestClient.create(urlFor(endpoint, query))
             .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
             .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
             .get();
+        return parse(response);
     }
 
     private static String urlFor(String endpoint, String query) {
@@ -142,9 +142,8 @@ class AwsDescribeInstancesApi {
         try {
             return tryParse(xmlResponse);
         } catch (Exception e) {
-            LOGGER.warning(e);
+            throw new RuntimeException(e);
         }
-        return new HashMap<>();
     }
 
     private static Map<String, String> tryParse(String xmlResponse) throws Exception {

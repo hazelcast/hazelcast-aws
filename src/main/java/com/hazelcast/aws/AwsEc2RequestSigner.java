@@ -28,6 +28,13 @@ import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/**
+ * Responsible for signing AWS Requests with the Signature version 4.
+ * <p>
+ * The signing steps are described in the AWS Documentation.
+ *
+ * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">Signature Version 4 Signing Process</a>
+ */
 class AwsEc2RequestSigner {
     static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";

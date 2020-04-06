@@ -113,7 +113,7 @@ class AwsClient {
     private AwsCredentials fetchCredentialsFromEcs() {
         // before giving up, attempt to discover whether we're running in an ECS Container,
         // in which case, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI will exist as an env var.
-        String relativePath = environment.getenv(ECS_CREDENTIALS_ENV_VAR_NAME);
+        String relativePath = environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME);
         if (relativePath == null) {
             throw new InvalidConfigurationException("Could not acquire credentials! "
                 + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
