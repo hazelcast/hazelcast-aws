@@ -23,7 +23,7 @@ import java.util.Map;
  */
 final class Filter {
 
-    private Map<String, String> filters = new HashMap<String, String>();
+    private Map<String, String> filters = new HashMap<>();
 
     /**
      * Filter index, each filter need to have a sequential index, starting from 1.
@@ -43,6 +43,6 @@ final class Filter {
     }
 
     Map<String, String> getFilterAttributes() {
-        return filters;
+        return new HashMap<>(filters);
     }
 }

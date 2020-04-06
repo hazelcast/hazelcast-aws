@@ -15,11 +15,7 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
-
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -29,14 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Utility class for making REST calls.
- */
 final class RestClient {
-    private static final ILogger LOGGER = Logger.getLogger(RestClient.class);
-
-    private static final int HTTP_OK = 200;
-
     private final String url;
     private final List<Parameter> headers = new ArrayList<>();
     private String body;
@@ -81,7 +70,6 @@ final class RestClient {
 
     private String call(String method) {
         HttpURLConnection connection = null;
-        DataOutputStream outputStream = null;
         try {
             URL urlToConnect = new URL(url);
             connection = (HttpURLConnection) urlToConnect.openConnection();
@@ -98,12 +86,13 @@ final class RestClient {
                 connection.setRequestProperty("charset", "utf-8");
                 connection.setRequestProperty("Content-Length", Integer.toString(bodyData.length));
 
-                outputStream = new DataOutputStream(connection.getOutputStream());
-                outputStream.write(bodyData);
-                outputStream.flush();
+                try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
+                    outputStream.write(bodyData);
+                    outputStream.flush();
+                }
             }
 
-            if (connection.getResponseCode() != HTTP_OK) {
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 throw new RestClientException(String.format("Failure executing: %s at: %s. HTTP Response Code: %s, "
                         + "Message: \"%s\",", method, url, connection.getResponseCode(),
                     read(connection.getErrorStream())));
@@ -115,19 +104,12 @@ final class RestClient {
             if (connection != null) {
                 connection.disconnect();
             }
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    LOGGER.finest("Error while closing HTTP output stream", e);
-                }
-            }
         }
     }
 
     private static String read(InputStream stream) {
         if (stream == null) {
-            return "";
+            return null;
         }
         Scanner scanner = new Scanner(stream, "UTF-8");
         scanner.useDelimiter("\\Z");
