@@ -48,8 +48,8 @@ public class AwsDescribeInstancesApiTest {
         .build();
     private static final String REGION = "eu-central-1";
     private static final AwsCredentials CREDENTIALS = AwsCredentials.builder()
-        .setAccessKey("ASIAZV4HIPQ45J2NU6SG")
-        .setSecretKey("pqidrmjASXExMA28naMBLrCbpIaOAXp6+o0cRYyd")
+        .setAccessKey("AKIDEXAMPLE")
+        .setSecretKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY")
         .setToken("IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGMEQCIGNqWOCTxslYFGiTqX2smgm5wANL67R4PE1HPpisXiQxAiBwtbamKgJR8FAcbOOEEMm1nTCsarvIqDGip5SE55ZNsSq6AwhbEAAaDDY2NTQ2NjczMTU3NyIM345eTegAGRnGjFHaKpcD/E8DRZLAQeDobXIgX1/oezU1Q6ZOv/M3tk6maifeh+UQIpRFLntzpPjadt5LiJTngti4KQkXb8XQKKHjIp+zN4rrRYhqUqhAe+BP8Qm7L2NczwRhnSVfoTJjZOx5CNw/tQf1n3CdNWKgZcgTSVwF1lLPyKK0bpoj3AkQvOjfSIo0ix9xHj1FnezO1QVzdFjJK70oMU806bAPzQ48KAVfh2L5gihaZo3KUDydOUpPcRbKYlrflOuifsxO25OAEqxhTLfFQAggApZ1a8ZGG278f+40Quh5XBAySU+SUgm3kDZ5ufWBePXVdfS8MD/WnO1sSRUKJMEFPgVHQ5DwcK8I+k0T4GhSIFxHjtUg8upKviSw1PR3OXI9AxLFpbHNcTXz9Q06sPj59VgnXvIdUwdZ/usL3YOhWI10ouPQQVG6KLdDMZT/gjWlrARN1rXHhuWOzyG5l8HfaYBMczGqgA1H1Oqjc767GaojiJ2N6cQbmmdYZMzG3EuBwKedIloDL0/2hYtiivwoOIycFOPMZcYzBPr8IbxGkVUwkIWc9AU67AHTKRcXVecgSjGOWuhoLz0gd8kSvBCqzvJdAdh0gVxsgTRmsh2BFEmEkqJHckIgpVZC8yEp/UZMAm8yu8RSeIcoxlEZfLKKqqQbWs9iHDBSGFwD5FLi7rHAMmYG2k6zGew2Vse3qI5uXquJDJlyzurZdnxu6O9BFSN0LBgO4e9OGHrLnwPMjYHwCqcsleS3mM7+v8a7i3HPE+wBIjfh9X96Dl25k1OBhvy8Xuzr+cERGqsMWLr5m5eck3V23Y+/pbS6FiFfaYMjc4ewjtPGT3/51wcvOvUTbl5B52uHKwMqIszO/qXTmqm0roC/OA==")
         .build();
     private static String endpoint;
@@ -115,7 +115,7 @@ public class AwsDescribeInstancesApiTest {
             + "&Filter.3.Name=instance-state-name&Filter.3.Value.1=running"
             + "&Version=2016-11-15"
             + "&X-Amz-Algorithm=AWS4-HMAC-SHA256"
-            + "&X-Amz-Credential=ASIAZV4HIPQ45J2NU6SG%2F20200403%2Feu-central-1%2Fec2%2Faws4_request"
+            + "&X-Amz-Credential=AKIDEXAMPLE%2F20200403%2Feu-central-1%2Fec2%2Faws4_request"
             + "&X-Amz-Date=20200403T102518Z"
             + "&X-Amz-Expires=30"
             + "&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGMEQCIGNqWOCTxslYFGiTqX2smgm5wANL67R4PE1HPpisXiQxAiBwtbamKgJR8FAcbOOEEMm1nTCsarvIqDGip5SE55ZNsSq6AwhbEAAaDDY2NTQ2NjczMTU3NyIM345eTegAGRnGjFHaKpcD%2FE8DRZLAQeDobXIgX1%2FoezU1Q6ZOv%2FM3tk6maifeh%2BUQIpRFLntzpPjadt5LiJTngti4KQkXb8XQKKHjIp%2BzN4rrRYhqUqhAe%2BBP8Qm7L2NczwRhnSVfoTJjZOx5CNw%2FtQf1n3CdNWKgZcgTSVwF1lLPyKK0bpoj3AkQvOjfSIo0ix9xHj1FnezO1QVzdFjJK70oMU806bAPzQ48KAVfh2L5gihaZo3KUDydOUpPcRbKYlrflOuifsxO25OAEqxhTLfFQAggApZ1a8ZGG278f%2B40Quh5XBAySU%2BSUgm3kDZ5ufWBePXVdfS8MD%2FWnO1sSRUKJMEFPgVHQ5DwcK8I%2Bk0T4GhSIFxHjtUg8upKviSw1PR3OXI9AxLFpbHNcTXz9Q06sPj59VgnXvIdUwdZ%2FusL3YOhWI10ouPQQVG6KLdDMZT%2FgjWlrARN1rXHhuWOzyG5l8HfaYBMczGqgA1H1Oqjc767GaojiJ2N6cQbmmdYZMzG3EuBwKedIloDL0%2F2hYtiivwoOIycFOPMZcYzBPr8IbxGkVUwkIWc9AU67AHTKRcXVecgSjGOWuhoLz0gd8kSvBCqzvJdAdh0gVxsgTRmsh2BFEmEkqJHckIgpVZC8yEp%2FUZMAm8yu8RSeIcoxlEZfLKKqqQbWs9iHDBSGFwD5FLi7rHAMmYG2k6zGew2Vse3qI5uXquJDJlyzurZdnxu6O9BFSN0LBgO4e9OGHrLnwPMjYHwCqcsleS3mM7%2Bv8a7i3HPE%2BwBIjfh9X96Dl25k1OBhvy8Xuzr%2BcERGqsMWLr5m5eck3V23Y%2B%2FpbS6FiFfaYMjc4ewjtPGT3%2F51wcvOvUTbl5B52uHKwMqIszO%2FqXTmqm0roC%2FOA%3D%3D"
