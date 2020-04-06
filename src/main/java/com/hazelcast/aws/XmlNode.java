@@ -14,7 +14,10 @@ import java.util.List;
 import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
 
-class XmlNode {
+/**
+ * Helper class for parsing XML strings
+ */
+final class XmlNode {
     private Node node;
 
     static XmlNode create(String xmlString) throws ParserConfigurationException, IOException, SAXException {

@@ -55,7 +55,7 @@ class AwsClient {
     }
 
     private String resolveRegion() {
-        if (StringUtil.isNotEmpty(awsConfig.getRegion())) {
+        if (StringUtils.isNotEmpty(awsConfig.getRegion())) {
             return awsConfig.getRegion();
         }
 
@@ -71,11 +71,11 @@ class AwsClient {
     }
 
     private String resolveIamRole() {
-        if (StringUtil.isNotEmpty(awsConfig.getAccessKey())) {
+        if (StringUtils.isNotEmpty(awsConfig.getAccessKey())) {
             // no need to resolve IAM Role, since using hardcoded Access/Secret keys takes precedence
             return null;
         }
-        if (StringUtil.isNotEmpty(awsConfig.getIamRole()) && !"DEFAULT".equals(awsConfig.getIamRole())) {
+        if (StringUtils.isNotEmpty(awsConfig.getIamRole()) && !"DEFAULT".equals(awsConfig.getIamRole())) {
             return awsConfig.getIamRole();
         }
         return awsMetadataApi.defaultIamRole();
@@ -86,7 +86,7 @@ class AwsClient {
     }
 
     private AwsCredentials prepareCredentials() {
-        if (StringUtil.isNotEmpty(awsConfig.getAccessKey())) {
+        if (StringUtils.isNotEmpty(awsConfig.getAccessKey())) {
             // authenticate using access key and secret key from the configuration
             return AwsCredentials.builder()
                 .setAccessKey(awsConfig.getAccessKey())
@@ -94,7 +94,7 @@ class AwsClient {
                 .build();
         }
 
-        if (StringUtil.isNotEmpty(iamRole)) {
+        if (StringUtils.isNotEmpty(iamRole)) {
             // authenticate using IAM Role
             LOGGER.fine(String.format("Fetching credentials using IAM Role: %s", iamRole));
             try {

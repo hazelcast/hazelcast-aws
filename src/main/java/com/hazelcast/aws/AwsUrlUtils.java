@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility class to format AWS Request to the canonical form.
+ */
 final class AwsUrlUtils {
 
     private AwsUrlUtils() {
