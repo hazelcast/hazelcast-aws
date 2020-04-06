@@ -103,8 +103,8 @@ public class AwsDescribeInstancesApiTest {
             () -> awsDescribeInstancesApi.addresses(REGION, endpoint, CREDENTIALS));
 
         // then
-        assertTrue(exception.getCause().getMessage().contains(Integer.toString(errorCode)));
-        assertTrue(exception.getCause().getMessage().contains(errorMessage));
+        assertTrue(exception.getMessage().contains(Integer.toString(errorCode)));
+        assertTrue(exception.getMessage().contains(errorMessage));
     }
 
     private static String requestUrl() {
