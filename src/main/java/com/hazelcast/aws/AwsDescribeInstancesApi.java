@@ -38,6 +38,8 @@ import static java.lang.String.format;
 class AwsDescribeInstancesApi {
     private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
 
+    private static final int TIMESTAMP_FIELD_LENGTH = 8;
+
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
     private final Environment environment;
@@ -89,10 +91,10 @@ class AwsDescribeInstancesApi {
         return df.format(environment.date());
     }
 
-    public static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
+    private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
         return String.format("%s/%s/%s/ec2/aws4_request",
             credentials.getAccessKey(),
-            timestamp.substring(0, 8),
+            timestamp.substring(0, TIMESTAMP_FIELD_LENGTH),
             region);
     }
 

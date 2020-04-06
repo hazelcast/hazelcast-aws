@@ -39,10 +39,9 @@ final class RestClient {
 
     private final String url;
     private final List<Parameter> headers = new ArrayList<>();
-    private final List<Parameter> queryParams = new ArrayList<>();
     private String body;
-    private int readTimeoutSeconds = 0; // infinite timeout
-    private int connectTimeoutSeconds = 0; // infinite timeout
+    private int readTimeoutSeconds;
+    private int connectTimeoutSeconds;
 
     private RestClient(String url) {
         this.url = url;
@@ -54,10 +53,6 @@ final class RestClient {
 
     RestClient withHeader(String key, String value) {
         headers.add(new Parameter(key, value));
-        return this;
-    }
-
-    RestClient withQueryParam(String key, String value) {
         return this;
     }
 

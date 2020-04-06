@@ -27,7 +27,6 @@ import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
 import com.hazelcast.spi.partitiongroup.PartitionGroupMetaData;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

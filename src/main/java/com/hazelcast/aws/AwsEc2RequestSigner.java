@@ -29,9 +29,10 @@ import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 class AwsEc2RequestSigner {
+    static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final String EC2_SERVICE = "ec2";
-    static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
+    private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
     String sign(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials,
                 String timestamp) {
@@ -121,7 +122,7 @@ class AwsEc2RequestSigner {
     }
 
     private static String datestamp(String timestamp) {
-        return timestamp.substring(0, 8);
+        return timestamp.substring(0, TIMESTAMP_FIELD_LENGTH);
     }
 
     private static String sha256Hashhex(String in) {
