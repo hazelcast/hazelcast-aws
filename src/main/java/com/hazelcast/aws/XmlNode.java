@@ -28,6 +28,7 @@ import java.util.List;
 
 import static com.hazelcast.internal.config.DomConfigHelper.childElements;
 import static com.hazelcast.internal.config.DomConfigHelper.cleanNodeName;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Helper class for parsing XML strings
@@ -43,7 +44,7 @@ final class XmlNode {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xmlString.getBytes()));
+        Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xmlString.getBytes(UTF_8)));
 
         return new XmlNode(doc.getDocumentElement());
     }
