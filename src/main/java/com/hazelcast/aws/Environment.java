@@ -18,9 +18,9 @@ package com.hazelcast.aws;
 import java.util.Date;
 
 /**
- * This class is introduced used to lookup system variables.
- *
- * It is
+ * This class is introduced to lookup system parameters.
+ * <p>
+ * It is introduced to isolate and mock system-related stuff.
  */
 class Environment {
 
