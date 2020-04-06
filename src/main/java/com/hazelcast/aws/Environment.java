@@ -15,8 +15,6 @@
 
 package com.hazelcast.aws;
 
-import java.util.Date;
-
 /**
  * This class is introduced to lookup system parameters.
  * <p>
@@ -27,9 +25,4 @@ class Environment {
     String getEnv(String name) {
         return System.getenv(name);
     }
-
-    Date date() {
-        return new Date();
-    }
-
 }

@@ -23,7 +23,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Date;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -39,7 +41,7 @@ import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsDescribeInstancesApiTest {
-    private static final long CURRENT_TIME_MS = 1585909518929L;
+    private static final Clock CLOCK = Clock.fixed(Instant.ofEpochMilli(1585909518929L), ZoneId.systemDefault());
     private static final String SIGNATURE = "032264a26b2b3bd7c021603233dd7822b571750e174fb1e47b8e0784dd160fb6";
     private static final AwsConfig AWS_CONFIG = AwsConfig.builder()
         .setSecurityGroupName("hazelcast")
@@ -68,8 +70,7 @@ public class AwsDescribeInstancesApiTest {
     @Before
     public void setUp() {
         given(requestSigner.sign(any(), any(), any(), any(), any())).willReturn(SIGNATURE);
-        given(environment.date()).willReturn(new Date(CURRENT_TIME_MS));
-        awsDescribeInstancesApi = new AwsDescribeInstancesApi(AWS_CONFIG, requestSigner, environment);
+        awsDescribeInstancesApi = new AwsDescribeInstancesApi(AWS_CONFIG, requestSigner, CLOCK);
 
         endpoint = String.format("http://localhost:%s", wireMockRule.port());
     }

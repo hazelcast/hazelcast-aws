@@ -15,11 +15,11 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 import org.w3c.dom.Node;
 
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,6 @@ import java.util.TimeZone;
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
-import static java.lang.String.format;
 
 /**
  * Responsible for connecting to AWS EC2 Describe Instances API.
@@ -36,18 +35,18 @@ import static java.lang.String.format;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
  */
 class AwsDescribeInstancesApi {
-    private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
+//    private static final ILogger LOGGER = Logger.getLogger(AwsDescribeInstancesApi.class);
 
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
     private final AwsConfig awsConfig;
     private final AwsEc2RequestSigner requestSigner;
-    private final Environment environment;
+    private final Clock clock;
 
-    AwsDescribeInstancesApi(AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Environment environment) {
+    AwsDescribeInstancesApi(AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Clock clock) {
         this.awsConfig = awsConfig;
         this.requestSigner = requestSigner;
-        this.environment = environment;
+        this.clock = clock;
     }
 
     /**
@@ -87,7 +86,7 @@ class AwsDescribeInstancesApi {
     private String formatCurrentTimestamp() {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return df.format(environment.date());
+        return df.format(Instant.now(clock).toEpochMilli());
     }
 
     private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {
@@ -175,7 +174,7 @@ class AwsDescribeInstancesApi {
 
             if (privateIp != null) {
                 addresses.put(privateIp, publicIp);
-                LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
+//                LOGGER.finest(format("Accepting EC2 instance [%s][%s]", instanceName, privateIp));
             }
         }
         return addresses;
