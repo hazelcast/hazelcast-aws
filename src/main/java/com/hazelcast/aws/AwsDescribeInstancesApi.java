@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
@@ -163,11 +164,11 @@ class AwsDescribeInstancesApi {
 
     private static void logInstanceName(XmlNode item) {
         LOGGER.fine(String.format("Accepting EC2 instance [%s][%s]",
-            parseInstanceName(item),
+            parseInstanceName(item).orElse("<unknown>"),
             item.getValue("privateipaddress")));
     }
 
-    private static String parseInstanceName(XmlNode nodeHolder) {
+    private static Optional<String> parseInstanceName(XmlNode nodeHolder) {
         return nodeHolder.getSubNodes("tagset").stream()
             .flatMap(e -> e.getSubNodes("item").stream())
             .filter(AwsDescribeInstancesApi::isNameField)
@@ -175,8 +176,7 @@ class AwsDescribeInstancesApi {
             .map(XmlNode::getNode)
             .map(Node::getFirstChild)
             .map(Node::getNodeValue)
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
 
     private static boolean isNameField(XmlNode item) {
