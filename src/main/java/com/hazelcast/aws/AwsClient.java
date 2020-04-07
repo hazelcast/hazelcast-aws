@@ -78,7 +78,10 @@ class AwsClient {
         if (StringUtils.isNotEmpty(awsConfig.getIamRole()) && !"DEFAULT".equals(awsConfig.getIamRole())) {
             return awsConfig.getIamRole();
         }
-        return awsMetadataApi.defaultIamRole();
+
+        String iamRole = awsMetadataApi.defaultIamRole();
+        LOGGER.info(String.format("Using IAM Role attached to EC2 Instance: %s", iamRole));
+        return iamRole;
     }
 
     Map<String, String> getAddresses() {
