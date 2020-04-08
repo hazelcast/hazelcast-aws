@@ -26,11 +26,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class to format AWS Request to the canonical form.
+ * Utility class to for AWS Requests.
  */
 final class AwsUrlUtils {
 
     private AwsUrlUtils() {
+    }
+
+    static String callAwsService(String url, AwsConfig awsConfig) {
+        return RetryUtils.retry(() -> RestClient.create(url)
+                .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
+                .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
+                .get()
+            , awsConfig.getConnectionRetries());
     }
 
     static String canonicalQueryString(Map<String, String> attributes) {

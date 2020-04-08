@@ -20,6 +20,8 @@ import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
+import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
+
 /**
  * Responsible for connecting to AWS EC2 and ECS Instance Metadata API.
  *
@@ -27,8 +29,6 @@ import com.hazelcast.logging.Logger;
  * @see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html">ECS Task Metadata</a>
  */
 class AwsMetadataApi {
-    private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);
-
     private static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
     private static final String ECS_METADATA_ENDPOINT = "http://169.254.170.2";
 
@@ -56,23 +56,23 @@ class AwsMetadataApi {
 
     String availabilityZone() {
         String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
-        return retrieveMetadataFromURI(uri);
+        return callAwsService(uri, awsConfig);
     }
 
     String defaultIamRole() {
         String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI);
-        return retrieveMetadataFromURI(uri);
+        return callAwsService(uri, awsConfig);
     }
 
     AwsCredentials credentials(String iamRole) {
         String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI).concat(iamRole);
-        String response = retrieveMetadataFromURI(uri);
+        String response = callAwsService(uri, awsConfig);
         return parseCredentials(response);
     }
 
     AwsCredentials credentialsFromEcs(String relativeUrl) {
         String uri = ecsEndpoint + relativeUrl;
-        String response = retrieveMetadataFromURI(uri);
+        String response = callAwsService(uri, awsConfig);
         return parseCredentials(response);
     }
 
@@ -83,16 +83,5 @@ class AwsMetadataApi {
             .setSecretKey(role.getString("SecretAccessKey", null))
             .setToken(role.getString("Token", null))
             .build();
-    }
-
-    /**
-     * Performs the HTTP request to retrieve AWS Instance Metadata from the given URI.
-     */
-    private String retrieveMetadataFromURI(final String uri) {
-        return RetryUtils.retry(() -> RestClient.create(uri)
-                .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
-                .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
-                .get()
-            , awsConfig.getConnectionRetries());
     }
 }
