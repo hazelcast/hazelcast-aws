@@ -64,7 +64,6 @@ class AwsEcsApi {
     }
 
     private String createBody(String clusterArn, String familyName) {
-        // TODO: Retrieve only running tasks (not all)
         JsonObject body = new JsonObject();
         body.add("cluster", clusterArn);
         body.add("family", familyName);
