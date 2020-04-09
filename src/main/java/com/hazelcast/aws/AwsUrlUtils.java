@@ -67,7 +67,10 @@ final class AwsUrlUtils {
 
     private static String canonicalQueryString(List<String> list) {
         Iterator<String> it = list.iterator();
-        StringBuilder result = new StringBuilder(it.next());
+        StringBuilder result = new StringBuilder();
+        if (it.hasNext()) {
+            result.append(it.next());
+        }
         while (it.hasNext()) {
             result.append('&').append(it.next());
         }

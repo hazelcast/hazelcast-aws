@@ -50,7 +50,7 @@ public class AwsEcsApiTest {
 
     @Before
     public void setUp() {
-        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
+        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
         endpoint = String.format("http://localhost:%s", wireMockRule.port());
         awsEcsApi = new AwsEcsApi(endpoint, AWS_CONFIG, requestSigner, CLOCK);
     }
@@ -67,8 +67,8 @@ public class AwsEcsApiTest {
         //language=JSON
         String response = "{\n"
             + "  \"taskArns\": [\n"
-            + "    \"task-arn-1\",\n"
-            + "    \"task-arn-2\"\n"
+            + "    \"arn:aws:ecs:us-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a\",\n"
+            + "    \"arn:aws:ecs:us-east-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207\"\n"
             + "  ]\n"
             + "}";
 
@@ -87,8 +87,8 @@ public class AwsEcsApiTest {
 
         // then
         assertThat(tasks, hasItems(
-            "task-arn-1",
-            "task-arn-2"
+            "arn:aws:ecs:us-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a",
+            "arn:aws:ecs:us-east-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207"
             )
         );
     }

@@ -30,15 +30,18 @@ class AwsEcsApi {
     }
 
     List<String> listTasks(String clusterArn, String familyName, String region, AwsCredentials credentials) {
-        Map<String, String> headers = createHeaders(region, credentials);
         String body = createBody(clusterArn, familyName);
+        Map<String, String> headers = createHeaders(body, region, credentials);
         String response = callServiceWithRetries(headers, body);
         return parse(response);
     }
 
-    private Map<String, String> createHeaders(String region, AwsCredentials credentials) {
+    private Map<String, String> createHeaders(String body, String region, AwsCredentials credentials) {
         Map<String, String> headers = new HashMap<>();
 
+        if (credentials.getToken() != null) {
+            headers.put("X-Amz-Security-Token", credentials.getToken());
+        }
         headers.put("X-Amz-Target", "AmazonEC2ContainerServiceV20141113.ListTasks");
         headers.put("Content-Type", "application/x-amz-json-1.1");
         headers.put("Accept-Encoding", "identity");
@@ -47,25 +50,21 @@ class AwsEcsApi {
         // TODO: Is it needed?
         headers.put("Host", host());
         headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, region, endpoint,
-            credentials, timestamp));
-
-        // TODO: Shouldn't it be at the beginning of this method?
-        if (credentials.getToken() != null) {
-            headers.put("X-Amz-Security-Token", credentials.getToken());
-        }
+            credentials, timestamp, body, "POST"));
 
         return headers;
     }
 
     private String host() {
         try {
-            return new URL(endpoint).getHost();
+            return new URL(urlFor(endpoint)).getHost();
         } catch (MalformedURLException e) {
             throw new IllegalStateException(String.format("Wrong endpoint: %s", endpoint), e);
         }
     }
 
     private String createBody(String clusterArn, String familyName) {
+        // TODO: Retrieve only running tasks (not all)
         JsonObject body = new JsonObject();
         body.add("cluster", clusterArn);
         body.add("family", familyName);
@@ -77,7 +76,7 @@ class AwsEcsApi {
     }
 
     private String callService(Map<String, String> headers, String body) {
-        return RestClient.create(endpoint)
+        return RestClient.create(urlFor(endpoint))
             .withHeaders(headers)
             .withBody(body)
             .post();
@@ -88,5 +87,12 @@ class AwsEcsApi {
         return StreamSupport.stream(tasks.get("taskArns").asArray().spliterator(), false)
             .map(JsonValue::asString)
             .collect(Collectors.toList());
+    }
+
+    private static String urlFor(String endpoint) {
+        if (endpoint.startsWith("http")) {
+            return endpoint;
+        }
+        return "https://" + endpoint;
     }
 }
