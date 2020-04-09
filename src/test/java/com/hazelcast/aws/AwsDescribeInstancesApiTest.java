@@ -54,10 +54,7 @@ public class AwsDescribeInstancesApiTest {
         .setSecretKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY")
         .setToken("IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGMEQCIGNqWOCTxslYFGiTqX2smgm5wANL67R4PE1HPpisXiQxAiBwtbamKgJR8FAcbOOEEMm1nTCsarvIqDGip5SE55ZNsSq6AwhbEAAaDDY2NTQ2NjczMTU3NyIM345eTegAGRnGjFHaKpcD/E8DRZLAQeDobXIgX1/oezU1Q6ZOv/M3tk6maifeh+UQIpRFLntzpPjadt5LiJTngti4KQkXb8XQKKHjIp+zN4rrRYhqUqhAe+BP8Qm7L2NczwRhnSVfoTJjZOx5CNw/tQf1n3CdNWKgZcgTSVwF1lLPyKK0bpoj3AkQvOjfSIo0ix9xHj1FnezO1QVzdFjJK70oMU806bAPzQ48KAVfh2L5gihaZo3KUDydOUpPcRbKYlrflOuifsxO25OAEqxhTLfFQAggApZ1a8ZGG278f+40Quh5XBAySU+SUgm3kDZ5ufWBePXVdfS8MD/WnO1sSRUKJMEFPgVHQ5DwcK8I+k0T4GhSIFxHjtUg8upKviSw1PR3OXI9AxLFpbHNcTXz9Q06sPj59VgnXvIdUwdZ/usL3YOhWI10ouPQQVG6KLdDMZT/gjWlrARN1rXHhuWOzyG5l8HfaYBMczGqgA1H1Oqjc767GaojiJ2N6cQbmmdYZMzG3EuBwKedIloDL0/2hYtiivwoOIycFOPMZcYzBPr8IbxGkVUwkIWc9AU67AHTKRcXVecgSjGOWuhoLz0gd8kSvBCqzvJdAdh0gVxsgTRmsh2BFEmEkqJHckIgpVZC8yEp/UZMAm8yu8RSeIcoxlEZfLKKqqQbWs9iHDBSGFwD5FLi7rHAMmYG2k6zGew2Vse3qI5uXquJDJlyzurZdnxu6O9BFSN0LBgO4e9OGHrLnwPMjYHwCqcsleS3mM7+v8a7i3HPE+wBIjfh9X96Dl25k1OBhvy8Xuzr+cERGqsMWLr5m5eck3V23Y+/pbS6FiFfaYMjc4ewjtPGT3/51wcvOvUTbl5B52uHKwMqIszO/qXTmqm0roC/OA==")
         .build();
-    private static String endpoint;
-
-    @Mock
-    private Environment environment;
+    private String endpoint;
 
     @Mock
     private AwsEc2RequestSigner requestSigner;

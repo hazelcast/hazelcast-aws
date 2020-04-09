@@ -19,17 +19,15 @@ import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.w3c.dom.Node;
 
-import java.text.SimpleDateFormat;
 import java.time.Clock;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
+import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
 /**
@@ -75,8 +73,8 @@ class AwsDescribeInstancesApi {
         attributes.put("X-Amz-SignedHeaders", "host");
         attributes.put("X-Amz-Expires", "30");
 
-        String timestamp = formatCurrentTimestamp();
-        attributes.put("X-Amz-Date", timestamp);
+        String timestamp = formatCurrentTimestamp(clock);
+        attributes.put("X-Amz-Date", formatCurrentTimestamp(clock));
         attributes.put("X-Amz-Credential", formatCredentials(region, credentials, timestamp));
 
         attributes.putAll(filterAttributes());
@@ -84,12 +82,6 @@ class AwsDescribeInstancesApi {
         attributes.put("X-Amz-Signature", requestSigner.sign(attributes, region, endpoint, credentials, timestamp));
 
         return attributes;
-    }
-
-    private String formatCurrentTimestamp() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return df.format(Instant.now(clock).toEpochMilli());
     }
 
     private static String formatCredentials(String region, AwsCredentials credentials, String timestamp) {

@@ -23,6 +23,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static java.lang.String.format;
@@ -40,7 +41,45 @@ class AwsEc2RequestSigner {
     static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final String EC2_SERVICE = "ec2";
+    private static final String ECS_SERVICE = "ecs";
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
+
+    String authenticationHeader(Map<String, String> attributes, Map<String, String> headers, String region,
+                                String endpoint,
+                                AwsCredentials credentials,
+                                String timestamp) {
+        return buildAuthHeader(credentials.getAccessKey(), credentialScopeEcs(region, timestamp),
+            getSignedHeaders(headers, endpoint),
+            sign(attributes, region, endpoint, credentials, timestamp));
+    }
+
+    private String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
+        return String.format("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+            SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
+    }
+
+    private String getSignedHeaders(Map<String, String> headers, String endpoint) {
+        StringBuilder signed = new StringBuilder();
+        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers, endpoint);
+        int n = 0;
+        for (String k : sortedHeaders.keySet()) {
+            if (n++ > 0) {
+                signed.append(";");
+            }
+            signed.append(k);
+        }
+        return signed.toString();
+    }
+
+    private Map<String, String> getSortedLowercaseHeaders(Map<String, String> headers, String endpoint) {
+        Map<String, String> sortedHeaders = new TreeMap<>();
+        for (Map.Entry<String, String> e : headers.entrySet()) {
+            sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
+        }
+        // TODO: Is it needed?
+        sortedHeaders.put("host", endpoint);
+        return sortedHeaders;
+    }
 
     String sign(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials,
                 String timestamp) {
@@ -80,6 +119,11 @@ class AwsEc2RequestSigner {
     }
 
     private String credentialScope(String region, String timestamp) {
+        // datestamp/region/service/API_TERMINATOR
+        return format("%s/%s/%s/%s", datestamp(timestamp), region, EC2_SERVICE, "aws4_request");
+    }
+
+    private String credentialScopeEcs(String region, String timestamp) {
         // datestamp/region/service/API_TERMINATOR
         return format("%s/%s/%s/%s", datestamp(timestamp), region, EC2_SERVICE, "aws4_request");
     }

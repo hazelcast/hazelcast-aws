@@ -23,6 +23,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +44,13 @@ final class RestClient {
 
     RestClient withHeader(String key, String value) {
         headers.add(new Parameter(key, value));
+        return this;
+    }
+
+    RestClient withHeaders(Map<String, String> headers) {
+        for (String key : headers.keySet()) {
+            this.headers.add(new Parameter(key, headers.get(key)));
+        }
         return this;
     }
 

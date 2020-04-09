@@ -19,11 +19,15 @@ import com.hazelcast.core.HazelcastException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Utility class to for AWS Requests.
@@ -31,6 +35,12 @@ import java.util.Map;
 final class AwsUrlUtils {
 
     private AwsUrlUtils() {
+    }
+
+    static String formatCurrentTimestamp(Clock clock) {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return df.format(Instant.now(clock).toEpochMilli());
     }
 
     static String callAwsService(String url, AwsConfig awsConfig) {
