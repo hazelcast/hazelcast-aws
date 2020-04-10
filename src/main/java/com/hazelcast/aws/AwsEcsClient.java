@@ -6,10 +6,12 @@ import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
+import static java.util.Collections.emptyMap;
 
 public class AwsEcsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
@@ -33,7 +35,6 @@ public class AwsEcsClient {
         this.familyName = metadata.getFamilyName();
         this.region = retrieveRegion();
 
-
         LOGGER.info(String.format("AWS ECS Discovery: {cluster : '%s', family : '%s'}", clusterArn, familyName));
     }
 
@@ -52,8 +53,24 @@ public class AwsEcsClient {
         List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, region, credentials);
         LOGGER.info(String.format("Found the following tasks: %s", tasks));
 
+        if (!tasks.isEmpty()) {
+            List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, region, credentials);
+            LOGGER.info(String.format("Found the following private addresses: %s", privateAddresses));
+
+            Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses);
+            LOGGER.info(String.format("The following (private, public) addresses found: %s", privateToPublicAddresses));
+            return privateToPublicAddresses;
+        }
+        return emptyMap();
+    }
+
+    private Map<String, String> fetchPublicAddresses(List<String> privateAddresses) {
+        Map<String, String> privateToPublicAddresses = new HashMap<>();
         // TODO
-        return null;
+        for (String address : privateAddresses) {
+            privateToPublicAddresses.put(address, "1.2.3.4");
+        }
+        return privateToPublicAddresses;
     }
 
     // TODO: Improve in the context of AwsMetadataApi
