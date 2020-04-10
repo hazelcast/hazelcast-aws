@@ -17,17 +17,17 @@ class AwsEcsClient implements AwsClient {
 
     private final AwsEcsMetadataApi awsEcsMetadataApi;
     private final AwsEcsApi awsEcsApi;
-    private final AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi;
+    private final AwsEc2Api awsEc2Api;
     private final String clusterArn;
     private final String familyName;
     private final String region;
     private final AwsConfig awsConfig;
 
     AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
-                 AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi, AwsConfig awsConfig) {
+                 AwsEc2Api awsEc2Api, AwsConfig awsConfig) {
         this.awsEcsMetadataApi = awsEcsMetadataApi;
         this.awsEcsApi = awsEcsApi;
-        this.awsDescribeNetworkInterfacesApi = awsDescribeNetworkInterfacesApi;
+        this.awsEc2Api = awsEc2Api;
         this.awsConfig = awsConfig;
 
         // TODO: Add config parameters
@@ -58,26 +58,26 @@ class AwsEcsClient implements AwsClient {
 
         if (!tasks.isEmpty()) {
             List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, region, credentials);
-            LOGGER.info(String.format("Found the following private addresses: %s", privateAddresses));
+            LOGGER.info(String.format("Found the following private describeInstances: %s", privateAddresses));
 
             Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
-            LOGGER.info(String.format("The following (private, public) addresses found: %s", privateToPublicAddresses));
+            LOGGER.info(String.format("The following (private, public) describeInstances found: %s", privateToPublicAddresses));
             return privateToPublicAddresses;
         }
         return emptyMap();
     }
 
     /**
-     * Fetches private addresses for the tasks.
+     * Fetches private describeInstances for the tasks.
      * <p>
-     * Note that this is done as best-effort and does not fail if no public addresses are not found, because:
+     * Note that this is done as best-effort and does not fail if no public describeInstances are not found, because:
      * <ul>
-     * <li>Task may not have public IP addresses</li>
-     * <li>Task may not have access rights to query for public addresses</li>
+     * <li>Task may not have public IP describeInstances</li>
+     * <li>Task may not have access rights to query for public describeInstances</li>
      * </ul>
      */
     private Map<String, String> fetchPublicAddresses(List<String> privateAddresses, AwsCredentials credentials) {
-        return awsDescribeNetworkInterfacesApi.publicAddresses(privateAddresses, region, credentials);
+        return awsEc2Api.describeNetworkInterfaces(privateAddresses, region, credentials);
     }
 
     // TODO: Improve in the context of AwsMetadataApi

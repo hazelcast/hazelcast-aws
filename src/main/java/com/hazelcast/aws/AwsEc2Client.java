@@ -14,7 +14,7 @@ class AwsEc2Client implements AwsClient {
     private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
 
     private final AwsMetadataApi awsMetadataApi;
-    private final AwsDescribeInstancesApi awsDescribeInstancesApi;
+    private final AwsEc2Api awsEc2Api;
     private final AwsConfig awsConfig;
     private final Environment environment;
 
@@ -22,10 +22,10 @@ class AwsEc2Client implements AwsClient {
     private final String endpoint;
     private final String iamRole;
 
-    AwsEc2Client(AwsMetadataApi awsMetadataApi, AwsDescribeInstancesApi awsDescribeInstancesApi, AwsConfig awsConfig,
+    AwsEc2Client(AwsMetadataApi awsMetadataApi, AwsEc2Api awsEc2Api, AwsConfig awsConfig,
                  Environment environment) {
         this.awsMetadataApi = awsMetadataApi;
-        this.awsDescribeInstancesApi = awsDescribeInstancesApi;
+        this.awsEc2Api = awsEc2Api;
         this.awsConfig = awsConfig;
         this.environment = environment;
 
@@ -68,7 +68,7 @@ class AwsEc2Client implements AwsClient {
 
     @Override
     public Map<String, String> getAddresses() {
-        return awsDescribeInstancesApi.addresses(region, endpoint, prepareCredentials());
+        return awsEc2Api.describeInstances(region, prepareCredentials());
     }
 
     private AwsCredentials prepareCredentials() {

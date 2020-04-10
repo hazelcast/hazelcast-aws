@@ -123,10 +123,10 @@ public class AwsDiscoveryStrategy
 
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
                 LOGGER.info("Describe instances will be queried with iam-role, "
-                    + "please make sure given iam-role have ec2:AwsDescribeInstancesApi policy attached.");
+                    + "please make sure given iam-role have ec2:AwsEc2Api policy attached.");
             } else {
                 LOGGER.info("Describe instances will be queried with iam-role assigned to EC2 instance, "
-                    + "please make sure given iam-role have ec2:AwsDescribeInstancesApi policy attached.");
+                    + "please make sure given iam-role have ec2:AwsEc2Api policy attached.");
             }
         } else {
             if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
@@ -148,12 +148,12 @@ public class AwsDiscoveryStrategy
         try {
             final Map<String, String> privatePublicIpAddressPairs = awsClient.getAddresses();
             if (privatePublicIpAddressPairs.isEmpty()) {
-                LOGGER.warning("No IP addresses found!");
+                LOGGER.warning("No IP describeInstances found!");
                 return Collections.emptyList();
             }
 
             if (LOGGER.isFinestEnabled()) {
-                final StringBuilder sb = new StringBuilder("Found the following IP addresses:\n");
+                final StringBuilder sb = new StringBuilder("Found the following IP describeInstances:\n");
                 for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
                     sb.append("    ").append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
                 }

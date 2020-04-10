@@ -14,18 +14,36 @@ class AwsClientConfigurator {
     private static final ILogger LOGGER = Logger.getLogger(AwsClientConfigurator.class);
 
     static AwsClient createAwsClient(AwsConfig awsConfig) {
-        //        AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
-//        AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig,
-//            new AwsEc2RequestSigner(), Clock.systemUTC());
+
+
+//        AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
+//        AwsEc2Api awsEc2Api = new AwsEc2Api("ec2.eu-central-1.amazonaws"
+//            + ".com", awsConfig,
+//            new AwsEc2RequestSigner("ec2"), Clock.systemUTC());
+//        return new AwsEc2Client(awsMetadataApi, awsEc2Api, awsConfig, new Environment());
+
+//        AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
+//        String region = resolveRegion(metadataApi, awsConfig);
+
         String endMetadataEndpoint = new Environment().getEnv("ECS_CONTAINER_METADATA_URI");
         LOGGER.info("ECS Metadata Endpoint: " + endMetadataEndpoint);
         AwsEcsMetadataApi awsEcsMetadataApi = new AwsEcsMetadataApi(endMetadataEndpoint, awsConfig);
-        AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi =
-            new AwsDescribeNetworkInterfacesApi("ec2.eu-central-1.amazonaws.com", awsConfig, new AwsEc2RequestSigner("ec2"), Clock.systemUTC());
-
-//        this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, new Environment());
+        AwsEc2Api awsEc2Api = new AwsEc2Api("ec2.eu-central-1.amazonaws.com", awsConfig, new AwsEc2RequestSigner("ec2"),
+            Clock.systemUTC());
         AwsEcsApi awsEcsApi = new AwsEcsApi("ecs.eu-central-1.amazonaws.com", awsConfig, new AwsEc2RequestSigner("ecs"),
             Clock.systemUTC());
-        return new AwsEcsClient(awsEcsMetadataApi, awsEcsApi, awsDescribeNetworkInterfacesApi, awsConfig);
+        return new AwsEcsClient(awsEcsMetadataApi, awsEcsApi, awsEc2Api, awsConfig);
+    }
+
+    /**
+     * Visibility for testing.
+     */
+    static String resolveRegion(AwsMetadataApi metadataApi, AwsConfig awsConfig) {
+        if (StringUtils.isNotEmpty(awsConfig.getRegion())) {
+            return awsConfig.getRegion();
+        }
+
+        String availabilityZone = metadataApi.availabilityZone();
+        return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 }
