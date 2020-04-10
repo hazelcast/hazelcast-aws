@@ -35,26 +35,29 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * The signing steps are described in the AWS Documentation.
  *
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">
- *     Signature Version 4 Signing Process</a>
+ * Signature Version 4 Signing Process</a>
  */
 class AwsEc2RequestSigner {
     static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
+    private final String region;
+    private final String endpoint;
     private final String service;
 
-    AwsEc2RequestSigner(String service) {
+    AwsEc2RequestSigner(String region, String endpoint, String service) {
+        this.region = region;
+        this.endpoint = endpoint;
         this.service = service;
     }
 
-    String authenticationHeader(Map<String, String> attributes, Map<String, String> headers, String region,
-                                String endpoint,
+    String authenticationHeader(Map<String, String> attributes, Map<String, String> headers,
                                 AwsCredentials credentials,
                                 String timestamp, String body, String httpMethod) {
-        return buildAuthHeader(credentials.getAccessKey(), credentialScopeEcs(region, timestamp),
-            getSignedHeaders(headers, endpoint),
-            signEcs(attributes, headers, region, endpoint, credentials, timestamp, body, httpMethod));
+        return buildAuthHeader(credentials.getAccessKey(), credentialScopeEcs(timestamp),
+            getSignedHeaders(headers),
+            signEcs(attributes, headers, credentials, timestamp, body, httpMethod));
     }
 
     private String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
@@ -62,9 +65,9 @@ class AwsEc2RequestSigner {
             SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
     }
 
-    private String getSignedHeaders(Map<String, String> headers, String endpoint) {
+    private String getSignedHeaders(Map<String, String> headers) {
         StringBuilder signed = new StringBuilder();
-        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers, endpoint);
+        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers);
         int n = 0;
         for (String k : sortedHeaders.keySet()) {
             if (n++ > 0) {
@@ -75,7 +78,7 @@ class AwsEc2RequestSigner {
         return signed.toString();
     }
 
-    private Map<String, String> getSortedLowercaseHeaders(Map<String, String> headers, String endpoint) {
+    private Map<String, String> getSortedLowercaseHeaders(Map<String, String> headers) {
         Map<String, String> sortedHeaders = new TreeMap<>();
         for (Map.Entry<String, String> e : headers.entrySet()) {
             sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
@@ -85,91 +88,81 @@ class AwsEc2RequestSigner {
         return sortedHeaders;
     }
 
-    String sign(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials,
+    String sign(Map<String, String> attributes, AwsCredentials credentials,
                 String timestamp) {
-        return sign(attributes, region, endpoint, credentials, timestamp, "", "GET");
+        return sign(attributes, credentials, timestamp, "", "GET");
     }
 
-    String sign(Map<String, String> attributes, String region, String endpoint, AwsCredentials credentials,
+    String sign(Map<String, String> attributes, AwsCredentials credentials,
                 String timestamp, String body, String httpMethod) {
-        String canonicalRequest = canonicalRequest(attributes, null, endpoint, body, httpMethod);
-        String stringToSign = stringToSign(canonicalRequest, region, timestamp);
-        byte[] signingKey = signingKey(region, credentials, timestamp);
+        String canonicalRequest = canonicalRequest(attributes, null, body, httpMethod);
+        String stringToSign = stringToSign(canonicalRequest, timestamp);
+        byte[] signingKey = signingKey(credentials, timestamp);
 
         return createSignature(stringToSign, signingKey);
     }
 
-    String signEcs(Map<String, String> attributes, Map<String, String> headers, String region,
-                   String endpoint,
+    String signEcs(Map<String, String> attributes, Map<String, String> headers,
                    AwsCredentials credentials,
-                String timestamp, String body, String httpMethod) {
-        String canonicalRequest = canonicalRequest(attributes, headers, endpoint, body, httpMethod);
-        String stringToSign = stringToSign(canonicalRequest, region, timestamp);
-        byte[] signingKey = signingKey(region, credentials, timestamp);
+                   String timestamp, String body, String httpMethod) {
+        String canonicalRequest = canonicalRequest(attributes, headers, body, httpMethod);
+        String stringToSign = stringToSign(canonicalRequest, timestamp);
+        byte[] signingKey = signingKey(credentials, timestamp);
 
         return createSignature(stringToSign, signingKey);
     }
 
     /* Task 1 */
-    private String canonicalRequest(Map<String, String> attributes, Map<String, String> headers, String endpoint,
+    private String canonicalRequest(Map<String, String> attributes, Map<String, String> headers,
                                     String body, String httpMethod) {
         return String.format("%s\n/\n%s\n%s\n%s\n%s",
             httpMethod,
             canonicalQueryString(attributes),
-            canonicalHeaders(headers, endpoint),
-            signedHeaders(headers, endpoint),
+            canonicalHeaders(headers),
+            signedHeaders(headers),
             sha256Hashhex(body)
         );
     }
 
-    private String canonicalHeaders(Map<String, String> headers, String endpoint) {
-//        if ("ec2".equals(service)) {
-//            return format("host:%s\n", endpoint);
-//        } else {
-            return getCanonicalHeaders(headers, endpoint);
-//        }
+    private String canonicalHeaders(Map<String, String> headers) {
+        return getCanonicalHeaders(headers);
     }
 
-    private String getCanonicalHeaders(Map<String, String> headers, String endpoint) {
+    private String getCanonicalHeaders(Map<String, String> headers) {
         StringBuilder canonical = new StringBuilder();
-        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers, endpoint);
+        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers);
         for (Map.Entry<String, String> entry : sortedHeaders.entrySet()) {
             canonical.append(format("%s:%s\n", entry.getKey().toLowerCase(), entry.getValue()));
         }
         return canonical.toString();
     }
 
-    private String signedHeaders(Map<String, String> headers, String endpoint) {
-//        if ("ec2".equals(service)) {
-//
-//            return "host";
-//        } else {
-            return getSignedHeaders(headers, endpoint);
-//        }
+    private String signedHeaders(Map<String, String> headers) {
+        return getSignedHeaders(headers);
     }
 
     /* Task 2 */
-    private String stringToSign(String canonicalRequest, String region, String timestamp) {
+    private String stringToSign(String canonicalRequest, String timestamp) {
         return String.format("%s\n%s\n%s\n%s",
             SIGNATURE_METHOD_V4,
             timestamp,
-            credentialScope(region, timestamp),
+            credentialScope(timestamp),
             sha256Hashhex(canonicalRequest)
         );
     }
 
-    private String credentialScope(String region, String timestamp) {
+    private String credentialScope(String timestamp) {
         // datestamp/region/service/API_TERMINATOR
         return format("%s/%s/%s/%s", datestamp(timestamp), region, service, "aws4_request");
     }
 
-    private String credentialScopeEcs(String region, String timestamp) {
+    private String credentialScopeEcs(String timestamp) {
         // datestamp/region/service/API_TERMINATOR
         return format("%s/%s/%s/%s", datestamp(timestamp), region, service, "aws4_request");
     }
 
     /* Task 3 */
-    private byte[] signingKey(String region, AwsCredentials credentials, String timestamp) {
+    private byte[] signingKey(AwsCredentials credentials, String timestamp) {
         String signKey = credentials.getSecretKey();
         // this is derived from
         // http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-python

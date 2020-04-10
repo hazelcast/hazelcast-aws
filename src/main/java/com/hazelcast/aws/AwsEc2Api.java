@@ -56,9 +56,9 @@ class AwsEc2Api {
      * @return map from private to public IP
      * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
      */
-    Map<String, String> describeInstances(String region, AwsCredentials credentials) {
+    Map<String, String> describeInstances(AwsCredentials credentials) {
         Map<String, String> attributes = createAttributesDescribeInstances();
-        Map<String, String> headers = createHeaders(attributes, region, credentials);
+        Map<String, String> headers = createHeaders(attributes, credentials);
         String response = callServiceWithRetries(attributes, headers);
         return parseDescribeInstances(response);
     }
@@ -76,16 +76,14 @@ class AwsEc2Api {
         return attributes;
     }
 
-    private Map<String, String> createHeaders(Map<String, String> attributes, String region,
-                                              AwsCredentials credentials) {
+    private Map<String, String> createHeaders(Map<String, String> attributes, AwsCredentials credentials) {
         Map<String, String> headers = new HashMap<>();
         if (credentials.getToken() != null) {
             headers.put("X-Amz-Security-Token", credentials.getToken());
         }
         String timestamp = formatCurrentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
-        headers.put("Authorization", requestSigner.authenticationHeader(attributes, headers, region, endpoint,
-            credentials, timestamp, "", "GET"));
+        headers.put("Authorization", requestSigner.authenticationHeader(attributes, headers, credentials, timestamp, "", "GET"));
 
         return headers;
     }
@@ -174,10 +172,9 @@ class AwsEc2Api {
      * @return map from private to public IP
      * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html">EC2 Describe Network Interfaces</a>
      */
-    Map<String, String> describeNetworkInterfaces(List<String> privateAddresses, String region,
-                                                  AwsCredentials credentials) {
+    Map<String, String> describeNetworkInterfaces(List<String> privateAddresses, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributesDescribeNetworkInterfaces(privateAddresses);
-        Map<String, String> headers = createHeaders(attributes, region, credentials);
+        Map<String, String> headers = createHeaders(attributes, credentials);
         String response = callServiceWithRetries(attributes, headers);
         return parseDescribeNetworkInterfaces(response);
     }

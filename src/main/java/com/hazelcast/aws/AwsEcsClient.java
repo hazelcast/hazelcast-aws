@@ -20,29 +20,22 @@ class AwsEcsClient implements AwsClient {
     private final AwsEc2Api awsEc2Api;
     private final String clusterArn;
     private final String familyName;
-    private final String region;
-    private final AwsConfig awsConfig;
+    private final AwsAuthenticator awsAuthenticator;
 
     AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
-                 AwsEc2Api awsEc2Api, AwsConfig awsConfig) {
+                 AwsEc2Api awsEc2Api, AwsAuthenticator awsAuthenticator) {
         this.awsEcsMetadataApi = awsEcsMetadataApi;
         this.awsEcsApi = awsEcsApi;
         this.awsEc2Api = awsEc2Api;
-        this.awsConfig = awsConfig;
+        this.awsAuthenticator = awsAuthenticator;
 
         // TODO: Add config parameters
         LOGGER.info("Retrieving data from ECS Metadata service");
         EcsMetadata metadata = awsEcsMetadataApi.metadata();
         this.clusterArn = metadata.getClusterArn();
         this.familyName = metadata.getFamilyName();
-        this.region = retrieveRegion();
 
         LOGGER.info(String.format("AWS ECS Discovery: {cluster : '%s', family : '%s'}", clusterArn, familyName));
-    }
-
-    private String retrieveRegion() {
-        // TODO: Use Metadata service to retrieve region
-        return "eu-central-1";
     }
 
     @Override
@@ -50,14 +43,14 @@ class AwsEcsClient implements AwsClient {
         LOGGER.info("Discovering Addresses from ECS");
 
         LOGGER.info("Retrieving AWS Credentials from ECS");
-        AwsCredentials credentials = retrieveCredentials();
+        AwsCredentials credentials = awsAuthenticator.credentials();
 
         LOGGER.info(String.format("Listing tasks from {cluster: '%s', family: '%s'}", clusterArn, familyName));
-        List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, region, credentials);
+        List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, credentials);
         LOGGER.info(String.format("Found the following tasks: %s", tasks));
 
         if (!tasks.isEmpty()) {
-            List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, region, credentials);
+            List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, credentials);
             LOGGER.info(String.format("Found the following private describeInstances: %s", privateAddresses));
 
             Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
@@ -77,23 +70,7 @@ class AwsEcsClient implements AwsClient {
      * </ul>
      */
     private Map<String, String> fetchPublicAddresses(List<String> privateAddresses, AwsCredentials credentials) {
-        return awsEc2Api.describeNetworkInterfaces(privateAddresses, region, credentials);
-    }
-
-    // TODO: Improve in the context of AwsMetadataApi
-    private AwsCredentials retrieveCredentials() {
-        String uri = "http://169.254.170.2" + System.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
-        String response = callAwsService(uri, awsConfig);
-        return parseCredentials(response);
-    }
-
-    private static AwsCredentials parseCredentials(String response) {
-        JsonObject role = Json.parse(response).asObject();
-        return AwsCredentials.builder()
-            .setAccessKey(role.getString("AccessKeyId", null))
-            .setSecretKey(role.getString("SecretAccessKey", null))
-            .setToken(role.getString("Token", null))
-            .build();
+        return awsEc2Api.describeNetworkInterfaces(privateAddresses, credentials);
     }
 
     @Override

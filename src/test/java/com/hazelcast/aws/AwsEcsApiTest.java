@@ -51,7 +51,7 @@ public class AwsEcsApiTest {
 
     @Before
     public void setUp() {
-        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
+        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
         endpoint = String.format("http://localhost:%s", wireMockRule.port());
         awsEcsApi = new AwsEcsApi(endpoint, AWS_CONFIG, requestSigner, CLOCK);
     }
@@ -86,7 +86,7 @@ public class AwsEcsApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        List<String> tasks = awsEcsApi.listTasks(cluster, family, REGION, CREDENTIALS);
+        List<String> tasks = awsEcsApi.listTasks(cluster, family, CREDENTIALS);
 
         // then
         assertThat(tasks, hasItems(
@@ -157,7 +157,7 @@ public class AwsEcsApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        List<String> result = awsEcsApi.describeTasks(cluster, tasks, REGION, CREDENTIALS);
+        List<String> result = awsEcsApi.describeTasks(cluster, tasks, CREDENTIALS);
 
         // then
         assertThat(result, hasItems("10.0.1.16", "10.0.1.219"));

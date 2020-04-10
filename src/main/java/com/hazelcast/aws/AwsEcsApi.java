@@ -31,15 +31,15 @@ class AwsEcsApi {
         this.clock = clock;
     }
 
-    List<String> listTasks(String clusterArn, String familyName, String region, AwsCredentials credentials) {
+    List<String> listTasks(String clusterArn, String familyName, AwsCredentials credentials) {
         String body = createBodyListTasks(clusterArn, familyName);
-        Map<String, String> headers = createHeadersListTasks(body, region, credentials);
+        Map<String, String> headers = createHeadersListTasks(body, credentials);
         String response = callServiceWithRetries(body, headers);
         return parseListTasks(response);
     }
 
-    private Map<String, String> createHeadersListTasks(String body, String region, AwsCredentials credentials) {
-        return createHeaders(body, region, credentials, "ListTasks");
+    private Map<String, String> createHeadersListTasks(String body, AwsCredentials credentials) {
+        return createHeaders(body, credentials, "ListTasks");
     }
 
     private String createBodyListTasks(String clusterArn, String familyName) {
@@ -55,9 +55,9 @@ class AwsEcsApi {
             .collect(Collectors.toList());
     }
 
-    List<String> describeTasks(String cluster, List<String> tasks, String region, AwsCredentials credentials) {
+    List<String> describeTasks(String cluster, List<String> tasks, AwsCredentials credentials) {
         String body = createBodyDescribeTasks(cluster, tasks);
-        Map<String, String> headers = createHeadersDescribeTasks(body, region, credentials);
+        Map<String, String> headers = createHeadersDescribeTasks(body, credentials);
         String response = callServiceWithRetries(body, headers);
         return parseDescribeTasks(response);
     }
@@ -71,8 +71,8 @@ class AwsEcsApi {
             .toString();
     }
 
-    private Map<String, String> createHeadersDescribeTasks(String body, String region, AwsCredentials credentials) {
-        return createHeaders(body, region, credentials, "DescribeTasks");
+    private Map<String, String> createHeadersDescribeTasks(String body, AwsCredentials credentials) {
+        return createHeaders(body, credentials, "DescribeTasks");
     }
 
     private List<String> parseDescribeTasks(String response) {
@@ -83,7 +83,7 @@ class AwsEcsApi {
             .collect(Collectors.toList());
     }
 
-    private Map<String, String> createHeaders(String body, String region, AwsCredentials credentials,
+    private Map<String, String> createHeaders(String body, AwsCredentials credentials,
                                               String awsTargetAction) {
         Map<String, String> headers = new HashMap<>();
 
@@ -97,8 +97,7 @@ class AwsEcsApi {
         headers.put("X-Amz-Date", timestamp);
         // TODO: Is it needed?
         headers.put("Host", hostFor(endpoint));
-        headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, region, endpoint,
-            credentials, timestamp, body, "POST"));
+        headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, credentials, timestamp, body, "POST"));
 
         return headers;
     }

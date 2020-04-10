@@ -7,6 +7,14 @@ class AwsEcsMetadataApi {
     private final String endpoint;
     private final AwsConfig awsConfig;
 
+    AwsEcsMetadataApi(AwsConfig awsConfig) {
+        this.endpoint = new Environment().getEnv("ECS_CONTAINER_METADATA_URI");
+        this.awsConfig = awsConfig;
+    }
+
+    /**
+     * For test purposes only.
+     */
     AwsEcsMetadataApi(String endpoint, AwsConfig awsConfig) {
         this.endpoint = endpoint;
         this.awsConfig = awsConfig;

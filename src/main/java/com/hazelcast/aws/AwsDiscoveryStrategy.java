@@ -56,7 +56,6 @@ public class AwsDiscoveryStrategy
     private static final Integer DEFAULT_CONNECTION_RETRIES = 3;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
-    private static final String DEFAULT_HOST_HEADER = "ec2.amazonaws.com";
 
     private final AwsClient awsClient;
     private final PortRange portRange;
@@ -88,7 +87,7 @@ public class AwsDiscoveryStrategy
                 .setAccessKey(getOrNull(ACCESS_KEY)).setSecretKey(getOrNull(SECRET_KEY))
                 .setRegion(getOrDefault(REGION.getDefinition(), null))
                 .setIamRole(getOrNull(IAM_ROLE))
-                .setHostHeader(getOrDefault(HOST_HEADER.getDefinition(), DEFAULT_HOST_HEADER))
+                .setHostHeader(getOrNull(HOST_HEADER.getDefinition()))
                 .setSecurityGroupName(getOrNull(SECURITY_GROUP_NAME)).setTagKey(getOrNull(TAG_KEY))
                 .setTagValue(getOrNull(TAG_VALUE))
                 .setConnectionTimeoutSeconds(getOrDefault(CONNECTION_TIMEOUT_SECONDS.getDefinition(),

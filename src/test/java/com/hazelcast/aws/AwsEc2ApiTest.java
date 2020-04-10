@@ -73,7 +73,7 @@ public class AwsEc2ApiTest {
 
     @Before
     public void setUp() {
-        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
+        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
         endpoint = String.format("http://localhost:%s", wireMockRule.port());
         awsEc2Api = new AwsEc2Api(endpoint, AWS_CONFIG, requestSigner, CLOCK);
     }
@@ -137,7 +137,7 @@ public class AwsEc2ApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        Map<String, String> result = awsEc2Api.describeInstances(REGION, CREDENTIALS);
+        Map<String, String> result = awsEc2Api.describeInstances(CREDENTIALS);
 
         // then
         assertEquals(2, result.size());
@@ -185,7 +185,7 @@ public class AwsEc2ApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        Map<String, String> result = awsEc2Api.describeNetworkInterfaces(privateAddresses, REGION, CREDENTIALS);
+        Map<String, String> result = awsEc2Api.describeNetworkInterfaces(privateAddresses, CREDENTIALS);
 
         // then
         assertEquals(2, result.size());
@@ -203,7 +203,7 @@ public class AwsEc2ApiTest {
 
         // when
         RestClientException exception = assertThrows(RestClientException.class,
-            () -> awsEc2Api.describeInstances(REGION, CREDENTIALS));
+            () -> awsEc2Api.describeInstances(CREDENTIALS));
 
         // then
         assertTrue(exception.getMessage().contains(Integer.toString(errorCode)));
