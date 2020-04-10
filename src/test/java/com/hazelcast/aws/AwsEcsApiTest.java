@@ -40,7 +40,7 @@ public class AwsEcsApiTest {
         .build();
 
     @Mock
-    private AwsEc2RequestSigner requestSigner;
+    private AwsRequestSigner requestSigner;
 
     private AwsEcsApi awsEcsApi;
 

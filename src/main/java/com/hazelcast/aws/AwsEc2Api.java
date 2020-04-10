@@ -40,10 +40,10 @@ class AwsEc2Api {
 
     private final String endpoint;
     private final AwsConfig awsConfig;
-    private final AwsEc2RequestSigner requestSigner;
+    private final AwsRequestSigner requestSigner;
     private final Clock clock;
 
-    AwsEc2Api(String endpoint, AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Clock clock) {
+    AwsEc2Api(String endpoint, AwsConfig awsConfig, AwsRequestSigner requestSigner, Clock clock) {
         this.endpoint = endpoint;
         this.awsConfig = awsConfig;
         this.requestSigner = requestSigner;
@@ -205,13 +205,13 @@ class AwsEc2Api {
 
     private static Map<String, String> parseDescribeNetworkInterfaces(String xmlResponse) {
         try {
-            return tryParse(xmlResponse);
+            return tryParseDescribeNetworkInterfaces(xmlResponse);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static Map<String, String> tryParse(String xmlResponse) throws Exception {
+    private static Map<String, String> tryParseDescribeNetworkInterfaces(String xmlResponse) throws Exception {
         return XmlNode.create(xmlResponse)
             .getSubNodes("networkinterfaceset").stream()
             .flatMap(e1 -> e1.getSubNodes("item").stream())

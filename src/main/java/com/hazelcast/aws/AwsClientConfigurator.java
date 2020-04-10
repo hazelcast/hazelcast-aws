@@ -1,6 +1,5 @@
 package com.hazelcast.aws;
 
-import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -19,18 +18,15 @@ class AwsClientConfigurator {
 
     static AwsClient createAwsClient(AwsConfig awsConfig) {
         String region = resolveRegion(awsConfig);
-        validateRegion(region);
         String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
-        AwsEc2RequestSigner ec2RequestSigner = new AwsEc2RequestSigner(region, ec2Endpoint, "ec2");
-
-        AwsEc2Api awsEc2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner,
-            Clock.systemUTC());
+        AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, ec2Endpoint, "ec2");
+        AwsEc2Api awsEc2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
         AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
         AwsAuthenticator awsAuthenticator = new AwsAuthenticator(awsMetadataApi, awsConfig, new Environment());
 
         if (isRunningOnEcs()) {
             String ecsEndpoint = resolveEcsEndpoint(awsConfig, region);
-            AwsEc2RequestSigner ecsRequestSigner = new AwsEc2RequestSigner(region, ecsEndpoint, "ecs");
+            AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ecsEndpoint, "ecs");
             AwsEcsMetadataApi awsEcsMetadataApi = new AwsEcsMetadataApi(awsConfig);
             AwsEcsApi awsEcsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner,
                 Clock.systemUTC());
@@ -55,7 +51,9 @@ class AwsClientConfigurator {
 
         AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
         String availabilityZone = metadataApi.availabilityZone();
-        return availabilityZone.substring(0, availabilityZone.length() - 1);
+        String region = availabilityZone.substring(0, availabilityZone.length() - 1);
+        validateRegion(region);
+        return region;
     }
 
     /**

@@ -20,40 +20,12 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hazelcast.aws.AwsEc2RequestSigner.SIGNATURE_METHOD_V4;
+import static com.hazelcast.aws.AwsRequestSigner.SIGNATURE_METHOD_V4;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 
-public class AwsEc2RequestSignerTest {
+public class AwsRequestSignerTest {
     private final static String REQUEST_DATE = "20141106T111126Z";
-
-    @Test
-    public void sign() {
-        // given
-        AwsCredentials credentials = AwsCredentials.builder()
-            .setAccessKey("AKIDEXAMPLE")
-            .setSecretKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY")
-            .build();
-        AwsEc2RequestSigner requestSigner = new AwsEc2RequestSigner("eu-central-1", "ec2.eu-central-1.amazonaws.com",
-            "ec2");
-
-        Map<String, String> attributes = new HashMap<>();
-        attributes.put("X-Amz-Date", REQUEST_DATE);
-        attributes.put("Action", "DescribeInstances");
-        attributes.put("Version", "2016-11-15");
-        attributes.put("X-Amz-Algorithm", SIGNATURE_METHOD_V4);
-        attributes.put("X-Amz-SignedHeaders", "host");
-        attributes.put("X-Amz-Expires", "30");
-        attributes.put("Filter.1.Value.1", "running");
-        attributes.put("Filter.1.Name", "instance-state-name");
-        attributes.put("X-Amz-Credential", "AKIDEXAMPLE/20141106/eu-central-1/ec2/aws4_request");
-
-        // when
-        String result = requestSigner.sign(attributes, credentials, REQUEST_DATE);
-
-        // then
-        assertEquals("79f7a4d346ee69ca22ba5f9bc3dd1efc13ac7509936afc5ec21cac37de071eef", result);
-    }
 
     private final static String TEST_REGION = "eu-central-1";
     private final static String TEST_HOST = "ecs.eu-central-1.amazonaws.com";
@@ -83,7 +55,7 @@ public class AwsEc2RequestSignerTest {
         headers.put("X-Amz-Date", TEST_REQUEST_DATE);
         headers.put("Host", TEST_HOST);
 
-        AwsEc2RequestSigner requestSigner = new AwsEc2RequestSigner(TEST_REGION, TEST_HOST, "ecs");
+        AwsRequestSigner requestSigner = new AwsRequestSigner(TEST_REGION, TEST_HOST, "ecs");
 
         // when
         String signature = requestSigner.authenticationHeader(emptyMap(), headers, awsCredentials, TEST_REQUEST_DATE, "", "GET");
@@ -117,7 +89,7 @@ public class AwsEc2RequestSignerTest {
         String body = "{\"cluster\":\"arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster\","
             + "\"family\":\"rafal-test-aws-ecs\"}";
 
-        AwsEc2RequestSigner requestSigner = new AwsEc2RequestSigner("eu-central-1", "ecs.eu-central-1.amazonaws.com",
+        AwsRequestSigner requestSigner = new AwsRequestSigner("eu-central-1", "ecs.eu-central-1.amazonaws.com",
             "ecs");
 
         // when
@@ -154,9 +126,9 @@ public class AwsEc2RequestSignerTest {
         headers.put("Host", TEST_HOST);
         headers.put("X-Amz-Date", TEST_REQUEST_DATE);
 
-        AwsEc2RequestSigner awsEc2RequestSigner = new AwsEc2RequestSigner("eu-central-1","ec2.eu-central-1"
+        AwsRequestSigner awsRequestSigner = new AwsRequestSigner("eu-central-1","ec2.eu-central-1"
             + ".amazonaws.com", "ec2");
-        String signature = awsEc2RequestSigner.signEcs(attributes, headers
+        String signature = awsRequestSigner.signEcs(attributes, headers
             , awsCredentials, TEST_REQUEST_DATE, "", "GET");
 
         assertEquals(TEST_SIGNATURE_EXPECTED_EC2, signature);

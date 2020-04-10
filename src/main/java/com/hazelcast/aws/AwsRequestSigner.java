@@ -37,7 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">
  * Signature Version 4 Signing Process</a>
  */
-class AwsEc2RequestSigner {
+class AwsRequestSigner {
     static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
@@ -46,7 +46,7 @@ class AwsEc2RequestSigner {
     private final String endpoint;
     private final String service;
 
-    AwsEc2RequestSigner(String region, String endpoint, String service) {
+    AwsRequestSigner(String region, String endpoint, String service) {
         this.region = region;
         this.endpoint = endpoint;
         this.service = service;
@@ -86,20 +86,6 @@ class AwsEc2RequestSigner {
         // TODO: Is it needed?
         sortedHeaders.put("host", endpoint);
         return sortedHeaders;
-    }
-
-    String sign(Map<String, String> attributes, AwsCredentials credentials,
-                String timestamp) {
-        return sign(attributes, credentials, timestamp, "", "GET");
-    }
-
-    String sign(Map<String, String> attributes, AwsCredentials credentials,
-                String timestamp, String body, String httpMethod) {
-        String canonicalRequest = canonicalRequest(attributes, null, body, httpMethod);
-        String stringToSign = stringToSign(canonicalRequest, timestamp);
-        byte[] signingKey = signingKey(credentials, timestamp);
-
-        return createSignature(stringToSign, signingKey);
     }
 
     String signEcs(Map<String, String> attributes, Map<String, String> headers,

@@ -64,7 +64,7 @@ public class AwsEc2ApiTest {
     private String endpoint;
 
     @Mock
-    private AwsEc2RequestSigner requestSigner;
+    private AwsRequestSigner requestSigner;
 
     private AwsEc2Api awsEc2Api;
 

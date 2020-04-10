@@ -21,10 +21,10 @@ import static java.util.Collections.emptyMap;
 class AwsEcsApi {
     private final String endpoint;
     private final AwsConfig awsConfig;
-    private final AwsEc2RequestSigner requestSigner;
+    private final AwsRequestSigner requestSigner;
     private final Clock clock;
 
-    AwsEcsApi(String endpoint, AwsConfig awsConfig, AwsEc2RequestSigner requestSigner, Clock clock) {
+    AwsEcsApi(String endpoint, AwsConfig awsConfig, AwsRequestSigner requestSigner, Clock clock) {
         this.endpoint = endpoint;
         this.awsConfig = awsConfig;
         this.requestSigner = requestSigner;
@@ -97,7 +97,8 @@ class AwsEcsApi {
         headers.put("X-Amz-Date", timestamp);
         // TODO: Is it needed?
         headers.put("Host", hostFor(endpoint));
-        headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, credentials, timestamp, body, "POST"));
+        headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, credentials, timestamp,
+            body, "POST"));
 
         return headers;
     }
