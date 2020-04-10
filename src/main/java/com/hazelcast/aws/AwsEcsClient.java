@@ -6,7 +6,6 @@ import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,14 +17,17 @@ public class AwsEcsClient {
 
     private final AwsEcsMetadataApi awsEcsMetadataApi;
     private final AwsEcsApi awsEcsApi;
+    private final AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi;
     private final String clusterArn;
     private final String familyName;
     private final String region;
     private final AwsConfig awsConfig;
 
-    public AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi, AwsConfig awsConfig) {
+    public AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
+                        AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi, AwsConfig awsConfig) {
         this.awsEcsMetadataApi = awsEcsMetadataApi;
         this.awsEcsApi = awsEcsApi;
+        this.awsDescribeNetworkInterfacesApi = awsDescribeNetworkInterfacesApi;
         this.awsConfig = awsConfig;
 
         // TODO: Add config parameters
@@ -57,20 +59,24 @@ public class AwsEcsClient {
             List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, region, credentials);
             LOGGER.info(String.format("Found the following private addresses: %s", privateAddresses));
 
-            Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses);
+            Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
             LOGGER.info(String.format("The following (private, public) addresses found: %s", privateToPublicAddresses));
             return privateToPublicAddresses;
         }
         return emptyMap();
     }
 
-    private Map<String, String> fetchPublicAddresses(List<String> privateAddresses) {
-        Map<String, String> privateToPublicAddresses = new HashMap<>();
-        // TODO
-        for (String address : privateAddresses) {
-            privateToPublicAddresses.put(address, "1.2.3.4");
-        }
-        return privateToPublicAddresses;
+    /**
+     * Fetches private addresses for the tasks.
+     * <p>
+     * Note that this is done as best-effort and does not fail if no public addresses are not found, because:
+     * <ul>
+     * <li>Task may not have public IP addresses</li>
+     * <li>Task may not have access rights to query for public addresses</li>
+     * </ul>
+     */
+    private Map<String, String> fetchPublicAddresses(List<String> privateAddresses, AwsCredentials credentials) {
+        return awsDescribeNetworkInterfacesApi.publicAddresses(privateAddresses, region, credentials);
     }
 
     // TODO: Improve in the context of AwsMetadataApi

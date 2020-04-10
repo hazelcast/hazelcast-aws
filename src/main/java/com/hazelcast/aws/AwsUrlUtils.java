@@ -18,6 +18,8 @@ package com.hazelcast.aws;
 import com.hazelcast.core.HazelcastException;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.time.Clock;
@@ -89,5 +91,20 @@ final class AwsUrlUtils {
             throw new HazelcastException(e);
         }
         return encoded;
+    }
+
+    static String urlFor(String endpoint) {
+        if (endpoint.startsWith("http")) {
+            return endpoint;
+        }
+        return "https://" + endpoint;
+    }
+
+    static String hostFor(String endpoint) {
+        try {
+            return new URL(urlFor(endpoint)).getHost();
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException(String.format("Wrong endpoint: %s", endpoint), e);
+        }
     }
 }

@@ -128,6 +128,38 @@ public class AwsEc2RequestSignerTest {
         assertEquals("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20200409/eu-central-1/ecs/aws4_request, SignedHeaders=accept-encoding;content-type;host;x-amz-date;x-amz-security-token;x-amz-target, Signature=5bc9912aa2fd47e19e2c80c903a4e4d5ca63dbe73af19fed6887c1d3610554bb", signature);
     }
 
+    private static final String TEST_SIGNATURE_EXPECTED_EC2 = "8e4f83fe919390f53fa71ea0ea8a25a09e7d10e1740b238fc6969a1410e06c57";
+
+    @Test
+    public void testSigningEc2() {
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setRegion("eu-central-1")
+            .setHostHeader("ec2.eu-central-1.amazonaws.com")
+            .setAccessKey(TEST_ACCESS_KEY)
+            .setSecretKey(TEST_SECRET_KEY)
+            .build();
+        AwsCredentials awsCredentials = AwsCredentials.builder()
+            .setAccessKey(TEST_ACCESS_KEY)
+            .setSecretKey(TEST_SECRET_KEY)
+            .build();
+
+        Map<String, String> attributes = new HashMap<>();
+        Filter filter = new Filter();
+        filter.addFilter("instance-state-name", "running");
+        attributes.putAll(filter.getFilterAttributes());
+        attributes.put("Action", "DescribeInstances");
+        attributes.put("Version", "2016-11-15");
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Host", TEST_HOST);
+        headers.put("X-Amz-Date", TEST_REQUEST_DATE);
+
+        AwsEc2RequestSigner awsEc2RequestSigner = new AwsEc2RequestSigner("ec2");
+        String signature = awsEc2RequestSigner.signEcs(attributes, headers, "eu-central-1", "ec2.eu-central-1"
+            + ".amazonaws.com", awsCredentials, TEST_REQUEST_DATE, "", "GET");
+
+        assertEquals(TEST_SIGNATURE_EXPECTED_EC2, signature);
+    }
 
 
 }

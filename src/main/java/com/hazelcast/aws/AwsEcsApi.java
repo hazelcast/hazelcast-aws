@@ -5,8 +5,6 @@ import com.hazelcast.internal.json.JsonArray;
 import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.internal.json.JsonValue;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +14,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
+import static com.hazelcast.aws.AwsUrlUtils.hostFor;
+import static com.hazelcast.aws.AwsUrlUtils.urlFor;
 import static java.util.Collections.emptyMap;
 
 class AwsEcsApi {
@@ -34,7 +34,7 @@ class AwsEcsApi {
     List<String> listTasks(String clusterArn, String familyName, String region, AwsCredentials credentials) {
         String body = createBodyListTasks(clusterArn, familyName);
         Map<String, String> headers = createHeadersListTasks(body, region, credentials);
-        String response = callServiceWithRetries(headers, body);
+        String response = callServiceWithRetries(body, headers);
         return parseListTasks(response);
     }
 
@@ -58,7 +58,7 @@ class AwsEcsApi {
     List<String> describeTasks(String cluster, List<String> tasks, String region, AwsCredentials credentials) {
         String body = createBodyDescribeTasks(cluster, tasks);
         Map<String, String> headers = createHeadersDescribeTasks(body, region, credentials);
-        String response = callServiceWithRetries(headers, body);
+        String response = callServiceWithRetries(body, headers);
         return parseDescribeTasks(response);
     }
 
@@ -96,26 +96,18 @@ class AwsEcsApi {
         String timestamp = formatCurrentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
         // TODO: Is it needed?
-        headers.put("Host", host());
+        headers.put("Host", hostFor(endpoint));
         headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, region, endpoint,
             credentials, timestamp, body, "POST"));
 
         return headers;
     }
 
-    private String host() {
-        try {
-            return new URL(urlFor(endpoint)).getHost();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException(String.format("Wrong endpoint: %s", endpoint), e);
-        }
+    private String callServiceWithRetries(String body, Map<String, String> headers) {
+        return RetryUtils.retry(() -> callService(body, headers), awsConfig.getConnectionRetries());
     }
 
-    private String callServiceWithRetries(Map<String, String> headers, String body) {
-        return RetryUtils.retry(() -> callService(headers, body), awsConfig.getConnectionRetries());
-    }
-
-    private String callService(Map<String, String> headers, String body) {
+    private String callService(String body, Map<String, String> headers) {
         return RestClient.create(urlFor(endpoint))
             .withHeaders(headers)
             .withBody(body)
@@ -130,10 +122,4 @@ class AwsEcsApi {
         return StreamSupport.stream(json.asArray().spliterator(), false);
     }
 
-    private static String urlFor(String endpoint) {
-        if (endpoint.startsWith("http")) {
-            return endpoint;
-        }
-        return "https://" + endpoint;
-    }
 }

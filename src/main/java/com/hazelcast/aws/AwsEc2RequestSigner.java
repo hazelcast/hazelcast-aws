@@ -123,11 +123,11 @@ class AwsEc2RequestSigner {
     }
 
     private String canonicalHeaders(Map<String, String> headers, String endpoint) {
-        if ("ec2".equals(service)) {
-            return format("host:%s\n", endpoint);
-        } else {
+//        if ("ec2".equals(service)) {
+//            return format("host:%s\n", endpoint);
+//        } else {
             return getCanonicalHeaders(headers, endpoint);
-        }
+//        }
     }
 
     private String getCanonicalHeaders(Map<String, String> headers, String endpoint) {
@@ -140,12 +140,12 @@ class AwsEc2RequestSigner {
     }
 
     private String signedHeaders(Map<String, String> headers, String endpoint) {
-        if ("ec2".equals(service)) {
-
-            return "host";
-        } else {
+//        if ("ec2".equals(service)) {
+//
+//            return "host";
+//        } else {
             return getSignedHeaders(headers, endpoint);
-        }
+//        }
     }
 
     /* Task 2 */
