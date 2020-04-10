@@ -12,7 +12,7 @@ import java.util.Map;
 import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
 import static java.util.Collections.emptyMap;
 
-public class AwsEcsClient {
+class AwsEcsClient implements AwsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
 
     private final AwsEcsMetadataApi awsEcsMetadataApi;
@@ -23,8 +23,8 @@ public class AwsEcsClient {
     private final String region;
     private final AwsConfig awsConfig;
 
-    public AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
-                        AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi, AwsConfig awsConfig) {
+    AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
+                 AwsDescribeNetworkInterfacesApi awsDescribeNetworkInterfacesApi, AwsConfig awsConfig) {
         this.awsEcsMetadataApi = awsEcsMetadataApi;
         this.awsEcsApi = awsEcsApi;
         this.awsDescribeNetworkInterfacesApi = awsDescribeNetworkInterfacesApi;
@@ -45,7 +45,8 @@ public class AwsEcsClient {
         return "eu-central-1";
     }
 
-    Map<String, String> getAddresses() {
+    @Override
+    public Map<String, String> getAddresses() {
         LOGGER.info("Discovering Addresses from ECS");
 
         LOGGER.info("Retrieving AWS Credentials from ECS");
@@ -95,7 +96,8 @@ public class AwsEcsClient {
             .build();
     }
 
-    String getAvailabilityZone() {
+    @Override
+    public String getAvailabilityZone() {
         // TODO: Return fetching availability zone
         return "unknown";
     }

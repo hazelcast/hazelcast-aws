@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AwsClientTest {
+public class AwsEc2ClientTest {
     private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
     private static final String REGION = "us-east-1";
     private static final String ENDPOINT = "ec2.us-east-1.amazonaws.com";
@@ -64,7 +64,7 @@ public class AwsClientTest {
             .build();
 
         // when
-        new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // then
         // throws exception
@@ -78,7 +78,7 @@ public class AwsClientTest {
             .build();
 
         // when
-        new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // then
         // throws exception
@@ -88,7 +88,7 @@ public class AwsClientTest {
     public void getAddresses() {
         // given
         AwsConfig awsConfig = predefinedAwsConfig().build();
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         Map<String, String> result = awsClient.getAddresses();
@@ -104,7 +104,7 @@ public class AwsClientTest {
         AwsConfig awsConfig = predefinedAwsConfig()
             .setRegion("")
             .build();
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         Map<String, String> result = awsClient.getAddresses();
@@ -121,7 +121,7 @@ public class AwsClientTest {
             .setSecretKey("")
             .setIamRole(IAM_ROLE)
             .build();
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         Map<String, String> result = awsClient.getAddresses();
@@ -139,7 +139,7 @@ public class AwsClientTest {
             .setIamRole("")
             .build();
         given(awsMetadataApi.defaultIamRole()).willReturn(IAM_ROLE);
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         Map<String, String> result = awsClient.getAddresses();
@@ -158,7 +158,7 @@ public class AwsClientTest {
             .setIamRole(iamRole)
             .build();
         given(awsMetadataApi.credentials(iamRole)).willThrow(new RuntimeException("Invalid IAM Role"));
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         awsClient.getAddresses();
@@ -178,7 +178,7 @@ public class AwsClientTest {
         String relativePath = "/some/relative/path";
         given(environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(relativePath);
         given(awsMetadataApi.credentialsFromEcs(relativePath)).willReturn(CREDENTIALS);
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         Map<String, String> result = awsClient.getAddresses();
@@ -198,7 +198,7 @@ public class AwsClientTest {
         String invalidPath = "/some/relative/path";
         given(environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(invalidPath);
         given(awsMetadataApi.credentialsFromEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata"));
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         awsClient.getAddresses();
@@ -216,7 +216,7 @@ public class AwsClientTest {
             .setSecretKey("")
             .setIamRole("")
             .build();
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, awsConfig, environment);
 
         // when
         awsClient.getAddresses();
@@ -230,7 +230,7 @@ public class AwsClientTest {
         // given
         String availabilityZone = "us-east-1a";
         given(awsMetadataApi.availabilityZone()).willReturn(availabilityZone);
-        AwsClient awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, predefinedAwsConfig().build(),
+        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsDescribeInstancesApi, predefinedAwsConfig().build(),
             environment);
 
         // when

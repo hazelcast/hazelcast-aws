@@ -26,7 +26,6 @@ import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
 import com.hazelcast.spi.partitiongroup.PartitionGroupMetaData;
 
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,18 +69,14 @@ public class AwsDiscoveryStrategy
         AwsConfig awsConfig = createAwsConfig();
         logConfiguration(awsConfig);
 
-        AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
-        AwsDescribeInstancesApi awsDescribeInstancesApi = new AwsDescribeInstancesApi(awsConfig,
-            new AwsEc2RequestSigner(), Clock.systemUTC());
-
-        this.awsClient = new AwsClient(awsMetadataApi, awsDescribeInstancesApi, awsConfig, new Environment());
+        this.awsClient = AwsClientConfigurator.createAwsClient(awsConfig);
         this.portRange = awsConfig.getHzPort();
     }
 
     /**
      * For test purposes only.
      */
-    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsClient client) {
+    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsEcsClient client) {
         super(LOGGER, properties);
         this.awsClient = client;
         this.portRange = createAwsConfig().getHzPort();
