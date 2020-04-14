@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
 import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
-import static com.hazelcast.aws.AwsUrlUtils.hostFor;
 import static com.hazelcast.aws.AwsUrlUtils.urlFor;
 import static java.util.Collections.emptyMap;
 
@@ -102,11 +102,7 @@ class AwsEcsApi {
     }
 
     private String callServiceWithRetries(String body, Map<String, String> headers) {
-        return RetryUtils.retry(() -> callService(body, headers), awsConfig.getConnectionRetries());
-    }
-
-    private String callService(String body, Map<String, String> headers) {
-        return RestClient.create(urlFor(endpoint))
+        return createRestClient(urlFor(endpoint), awsConfig)
             .withHeaders(headers)
             .withBody(body)
             .post();

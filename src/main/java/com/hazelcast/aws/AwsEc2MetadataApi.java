@@ -17,10 +17,8 @@ package com.hazelcast.aws;
 
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 
-import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
+import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
 
 /**
  * Responsible for connecting to AWS EC2 and ECS Instance Metadata API.
@@ -56,23 +54,23 @@ class AwsEc2MetadataApi {
 
     String availabilityZone() {
         String uri = ec2Endpoint.concat(AVAILABILITY_ZONE_URI);
-        return callAwsService(uri, awsConfig);
+        return createRestClient(uri, awsConfig).get();
     }
 
     String defaultIamRole() {
         String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI);
-        return callAwsService(uri, awsConfig);
+        return createRestClient(uri, awsConfig).get();
     }
 
     AwsCredentials credentials(String iamRole) {
         String uri = ec2Endpoint.concat(SECURITY_CREDENTIALS_URI).concat(iamRole);
-        String response = callAwsService(uri, awsConfig);
+        String response = createRestClient(uri, awsConfig).get();
         return parseCredentials(response);
     }
 
     AwsCredentials credentialsFromEcs(String relativeUrl) {
         String uri = ecsEndpoint + relativeUrl;
-        String response = callAwsService(uri, awsConfig);
+        String response = createRestClient(uri, awsConfig).get();
         return parseCredentials(response);
     }
 

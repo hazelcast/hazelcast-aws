@@ -49,7 +49,7 @@ final class Filter {
      * @param name  Filter name
      * @param values Filter values
      */
-    public void addMultiValuedFilter(String name, Collection<String> values) {
+    void addMultiValuedFilter(String name, Collection<String> values) {
         if (values.size() > 0) {
             filters.put("Filter." + index + ".Name", name);
             int valueIndex = 1;

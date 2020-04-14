@@ -33,6 +33,7 @@ final class RestClient {
     private String body;
     private int readTimeoutSeconds;
     private int connectTimeoutSeconds;
+    private int retries;
 
     private RestClient(String url) {
         this.url = url;
@@ -69,12 +70,21 @@ final class RestClient {
         return this;
     }
 
+    RestClient withRetries(int retries) {
+        this.retries = retries;
+        return this;
+    }
+
     String get() {
-        return call("GET");
+        return callWithRetries("GET");
     }
 
     String post() {
-        return call("POST");
+        return callWithRetries("POST");
+    }
+
+    private String callWithRetries(String method) {
+        return RetryUtils.retry(() -> call(method), retries);
     }
 
     private String call(String method) {

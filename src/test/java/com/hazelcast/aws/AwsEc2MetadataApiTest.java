@@ -21,11 +21,7 @@ public class AwsEc2MetadataApiTest {
 
     @Before
     public void setUp() {
-        AwsConfig awsConfig = AwsConfig.builder()
-            .setConnectionTimeoutSeconds(10)
-            .setConnectionRetries(1)
-            .setReadTimeoutSeconds(10)
-            .build();
+        AwsConfig awsConfig = AwsConfig.builder().build();
         String endpoint = String.format("http://localhost:%s", wireMockRule.port());
         awsEc2MetadataApi = new AwsEc2MetadataApi(endpoint, endpoint, awsConfig);
     }

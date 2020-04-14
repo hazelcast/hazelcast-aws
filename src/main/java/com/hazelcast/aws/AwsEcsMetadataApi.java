@@ -3,6 +3,8 @@ package com.hazelcast.aws;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
 
+import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
+
 class AwsEcsMetadataApi {
     private final String endpoint;
     private final AwsConfig awsConfig;
@@ -21,7 +23,7 @@ class AwsEcsMetadataApi {
     }
 
     EcsMetadata metadata() {
-        String response = AwsUrlUtils.callAwsService(endpoint, awsConfig);
+        String response = createRestClient(endpoint, awsConfig).get();
         return parse(response);
     }
 

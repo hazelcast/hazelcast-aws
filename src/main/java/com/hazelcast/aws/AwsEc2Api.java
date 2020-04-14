@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
+import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
 import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
@@ -157,7 +158,6 @@ class AwsEc2Api {
             .orElse(false);
     }
 
-
     /**
      * Calls AWS EC2 Describe Network Interfaces API, parses the response, and returns mapping from private to public
      * IPs.
@@ -186,12 +186,8 @@ class AwsEc2Api {
     }
 
     private String callServiceWithRetries(Map<String, String> attributes, Map<String, String> headers) {
-        return RetryUtils.retry(() -> callService(attributes, headers), awsConfig.getConnectionRetries());
-    }
-
-    private String callService(Map<String, String> attributes, Map<String, String> headers) {
         String query = canonicalQueryString(attributes);
-        return RestClient.create(urlFor(endpoint, query))
+        return createRestClient(urlFor(endpoint, query), awsConfig)
             .withHeaders(headers)
             .get();
     }

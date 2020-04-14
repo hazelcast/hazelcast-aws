@@ -18,8 +18,6 @@ package com.hazelcast.aws;
 import com.hazelcast.core.HazelcastException;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.time.Clock;
@@ -45,12 +43,11 @@ final class AwsUrlUtils {
         return df.format(Instant.now(clock).toEpochMilli());
     }
 
-    static String callAwsService(String url, AwsConfig awsConfig) {
-        return RetryUtils.retry(() -> RestClient.create(url)
-                .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
-                .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
-                .get()
-            , awsConfig.getConnectionRetries());
+    static RestClient createRestClient(String url, AwsConfig awsConfig) {
+        return RestClient.create(url)
+            .withConnectTimeoutSeconds(awsConfig.getConnectionTimeoutSeconds())
+            .withReadTimeoutSeconds(awsConfig.getReadTimeoutSeconds())
+            .withRetries(awsConfig.getConnectionRetries());
     }
 
     static String canonicalQueryString(Map<String, String> attributes) {
@@ -98,13 +95,5 @@ final class AwsUrlUtils {
             return endpoint;
         }
         return "https://" + endpoint;
-    }
-
-    static String hostFor(String endpoint) {
-        try {
-            return new URL(urlFor(endpoint)).getHost();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException(String.format("Wrong endpoint: %s", endpoint), e);
-        }
     }
 }

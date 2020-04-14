@@ -151,7 +151,7 @@ public class AwsEc2ApiTest {
         List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
 
         String requestUrl = "/?Action=DescribeNetworkInterfaces"
-            + "&Filter.1.Name=describeInstances.private-ip-address"
+            + "&Filter.1.Name=addresses.private-ip-address"
             + "&Filter.1.Value.1=10.0.1.207"
             + "&Filter.1.Value.2=10.0.1.82"
             + "&Version=2016-11-15";
