@@ -28,7 +28,7 @@ import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
  * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">EC2 Instance Metatadata</a>
  * @see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html">ECS Task Metadata</a>
  */
-class AwsMetadataApi {
+class AwsEc2MetadataApi {
     private static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
     private static final String ECS_METADATA_ENDPOINT = "http://169.254.170.2";
 
@@ -39,7 +39,7 @@ class AwsMetadataApi {
     private final String ecsEndpoint;
     private final AwsConfig awsConfig;
 
-    AwsMetadataApi(AwsConfig awsConfig) {
+    AwsEc2MetadataApi(AwsConfig awsConfig) {
         this.ec2Endpoint = EC2_METADATA_ENDPOINT;
         this.ecsEndpoint = ECS_METADATA_ENDPOINT;
         this.awsConfig = awsConfig;
@@ -48,7 +48,7 @@ class AwsMetadataApi {
     /**
      * For test purposes only.
      */
-    AwsMetadataApi(String ec2Endpoint, String ecsEndpoint, AwsConfig awsConfig) {
+    AwsEc2MetadataApi(String ec2Endpoint, String ecsEndpoint, AwsConfig awsConfig) {
         this.ec2Endpoint = ec2Endpoint;
         this.ecsEndpoint = ecsEndpoint;
         this.awsConfig = awsConfig;

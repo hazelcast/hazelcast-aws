@@ -26,7 +26,7 @@ final class StringUtils {
      * @param s the string to check.
      * @return true if the string is null or empty, false otherwise
      */
-    private static boolean isEmpty(String s) {
+    static boolean isEmpty(String s) {
         if (s == null) {
             return true;
         }

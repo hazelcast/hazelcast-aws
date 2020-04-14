@@ -98,6 +98,7 @@ public class AwsDiscoveryStrategy
                 .build();
 
         } catch (IllegalArgumentException e) {
+            // TODO: validate configuration (host-header)
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
     }

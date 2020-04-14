@@ -42,7 +42,7 @@ public class AwsEc2ClientTest {
 //    private static final Map<String, String> ADDRESSES = Collections.singletonMap("192.168.1.2", "12.56.345.2");
 //
 //    @Mock
-//    private AwsMetadataApi awsMetadataApi;
+//    private AwsEc2MetadataApi awsMetadataApi;
 //
 //    @Mock
 //    private AwsEc2Api awsEc2Api;

@@ -9,33 +9,56 @@ import static com.hazelcast.aws.RegionValidator.validateRegion;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
 /**
- * Responsible for creating the right {@code AwsClient}.
+ * Responsible for creating the correct {@code AwsClient} implementation.
  * <p>
- * It also create inject all dependencies.
+ * It also creates and injects all dependencies.
  */
 class AwsClientConfigurator {
     private static final ILogger LOGGER = Logger.getLogger(AwsClientConfigurator.class);
 
+    private static final String DEFAULT_EC2_HOST_HEADER = "ec2.amazonaws.com";
+    private static final String DEFAULT_ECS_HOST_HEADER = "ecs.amazonaws.com";
+
+    private static final String EC2_SERVICE = "ec2";
+    private static final String ECS_SERVICE = "ecs";
+
+    private static final Environment environment = resolveEnvironment();
+
     static AwsClient createAwsClient(AwsConfig awsConfig) {
         String region = resolveRegion(awsConfig);
-        String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
-        AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, ec2Endpoint, "ec2");
-        AwsEc2Api awsEc2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
-        AwsMetadataApi awsMetadataApi = new AwsMetadataApi(awsConfig);
-        AwsAuthenticator awsAuthenticator = new AwsAuthenticator(awsMetadataApi, awsConfig, new Environment());
+        validateRegion(region);
 
-        if (isRunningOnEcs()) {
-            String ecsEndpoint = resolveEcsEndpoint(awsConfig, region);
-            AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ecsEndpoint, "ecs");
-            AwsEcsMetadataApi awsEcsMetadataApi = new AwsEcsMetadataApi(awsConfig);
-            AwsEcsApi awsEcsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner,
-                Clock.systemUTC());
-            return new AwsEcsClient(awsEcsMetadataApi, awsEcsApi, awsEc2Api, awsAuthenticator);
+        String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
+        AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, ec2Endpoint, EC2_SERVICE);
+        AwsEc2Api awsEc2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
+        AwsEc2MetadataApi ec2MetadataApi = new AwsEc2MetadataApi(awsConfig);
+        AwsAuthenticator awsAuthenticator = new AwsAuthenticator(ec2MetadataApi, awsConfig, new com.hazelcast.aws.Environment());
+
+        // EC2 Discovery
+        if (Environment.EC2.equals(environment) || explicitlyEc2Configured(awsConfig)) {
+            return new AwsEc2Client(ec2MetadataApi, awsEc2Api, awsAuthenticator);
         }
 
-        return new AwsEc2Client(awsMetadataApi, awsEc2Api, awsAuthenticator);
+        // ECS Discovery
+        String ecsEndpoint = resolveEcsEndpoint(awsConfig, region);
+        AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ecsEndpoint, ECS_SERVICE);
+        AwsEcsMetadataApi awsEcsMetadataApi = new AwsEcsMetadataApi(awsConfig);
+        AwsEcsApi awsEcsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner, Clock.systemUTC());
+        return new AwsEcsClient(awsEcsMetadataApi, awsEcsApi, awsEc2Api, awsAuthenticator);
     }
 
+    /**
+     * Checks if EC2 environment was explicitly configured in the Hazelcast configuration.
+     * <p>
+     * Hazelcast may run inside ECS, but use EC2 discovery when:
+     * <ul>
+     * <li>EC2 cluster uses EC2 mode (not Fargate)</li>
+     * <li>Containers are run in "host" network mode</li>
+     * </ul>
+     */
+    private static boolean explicitlyEc2Configured(AwsConfig awsConfig) {
+        return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2.");
+    }
 
     /**
      * Visibility for testing.
@@ -45,14 +68,13 @@ class AwsClientConfigurator {
             return awsConfig.getRegion();
         }
 
-        if (isRunningOnEcs()) {
+        if (Environment.ECS.equals(environment)) {
             return System.getenv("AWS_REGION");
         }
 
-        AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
+        AwsEc2MetadataApi metadataApi = new AwsEc2MetadataApi(awsConfig);
         String availabilityZone = metadataApi.availabilityZone();
         String region = availabilityZone.substring(0, availabilityZone.length() - 1);
-        validateRegion(region);
         return region;
     }
 
@@ -60,49 +82,42 @@ class AwsClientConfigurator {
      * Visibility for testing.
      */
     static String resolveEc2Endpoint(AwsConfig awsConfig, String region) {
-        // TODO
-//        if (isNotEmpty(awsConfig.getHostHeader())) {
-//            if (!awsConfig.getHostHeader().startsWith("ec2.") && !awsConfig.getHostHeader().startsWith("ecs.")) {
-//                throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" or \"ecs\" prefix");
-//            }
-//            return awsConfig.getHostHeader()
-//                .replace("ec2.", "ec2." + region + ".")
-//                .replace("ecs.", "ecs." + region + ".");
-//        }
-//        if (isRunningOnEcs()) {
-//            return "ec2." + region + "amazonaws.com";
-//        }
-//        return "ecs." + region + "amazonaws.com";
-        return "ec2." + region + ".amazonaws.com";
+        String ec2HostHeader = awsConfig.getHostHeader();
+        if (StringUtils.isEmpty(ec2HostHeader) ||
+            ec2HostHeader.startsWith("ecs") ||
+            ec2HostHeader.equals("ec2")
+        ) {
+            ec2HostHeader = DEFAULT_EC2_HOST_HEADER;
+        }
+        return ec2HostHeader.replace("ec2.", "ec2." + region + ".");
     }
 
+    /**
+     * Visibility for testing.
+     */
     static String resolveEcsEndpoint(AwsConfig awsConfig, String region) {
-        // TODO
-//        if (isNotEmpty(awsConfig.getHostHeader())) {
-//            if (!awsConfig.getHostHeader().startsWith("ec2.") && !awsConfig.getHostHeader().startsWith("ecs.")) {
-//                throw new InvalidConfigurationException("HostHeader should start with \"ec2.\" or \"ecs\" prefix");
-//            }
-//            return awsConfig.getHostHeader()
-//                .replace("ec2.", "ec2." + region + ".")
-//                .replace("ecs.", "ecs." + region + ".");
-//        }
-//        if (isRunningOnEcs()) {
-//            return "ec2." + region + "amazonaws.com";
-//        }
-//        return "ecs." + region + "amazonaws.com";
-        return "ecs." + region + ".amazonaws.com";
+        String ecsHostHeader = awsConfig.getHostHeader();
+        if (StringUtils.isEmpty(ecsHostHeader) ||
+            ecsHostHeader.equals("ecs")
+        ) {
+            ecsHostHeader = DEFAULT_ECS_HOST_HEADER;
+        }
+        return ecsHostHeader.replace("ecs.", "ecs." + region + ".");
     }
 
-    private static boolean isRunningOnEc2() {
-        return isRunningOn("ECS");
-    }
-
-    private static boolean isRunningOnEcs() {
-        return isRunningOn("ECS");
+    private static Environment resolveEnvironment() {
+        if (isRunningOn("ECS")) {
+            return Environment.ECS;
+        }
+        return Environment.EC2;
     }
 
     private static boolean isRunningOn(String system) {
-        String execEnv = new Environment().getEnv("AWS_EXECUTION_ENV");
+        String execEnv = new com.hazelcast.aws.Environment().getEnv("AWS_EXECUTION_ENV");
         return isNotEmpty(execEnv) && execEnv.contains(system);
+    }
+
+    private enum Environment {
+        EC2, ECS;
     }
 }

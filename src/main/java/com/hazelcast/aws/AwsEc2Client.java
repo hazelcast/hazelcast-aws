@@ -3,12 +3,12 @@ package com.hazelcast.aws;
 import java.util.Map;
 
 class AwsEc2Client implements AwsClient {
-    private final AwsMetadataApi awsMetadataApi;
+    private final AwsEc2MetadataApi awsEc2MetadataApi;
     private final AwsEc2Api awsEc2Api;
     private final AwsAuthenticator awsAuthenticator;
 
-    AwsEc2Client(AwsMetadataApi awsMetadataApi, AwsEc2Api awsEc2Api, AwsAuthenticator awsAuthenticator) {
-        this.awsMetadataApi = awsMetadataApi;
+    AwsEc2Client(AwsEc2MetadataApi awsEc2MetadataApi, AwsEc2Api awsEc2Api, AwsAuthenticator awsAuthenticator) {
+        this.awsEc2MetadataApi = awsEc2MetadataApi;
         this.awsEc2Api = awsEc2Api;
         this.awsAuthenticator = awsAuthenticator;
     }
@@ -20,6 +20,6 @@ class AwsEc2Client implements AwsClient {
 
     @Override
     public String getAvailabilityZone() {
-        return awsMetadataApi.availabilityZone();
+        return awsEc2MetadataApi.availabilityZone();
     }
 }

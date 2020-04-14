@@ -11,13 +11,13 @@ class AwsAuthenticator {
 
     private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
 
-    private final AwsMetadataApi awsMetadataApi;
+    private final AwsEc2MetadataApi awsEc2MetadataApi;
     private final AwsConfig awsConfig;
     private final Environment environment;
     private final String iamRole;
 
-    AwsAuthenticator(AwsMetadataApi awsMetadataApi, AwsConfig awsConfig, Environment environment) {
-        this.awsMetadataApi = awsMetadataApi;
+    AwsAuthenticator(AwsEc2MetadataApi awsEc2MetadataApi, AwsConfig awsConfig, Environment environment) {
+        this.awsEc2MetadataApi = awsEc2MetadataApi;
         this.awsConfig = awsConfig;
         this.environment = environment;
         this.iamRole = resolveIamRole();
@@ -37,7 +37,7 @@ class AwsAuthenticator {
             return awsConfig.getIamRole();
         }
 
-        String iamRole = awsMetadataApi.defaultIamRole();
+        String iamRole = awsEc2MetadataApi.defaultIamRole();
         LOGGER.info(String.format("Using IAM Role attached to EC2 Instance: %s", iamRole));
         return iamRole;
     }
@@ -55,7 +55,7 @@ class AwsAuthenticator {
             // authenticate using IAM Role
             LOGGER.fine(String.format("Fetching credentials using IAM Role: %s", iamRole));
             try {
-                return awsMetadataApi.credentials(iamRole);
+                return awsEc2MetadataApi.credentials(iamRole);
             } catch (Exception e) {
                 throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role: "
                     + awsConfig.getIamRole(), e);
@@ -74,7 +74,7 @@ class AwsAuthenticator {
                 + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
         }
         try {
-            return awsMetadataApi.credentialsFromEcs(relativePath);
+            return awsEc2MetadataApi.credentialsFromEcs(relativePath);
         } catch (Exception e) {
             throw new InvalidConfigurationException(
                 "Unable to retrieve credentials from IAM Task Role. " + "URI: " + relativePath);

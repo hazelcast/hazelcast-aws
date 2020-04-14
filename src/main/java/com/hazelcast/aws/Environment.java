@@ -22,6 +22,8 @@ package com.hazelcast.aws;
  */
 class Environment {
 
+
+
     String getEnv(String name) {
         return System.getenv(name);
     }

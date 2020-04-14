@@ -12,9 +12,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
 
-public class AwsMetadataApiTest {
+public class AwsEc2MetadataApiTest {
 
-    private AwsMetadataApi awsMetadataApi;
+    private AwsEc2MetadataApi awsEc2MetadataApi;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
@@ -27,7 +27,7 @@ public class AwsMetadataApiTest {
             .setReadTimeoutSeconds(10)
             .build();
         String endpoint = String.format("http://localhost:%s", wireMockRule.port());
-        awsMetadataApi = new AwsMetadataApi(endpoint, endpoint, awsConfig);
+        awsEc2MetadataApi = new AwsEc2MetadataApi(endpoint, endpoint, awsConfig);
     }
 
     @Test
@@ -38,7 +38,7 @@ public class AwsMetadataApiTest {
             .willReturn(aResponse().withStatus(200).withBody(availabilityZone)));
 
         // when
-        String result = awsMetadataApi.availabilityZone();
+        String result = awsEc2MetadataApi.availabilityZone();
 
         // then
         assertEquals(availabilityZone, result);
@@ -52,7 +52,7 @@ public class AwsMetadataApiTest {
             .willReturn(aResponse().withStatus(200).withBody(defaultIamRole)));
 
         // when
-        String result = awsMetadataApi.defaultIamRole();
+        String result = awsEc2MetadataApi.defaultIamRole();
 
         // then
         assertEquals(defaultIamRole, result);
@@ -73,7 +73,7 @@ public class AwsMetadataApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        AwsCredentials result = awsMetadataApi.credentials(iamRole);
+        AwsCredentials result = awsEc2MetadataApi.credentials(iamRole);
 
         // then
         assertEquals("Access1234", result.getAccessKey());
@@ -96,7 +96,7 @@ public class AwsMetadataApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        AwsCredentials result = awsMetadataApi.credentialsFromEcs(relativePath);
+        AwsCredentials result = awsEc2MetadataApi.credentialsFromEcs(relativePath);
 
         // then
         assertEquals("Access1234", result.getAccessKey());
