@@ -95,8 +95,6 @@ class AwsEcsApi {
         headers.put("Accept-Encoding", "identity");
         String timestamp = formatCurrentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
-        // TODO: Is it needed?
-        headers.put("Host", hostFor(endpoint));
         headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, credentials, timestamp,
             body, "POST"));
 
