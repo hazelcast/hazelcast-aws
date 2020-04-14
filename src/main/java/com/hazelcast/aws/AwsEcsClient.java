@@ -1,15 +1,12 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.AwsEcsMetadataApi.EcsMetadata;
-import com.hazelcast.internal.json.Json;
-import com.hazelcast.internal.json.JsonObject;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.hazelcast.aws.AwsUrlUtils.callAwsService;
 import static java.util.Collections.emptyMap;
 
 class AwsEcsClient implements AwsClient {
@@ -20,14 +17,14 @@ class AwsEcsClient implements AwsClient {
     private final AwsEc2Api awsEc2Api;
     private final String clusterArn;
     private final String familyName;
-    private final AwsAuthenticator awsAuthenticator;
+    private final AwsCredentialsProvider awsCredentialsProvider;
 
     AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
-                 AwsEc2Api awsEc2Api, AwsAuthenticator awsAuthenticator) {
+                 AwsEc2Api awsEc2Api, AwsCredentialsProvider awsCredentialsProvider) {
         this.awsEcsMetadataApi = awsEcsMetadataApi;
         this.awsEcsApi = awsEcsApi;
         this.awsEc2Api = awsEc2Api;
-        this.awsAuthenticator = awsAuthenticator;
+        this.awsCredentialsProvider = awsCredentialsProvider;
 
         // TODO: Add config parameters
         LOGGER.info("Retrieving data from ECS Metadata service");
@@ -43,7 +40,7 @@ class AwsEcsClient implements AwsClient {
         LOGGER.info("Discovering Addresses from ECS");
 
         LOGGER.info("Retrieving AWS Credentials from ECS");
-        AwsCredentials credentials = awsAuthenticator.credentials();
+        AwsCredentials credentials = awsCredentialsProvider.credentials();
 
         LOGGER.info(String.format("Listing tasks from {cluster: '%s', family: '%s'}", clusterArn, familyName));
         List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, credentials);

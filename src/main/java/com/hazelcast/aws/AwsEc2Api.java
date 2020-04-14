@@ -108,13 +108,6 @@ class AwsEc2Api {
         return filter.getFilterAttributes();
     }
 
-    private static String urlFor(String endpoint, String query) {
-        if (endpoint.startsWith("http")) {
-            return endpoint + "/?" + query;
-        }
-        return "https://" + endpoint + "/?" + query;
-    }
-
     private static Map<String, String> parseDescribeInstances(String xmlResponse) {
         try {
             return tryParseDescribeInstances(xmlResponse);
@@ -201,6 +194,10 @@ class AwsEc2Api {
         return RestClient.create(urlFor(endpoint, query))
             .withHeaders(headers)
             .get();
+    }
+
+    private static String urlFor(String endpoint, String query) {
+        return AwsUrlUtils.urlFor(endpoint) + "/?" + query;
     }
 
     private static Map<String, String> parseDescribeNetworkInterfaces(String xmlResponse) {

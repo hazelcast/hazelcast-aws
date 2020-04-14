@@ -17,7 +17,6 @@ package com.hazelcast.aws;
 
 import com.hazelcast.cluster.Address;
 import com.hazelcast.config.InvalidConfigurationException;
-import com.hazelcast.internal.util.StringUtil;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import com.hazelcast.spi.discovery.AbstractDiscoveryStrategy;
@@ -66,8 +65,6 @@ public class AwsDiscoveryStrategy
         super(LOGGER, properties);
 
         AwsConfig awsConfig = createAwsConfig();
-        logConfiguration(awsConfig);
-
         this.awsClient = AwsClientConfigurator.createAwsClient(awsConfig);
         this.portRange = awsConfig.getHzPort();
     }
@@ -98,7 +95,6 @@ public class AwsDiscoveryStrategy
                 .build();
 
         } catch (IllegalArgumentException e) {
-            // TODO: validate configuration (host-header)
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }
     }
@@ -115,24 +111,6 @@ public class AwsDiscoveryStrategy
             return DEFAULT_PORT_RANGE;
         }
         return portRange.toString();
-    }
-
-    private void logConfiguration(AwsConfig config) {
-        if (StringUtil.isNullOrEmptyAfterTrim(config.getSecretKey()) || StringUtil
-            .isNullOrEmptyAfterTrim(config.getAccessKey())) {
-
-            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
-                LOGGER.info("Describe instances will be queried with iam-role, "
-                    + "please make sure given iam-role have ec2:AwsEc2Api policy attached.");
-            } else {
-                LOGGER.info("Describe instances will be queried with iam-role assigned to EC2 instance, "
-                    + "please make sure given iam-role have ec2:AwsEc2Api policy attached.");
-            }
-        } else {
-            if (!StringUtil.isNullOrEmptyAfterTrim(config.getIamRole())) {
-                LOGGER.info("No need to define iam-role, when access and secret keys are configured!");
-            }
-        }
     }
 
     @Override
@@ -153,7 +131,7 @@ public class AwsDiscoveryStrategy
             }
 
             if (LOGGER.isFinestEnabled()) {
-                final StringBuilder sb = new StringBuilder("Found the following IP describeInstances:\n");
+                final StringBuilder sb = new StringBuilder("Found the following IPs:\n");
                 for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
                     sb.append("    ").append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
                 }
