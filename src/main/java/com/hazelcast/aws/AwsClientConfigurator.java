@@ -5,6 +5,7 @@ import com.hazelcast.logging.Logger;
 
 import java.time.Clock;
 
+import static com.hazelcast.aws.Environment.isRunningOnEcs;
 import static com.hazelcast.aws.RegionValidator.validateRegion;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
@@ -22,8 +23,6 @@ class AwsClientConfigurator {
     private static final String EC2_SERVICE = "ec2";
     private static final String ECS_SERVICE = "ecs";
 
-    private static final Environment environment = resolveEnvironment();
-
     static AwsClient createAwsClient(AwsConfig awsConfig) {
         String region = resolveRegion(awsConfig);
         validateRegion(region);
@@ -35,7 +34,7 @@ class AwsClientConfigurator {
         AwsAuthenticator awsAuthenticator = new AwsAuthenticator(ec2MetadataApi, awsConfig, new com.hazelcast.aws.Environment());
 
         // EC2 Discovery
-        if (Environment.EC2.equals(environment) || explicitlyEc2Configured(awsConfig)) {
+        if (!isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
             return new AwsEc2Client(ec2MetadataApi, awsEc2Api, awsAuthenticator);
         }
 
@@ -68,7 +67,7 @@ class AwsClientConfigurator {
             return awsConfig.getRegion();
         }
 
-        if (Environment.ECS.equals(environment)) {
+        if (isRunningOnEcs()) {
             return System.getenv("AWS_REGION");
         }
 
@@ -103,21 +102,5 @@ class AwsClientConfigurator {
             ecsHostHeader = DEFAULT_ECS_HOST_HEADER;
         }
         return ecsHostHeader.replace("ecs.", "ecs." + region + ".");
-    }
-
-    private static Environment resolveEnvironment() {
-        if (isRunningOn("ECS")) {
-            return Environment.ECS;
-        }
-        return Environment.EC2;
-    }
-
-    private static boolean isRunningOn(String system) {
-        String execEnv = new com.hazelcast.aws.Environment().getEnv("AWS_EXECUTION_ENV");
-        return isNotEmpty(execEnv) && execEnv.contains(system);
-    }
-
-    private enum Environment {
-        EC2, ECS;
     }
 }

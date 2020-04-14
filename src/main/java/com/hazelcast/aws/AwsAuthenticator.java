@@ -4,7 +4,7 @@ import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import static com.hazelcast.aws.StringUtils.isNotEmpty;
+import static com.hazelcast.aws.Environment.isRunningOnEcs;
 
 class AwsAuthenticator {
     private static final ILogger LOGGER = Logger.getLogger(AwsAuthenticator.class);
@@ -80,14 +80,4 @@ class AwsAuthenticator {
                 "Unable to retrieve credentials from IAM Task Role. " + "URI: " + relativePath);
         }
     }
-
-    private boolean isRunningOnEcs() {
-        return isRunningOn("ECS");
-    }
-
-    private boolean isRunningOn(String system) {
-        String execEnv = environment.getEnv("AWS_EXECUTION_ENV");
-        return isNotEmpty(execEnv) && execEnv.contains(system);
-    }
-
 }
