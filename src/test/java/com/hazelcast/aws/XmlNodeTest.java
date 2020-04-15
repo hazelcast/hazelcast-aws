@@ -52,4 +52,16 @@ public class XmlNodeTest {
         assertThat(itemValues, hasItems("value", "second-value"));
     }
 
+    @Test(expected = RuntimeException.class)
+    public void parseError() {
+        // given
+        String xml = "malformed-xml";
+
+        // when
+        XmlNode.create(xml);
+
+        // then
+        // throws exception
+    }
+
 }
