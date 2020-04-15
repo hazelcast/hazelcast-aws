@@ -81,8 +81,6 @@ public class AwsEc2ApiTest {
     @Test
     public void describeInstances() {
         // given
-        List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
-
         String requestUrl = "/?Action=DescribeInstances"
             + "&Filter.1.Name=tag%3Aaws-test-cluster"
             + "&Filter.1.Value.1=cluster1"
@@ -146,6 +144,53 @@ public class AwsEc2ApiTest {
     }
 
     @Test
+    public void describeInstancesNoPublicIpNoInstanceName() {
+        // given
+        String requestUrl = "/?Action=DescribeInstances"
+            + "&Filter.1.Name=tag%3Aaws-test-cluster"
+            + "&Filter.1.Value.1=cluster1"
+            + "&Filter.2.Name=instance.group-name"
+            + "&Filter.2.Value.1=hazelcast"
+            + "&Filter.3.Name=instance-state-name&Filter.3.Value.1=running"
+            + "&Version=2016-11-15";
+
+        //language=XML
+        String response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<DescribeInstancesResponse xmlns=\"http://ec2.amazonaws.com/doc/2016-11-15/\">\n"
+            + "    <reservationSet>\n"
+            + "        <item>\n"
+            + "            <instancesSet>\n"
+            + "                <item>\n"
+            + "                    <privateIpAddress>10.0.1.25</privateIpAddress>\n"
+            + "                </item>\n"
+            + "            </instancesSet>\n"
+            + "        </item>\n"
+            + "        <item>\n"
+            + "            <instancesSet>\n"
+            + "                <item>\n"
+            + "                    <privateIpAddress>172.31.14.42</privateIpAddress>\n"
+            + "                </item>\n"
+            + "            </instancesSet>\n"
+            + "        </item>\n"
+            + "    </reservationSet>\n"
+            + "</DescribeInstancesResponse>";
+
+        stubFor(get(urlEqualTo(requestUrl))
+            .withHeader("X-Amz-Date", equalTo("20200403T102518Z"))
+            .withHeader("Authorization", equalTo(AUTHORIZATION_HEADER))
+            .withHeader("X-Amz-Security-Token", equalTo(TOKEN))
+            .willReturn(aResponse().withStatus(200).withBody(response)));
+
+        // when
+        Map<String, String> result = awsEc2Api.describeInstances(CREDENTIALS);
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals(null, result.get("10.0.1.25"));
+        assertEquals(null, result.get("172.31.14.42"));
+    }
+
+    @Test
     public void describeNetworkInterfaces() {
         // given
         List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
@@ -191,6 +236,45 @@ public class AwsEc2ApiTest {
         assertEquals(2, result.size());
         assertEquals("54.93.217.194", result.get("10.0.1.207"));
         assertEquals("35.156.192.128", result.get("10.0.1.82"));
+    }
+
+    @Test
+    public void describeNetworkInterfacesNoPublicIp() {
+        // given
+        List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
+
+        String requestUrl = "/?Action=DescribeNetworkInterfaces"
+            + "&Filter.1.Name=addresses.private-ip-address"
+            + "&Filter.1.Value.1=10.0.1.207"
+            + "&Filter.1.Value.2=10.0.1.82"
+            + "&Version=2016-11-15";
+
+        //language=XML
+        String response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<DescribeNetworkInterfacesResponse xmlns=\"http://ec2.amazonaws.com/doc/2016-11-15/\">\n"
+            + "    <networkInterfaceSet>\n"
+            + "        <item>\n"
+            + "            <privateIpAddress>10.0.1.207</privateIpAddress>\n"
+            + "        </item>\n"
+            + "        <item>\n"
+            + "            <privateIpAddress>10.0.1.82</privateIpAddress>\n"
+            + "        </item>\n"
+            + "    </networkInterfaceSet>\n"
+            + "</DescribeNetworkInterfacesResponse>";
+
+        stubFor(get(urlEqualTo(requestUrl))
+            .withHeader("X-Amz-Date", equalTo("20200403T102518Z"))
+            .withHeader("Authorization", equalTo(AUTHORIZATION_HEADER))
+            .withHeader("X-Amz-Security-Token", equalTo(TOKEN))
+            .willReturn(aResponse().withStatus(200).withBody(response)));
+
+        // when
+        Map<String, String> result = awsEc2Api.describeNetworkInterfaces(privateAddresses, CREDENTIALS);
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals(null, result.get("10.0.1.207"));
+        assertEquals(null, result.get("10.0.1.82"));
     }
 
     @Test

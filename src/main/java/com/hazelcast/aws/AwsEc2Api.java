@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
@@ -118,17 +117,16 @@ class AwsEc2Api {
     }
 
     private static Map<String, String> tryParseDescribeInstances(String xmlResponse) throws Exception {
-        return XmlNode.create(xmlResponse)
+        Map<String, String> result = new HashMap<>();
+        XmlNode.create(xmlResponse)
             .getSubNodes("reservationset").stream()
             .flatMap(e -> e.getSubNodes("item").stream())
             .flatMap(e -> e.getSubNodes("instancesset").stream())
             .flatMap(e -> e.getSubNodes("item").stream())
             .filter(e -> e.getValue("privateipaddress") != null)
             .peek(AwsEc2Api::logInstanceName)
-            .collect(Collectors.toMap(
-                e -> e.getValue("privateipaddress"),
-                e -> e.getValue("ipaddress"))
-            );
+            .forEach(e -> result.put(e.getValue("privateipaddress"), e.getValue("ipaddress")));
+        return result;
     }
 
     private static void logInstanceName(XmlNode item) {
@@ -205,16 +203,18 @@ class AwsEc2Api {
     }
 
     private static Map<String, String> tryParseDescribeNetworkInterfaces(String xmlResponse) throws Exception {
-        return XmlNode.create(xmlResponse)
+        Map<String, String> result = new HashMap<>();
+        XmlNode.create(xmlResponse)
             .getSubNodes("networkinterfaceset").stream()
-            .flatMap(e1 -> e1.getSubNodes("item").stream())
-            .collect(Collectors.toMap(
-                e -> e.getValue("privateipaddress"),
-                e ->
-                    e.getSubNodes("association").stream()
-                        .map(a -> a.getValue("publicip"))
-                        .findFirst()
-                        .orElse(null)
+            .flatMap(e -> e.getSubNodes("item").stream())
+            .filter(e -> e.getValue("privateipaddress") != null)
+            .forEach(e -> result.put(
+                e.getValue("privateipaddress"),
+                e.getSubNodes("association").stream()
+                    .map(a -> a.getValue("publicip"))
+                    .findFirst()
+                    .orElse(null)
             ));
+        return result;
     }
 }
