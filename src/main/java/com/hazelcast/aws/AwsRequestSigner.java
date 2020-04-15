@@ -42,12 +42,10 @@ class AwsRequestSigner {
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
     private final String region;
-    private final String endpoint;
     private final String service;
 
-    AwsRequestSigner(String region, String endpoint, String service) {
+    AwsRequestSigner(String region, String service) {
         this.region = region;
-        this.endpoint = endpoint;
         this.service = service;
     }
 
@@ -172,8 +170,6 @@ class AwsRequestSigner {
         for (Map.Entry<String, String> e : headers.entrySet()) {
             sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
         }
-        // TODO: Is it needed?
-        sortedHeaders.put("host", endpoint);
         return sortedHeaders;
     }
 

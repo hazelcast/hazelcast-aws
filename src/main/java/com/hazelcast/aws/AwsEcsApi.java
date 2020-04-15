@@ -110,6 +110,7 @@ class AwsEcsApi {
         if (credentials.getToken() != null) {
             headers.put("X-Amz-Security-Token", credentials.getToken());
         }
+        headers.put("Host", endpoint);
         headers.put("X-Amz-Target", String.format("AmazonEC2ContainerServiceV20141113.%s", awsTargetAction));
         headers.put("Content-Type", "application/x-amz-json-1.1");
         headers.put("Accept-Encoding", "identity");

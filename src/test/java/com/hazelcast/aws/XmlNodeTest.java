@@ -16,10 +16,7 @@
 package com.hazelcast.aws;
 
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +26,7 @@ import static org.hamcrest.Matchers.hasItems;
 public class XmlNodeTest {
 
     @Test
-    public void parse() throws IOException, SAXException, ParserConfigurationException {
+    public void parse() {
         // given
         //language=XML
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"

@@ -190,6 +190,7 @@ class AwsEc2Api {
         if (credentials.getToken() != null) {
             headers.put("X-Amz-Security-Token", credentials.getToken());
         }
+        headers.put("Host", endpoint);
         String timestamp = currentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
         headers.put("Authorization", requestSigner.authHeader(attributes, headers, "", credentials, timestamp, "GET"));

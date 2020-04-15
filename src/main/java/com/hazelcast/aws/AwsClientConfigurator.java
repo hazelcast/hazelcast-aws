@@ -28,7 +28,7 @@ class AwsClientConfigurator {
         validateRegion(region);
 
         String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
-        AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, ec2Endpoint, EC2_SERVICE_NAME);
+        AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, EC2_SERVICE_NAME);
         AwsEc2Api ec2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
         AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
         AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(metadataApi, awsConfig, new Environment());
@@ -41,7 +41,7 @@ class AwsClientConfigurator {
 
         // ECS Discovery
         String ecsEndpoint = resolveEcsEndpoint(awsConfig, region);
-        AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ecsEndpoint, ECS_SERVICE_NAME);
+        AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ECS_SERVICE_NAME);
         AwsEcsApi ecsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner, Clock.systemUTC());
         LOGGER.info("Using AWS discovery for ECS environment");
         return new AwsEcsClient(metadataApi, ecsApi, ec2Api, awsCredentialsProvider);
