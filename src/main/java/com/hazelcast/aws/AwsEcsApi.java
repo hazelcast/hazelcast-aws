@@ -115,7 +115,7 @@ class AwsEcsApi {
         headers.put("Accept-Encoding", "identity");
         String timestamp = currentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
-        headers.put("Authorization", requestSigner.authHeader(emptyMap(), headers, credentials, timestamp, body, "POST"));
+        headers.put("Authorization", requestSigner.authHeader(emptyMap(), headers, body, credentials, timestamp, "POST"));
 
         return headers;
     }

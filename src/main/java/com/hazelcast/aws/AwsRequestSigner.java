@@ -34,11 +34,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <p>
  * The signing steps are described in the AWS Documentation.
  *
- * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">
- * Signature Version 4 Signing Process</a>
+ * @see <a href="https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html">Signature Version 4 Signing Process</a>
  */
 class AwsRequestSigner {
-    static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
+    private static final String SIGNATURE_METHOD_V4 = "AWS4-HMAC-SHA256";
     private static final String HMAC_SHA256 = "HmacSHA256";
     private static final int TIMESTAMP_FIELD_LENGTH = 8;
 
@@ -52,12 +51,14 @@ class AwsRequestSigner {
         this.service = service;
     }
 
-    String authHeader(Map<String, String> attributes, Map<String, String> headers,
-                      AwsCredentials credentials,
-                      String timestamp, String body, String httpMethod) {
-        return buildAuthHeader(credentials.getAccessKey(), credentialScopeEcs(timestamp),
-            getSignedHeaders(headers),
-            signEcs(attributes, headers, credentials, timestamp, body, httpMethod));
+    String authHeader(Map<String, String> attributes, Map<String, String> headers, String body,
+                      AwsCredentials credentials, String timestamp, String httpMethod) {
+        return buildAuthHeader(
+            credentials.getAccessKey(),
+            credentialScopeEcs(timestamp),
+            signedHeaders(headers),
+            sign(attributes, headers, body, credentials, timestamp, httpMethod)
+        );
     }
 
     private String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
@@ -65,36 +66,16 @@ class AwsRequestSigner {
             SIGNATURE_METHOD_V4, accessKey, credentialScope, signedHeaders, signature);
     }
 
-    private String getSignedHeaders(Map<String, String> headers) {
-        StringBuilder signed = new StringBuilder();
-        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers);
-        int n = 0;
-        for (String k : sortedHeaders.keySet()) {
-            if (n++ > 0) {
-                signed.append(";");
-            }
-            signed.append(k);
-        }
-        return signed.toString();
+    private String credentialScopeEcs(String timestamp) {
+        // datestamp/region/service/API_TERMINATOR
+        return format("%s/%s/%s/%s", datestamp(timestamp), region, service, "aws4_request");
     }
 
-    private Map<String, String> getSortedLowercaseHeaders(Map<String, String> headers) {
-        Map<String, String> sortedHeaders = new TreeMap<>();
-        for (Map.Entry<String, String> e : headers.entrySet()) {
-            sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
-        }
-        // TODO: Is it needed?
-        sortedHeaders.put("host", endpoint);
-        return sortedHeaders;
-    }
-
-    String signEcs(Map<String, String> attributes, Map<String, String> headers,
-                   AwsCredentials credentials,
-                   String timestamp, String body, String httpMethod) {
+    private String sign(Map<String, String> attributes, Map<String, String> headers, String body,
+                        AwsCredentials credentials, String timestamp, String httpMethod) {
         String canonicalRequest = canonicalRequest(attributes, headers, body, httpMethod);
         String stringToSign = stringToSign(canonicalRequest, timestamp);
         byte[] signingKey = signingKey(credentials, timestamp);
-
         return createSignature(stringToSign, signingKey);
     }
 
@@ -111,20 +92,11 @@ class AwsRequestSigner {
     }
 
     private String canonicalHeaders(Map<String, String> headers) {
-        return getCanonicalHeaders(headers);
-    }
-
-    private String getCanonicalHeaders(Map<String, String> headers) {
         StringBuilder canonical = new StringBuilder();
-        Map<String, String> sortedHeaders = getSortedLowercaseHeaders(headers);
-        for (Map.Entry<String, String> entry : sortedHeaders.entrySet()) {
-            canonical.append(format("%s:%s\n", entry.getKey().toLowerCase(), entry.getValue()));
+        for (Map.Entry<String, String> entry : sortedLowercase(headers).entrySet()) {
+            canonical.append(format("%s:%s\n", entry.getKey(), entry.getValue()));
         }
         return canonical.toString();
-    }
-
-    private String signedHeaders(Map<String, String> headers) {
-        return getSignedHeaders(headers);
     }
 
     /* Task 2 */
@@ -138,11 +110,6 @@ class AwsRequestSigner {
     }
 
     private String credentialScope(String timestamp) {
-        // datestamp/region/service/API_TERMINATOR
-        return format("%s/%s/%s/%s", datestamp(timestamp), region, service, "aws4_request");
-    }
-
-    private String credentialScopeEcs(String timestamp) {
         // datestamp/region/service/API_TERMINATOR
         return format("%s/%s/%s/%s", datestamp(timestamp), region, service, "aws4_request");
     }
@@ -194,6 +161,20 @@ class AwsRequestSigner {
 
     private static String datestamp(String timestamp) {
         return timestamp.substring(0, TIMESTAMP_FIELD_LENGTH);
+    }
+
+    private String signedHeaders(Map<String, String> headers) {
+        return String.join(";", sortedLowercase(headers).keySet());
+    }
+
+    private Map<String, String> sortedLowercase(Map<String, String> headers) {
+        Map<String, String> sortedHeaders = new TreeMap<>();
+        for (Map.Entry<String, String> e : headers.entrySet()) {
+            sortedHeaders.put(e.getKey().toLowerCase(), e.getValue());
+        }
+        // TODO: Is it needed?
+        sortedHeaders.put("host", endpoint);
+        return sortedHeaders;
     }
 
     private static String sha256Hashhex(String in) {

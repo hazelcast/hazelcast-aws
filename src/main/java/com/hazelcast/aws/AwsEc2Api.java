@@ -192,7 +192,7 @@ class AwsEc2Api {
         }
         String timestamp = currentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
-        headers.put("Authorization", requestSigner.authHeader(attributes, headers, credentials, timestamp, "", "GET"));
+        headers.put("Authorization", requestSigner.authHeader(attributes, headers, "", credentials, timestamp, "GET"));
 
         return headers;
     }
