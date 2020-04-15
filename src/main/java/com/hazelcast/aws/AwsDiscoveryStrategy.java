@@ -126,7 +126,7 @@ public class AwsDiscoveryStrategy
         try {
             final Map<String, String> privatePublicIpAddressPairs = awsClient.getAddresses();
             if (privatePublicIpAddressPairs.isEmpty()) {
-                LOGGER.warning("No IP describeInstances found!");
+                LOGGER.warning("No IP addresses found!");
                 return Collections.emptyList();
             }
 

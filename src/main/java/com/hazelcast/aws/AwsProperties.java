@@ -92,7 +92,8 @@ enum AwsProperties {
     READ_TIMEOUT_SECONDS("read-timeout-seconds", INTEGER, true),
 
     /**
-     * The discovery mechanism will discover only IP describeInstances. You can define the port or the port range on which Hazelcast is
+     * The discovery mechanism will discover only IP addresses. You can define the port or the port range on which
+     * Hazelcast is
      * expected to be running.
      * <p>
      * Sample values: "5701", "5701-5710".

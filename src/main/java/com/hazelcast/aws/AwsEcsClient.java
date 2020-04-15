@@ -4,6 +4,7 @@ import com.hazelcast.aws.AwsEcsMetadataApi.EcsMetadata;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,26 +49,36 @@ class AwsEcsClient implements AwsClient {
 
         if (!tasks.isEmpty()) {
             List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, credentials);
-            LOGGER.info(String.format("Found the following private describeInstances: %s", privateAddresses));
+            LOGGER.info(String.format("Found the following private addresses: %s", privateAddresses));
 
             Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
-            LOGGER.info(String.format("The following (private, public) describeInstances found: %s", privateToPublicAddresses));
+            LOGGER.info(String.format("The following (private, public) addresses found: %s", privateToPublicAddresses));
             return privateToPublicAddresses;
         }
         return emptyMap();
     }
 
     /**
-     * Fetches private describeInstances for the tasks.
+     * Fetches private addresses for the tasks.
      * <p>
      * Note that this is done as best-effort and does not fail if no public describeInstances are not found, because:
      * <ul>
-     * <li>Task may not have public IP describeInstances</li>
-     * <li>Task may not have access rights to query for public describeInstances</li>
+     * <li>Task may not have public IP addresses</li>
+     * <li>Task may not have access rights to query for public addresses</li>
      * </ul>
      */
     private Map<String, String> fetchPublicAddresses(List<String> privateAddresses, AwsCredentials credentials) {
-        return awsEc2Api.describeNetworkInterfaces(privateAddresses, credentials);
+        try {
+            return awsEc2Api.describeNetworkInterfaces(privateAddresses, credentials);
+        } catch (Exception e) {
+            LOGGER.warning("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
+                + " Hazelcast with public IP, please check if your Task has IAM role which allows querying EC2 API");
+            LOGGER.fine(e);
+
+            Map<String, String> map = new HashMap<>();
+            privateAddresses.forEach(k -> map.put(k, null));
+            return map;
+        }
     }
 
     @Override

@@ -122,7 +122,7 @@ public class AwsDiscoveryStrategyTest {
         Iterable<DiscoveryNode> nodes = awsDiscoveryStrategy.discoverNodes();
 
         // then
-        // 2 * 8 = 16 describeInstances found
+        // 2 * 8 = 16 addresses found
         assertThat(toList(nodes), hasSize(16));
     }
 
