@@ -36,8 +36,8 @@ final class AwsUrlUtils {
 
     private AwsUrlUtils() {
     }
-
-    static String formatCurrentTimestamp(Clock clock) {
+    
+    static String currentTimestamp(Clock clock) {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         return df.format(Instant.now(clock).toEpochMilli());

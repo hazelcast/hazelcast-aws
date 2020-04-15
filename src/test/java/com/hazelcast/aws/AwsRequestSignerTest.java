@@ -20,7 +20,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hazelcast.aws.AwsRequestSigner.SIGNATURE_METHOD_V4;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 
@@ -58,7 +57,7 @@ public class AwsRequestSignerTest {
         AwsRequestSigner requestSigner = new AwsRequestSigner(TEST_REGION, TEST_HOST, "ecs");
 
         // when
-        String signature = requestSigner.authenticationHeader(emptyMap(), headers, awsCredentials, TEST_REQUEST_DATE, "", "GET");
+        String signature = requestSigner.authHeader(emptyMap(), headers, awsCredentials, TEST_REQUEST_DATE, "", "GET");
 
         // then
         assertEquals(TEST_AUTHENTICATION_HEADER, signature);
@@ -93,7 +92,7 @@ public class AwsRequestSignerTest {
             "ecs");
 
         // when
-        String signature = requestSigner.authenticationHeader(emptyMap(), headers,
+        String signature = requestSigner.authHeader(emptyMap(), headers,
             awsCredentials, "20200409T144619Z", body, "POST");
 
         // then

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Hazelcast Inc.
+ *
+ * Licensed under the Hazelcast Community License (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * http://hazelcast.com/hazelcast-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package com.hazelcast.aws;
 
 import com.hazelcast.internal.json.Json;
@@ -14,10 +29,15 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
-import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
+import static com.hazelcast.aws.AwsUrlUtils.currentTimestamp;
 import static com.hazelcast.aws.AwsUrlUtils.urlFor;
 import static java.util.Collections.emptyMap;
 
+/**
+ * Responsible for connecting to AWS ECS API.
+ *
+ * @see <a href="https://docs.aws.amazon.com/AmazonECS/latest/APIReference/Welcome.html">AWS ECS API</a>
+ */
 class AwsEcsApi {
     private final String endpoint;
     private final AwsConfig awsConfig;
@@ -34,12 +54,8 @@ class AwsEcsApi {
     List<String> listTasks(String clusterArn, String familyName, AwsCredentials credentials) {
         String body = createBodyListTasks(clusterArn, familyName);
         Map<String, String> headers = createHeadersListTasks(body, credentials);
-        String response = callServiceWithRetries(body, headers);
+        String response = callAwsService(body, headers);
         return parseListTasks(response);
-    }
-
-    private Map<String, String> createHeadersListTasks(String body, AwsCredentials credentials) {
-        return createHeaders(body, credentials, "ListTasks");
     }
 
     private String createBodyListTasks(String clusterArn, String familyName) {
@@ -49,16 +65,20 @@ class AwsEcsApi {
         return body.toString();
     }
 
+    private Map<String, String> createHeadersListTasks(String body, AwsCredentials credentials) {
+        return createHeaders(body, credentials, "ListTasks");
+    }
+
     private List<String> parseListTasks(String response) {
         return toStream(toJson(response).get("taskArns"))
             .map(JsonValue::asString)
             .collect(Collectors.toList());
     }
 
-    List<String> describeTasks(String cluster, List<String> tasks, AwsCredentials credentials) {
-        String body = createBodyDescribeTasks(cluster, tasks);
+    List<String> describeTasks(String clusterArn, List<String> tasks, AwsCredentials credentials) {
+        String body = createBodyDescribeTasks(clusterArn, tasks);
         Map<String, String> headers = createHeadersDescribeTasks(body, credentials);
-        String response = callServiceWithRetries(body, headers);
+        String response = callAwsService(body, headers);
         return parseDescribeTasks(response);
     }
 
@@ -93,15 +113,14 @@ class AwsEcsApi {
         headers.put("X-Amz-Target", String.format("AmazonEC2ContainerServiceV20141113.%s", awsTargetAction));
         headers.put("Content-Type", "application/x-amz-json-1.1");
         headers.put("Accept-Encoding", "identity");
-        String timestamp = formatCurrentTimestamp(clock);
+        String timestamp = currentTimestamp(clock);
         headers.put("X-Amz-Date", timestamp);
-        headers.put("Authorization", requestSigner.authenticationHeader(emptyMap(), headers, credentials, timestamp,
-            body, "POST"));
+        headers.put("Authorization", requestSigner.authHeader(emptyMap(), headers, credentials, timestamp, body, "POST"));
 
         return headers;
     }
 
-    private String callServiceWithRetries(String body, Map<String, String> headers) {
+    private String callAwsService(String body, Map<String, String> headers) {
         return createRestClient(urlFor(endpoint), awsConfig)
             .withHeaders(headers)
             .withBody(body)
@@ -115,5 +134,4 @@ class AwsEcsApi {
     private static Stream<JsonValue> toStream(JsonValue json) {
         return StreamSupport.stream(json.asArray().spliterator(), false);
     }
-
 }

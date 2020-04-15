@@ -52,9 +52,9 @@ class AwsRequestSigner {
         this.service = service;
     }
 
-    String authenticationHeader(Map<String, String> attributes, Map<String, String> headers,
-                                AwsCredentials credentials,
-                                String timestamp, String body, String httpMethod) {
+    String authHeader(Map<String, String> attributes, Map<String, String> headers,
+                      AwsCredentials credentials,
+                      String timestamp, String body, String httpMethod) {
         return buildAuthHeader(credentials.getAccessKey(), credentialScopeEcs(timestamp),
             getSignedHeaders(headers),
             signEcs(attributes, headers, credentials, timestamp, body, httpMethod));

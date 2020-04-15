@@ -26,7 +26,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +36,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -45,23 +46,13 @@ import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsEc2ApiTest {
-    private static final Clock CLOCK = Clock.fixed(Instant.ofEpochMilli(1585909518929L), ZoneId.systemDefault());
-    private static final String SIGNATURE = "032264a26b2b3bd7c021603233dd7822b571750e174fb1e47b8e0784dd160fb6";
-    private static final AwsConfig AWS_CONFIG = AwsConfig.builder()
-        .setSecurityGroupName("hazelcast")
-        .setTagKey("aws-test-cluster")
-        .setTagValue("cluster1")
-        .build();
-    private static final String REGION = "eu-central-1";
     private static final String AUTHORIZATION_HEADER = "authorization-header";
-    private static final String TOKEN =
-        "IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGMEQCIGNqWOCTxslYFGiTqX2smgm5wANL67R4PE1HPpisXiQxAiBwtbamKgJR8FAcbOOEEMm1nTCsarvIqDGip5SE55ZNsSq6AwhbEAAaDDY2NTQ2NjczMTU3NyIM345eTegAGRnGjFHaKpcD/E8DRZLAQeDobXIgX1/oezU1Q6ZOv/M3tk6maifeh+UQIpRFLntzpPjadt5LiJTngti4KQkXb8XQKKHjIp+zN4rrRYhqUqhAe+BP8Qm7L2NczwRhnSVfoTJjZOx5CNw/tQf1n3CdNWKgZcgTSVwF1lLPyKK0bpoj3AkQvOjfSIo0ix9xHj1FnezO1QVzdFjJK70oMU806bAPzQ48KAVfh2L5gihaZo3KUDydOUpPcRbKYlrflOuifsxO25OAEqxhTLfFQAggApZ1a8ZGG278f+40Quh5XBAySU+SUgm3kDZ5ufWBePXVdfS8MD/WnO1sSRUKJMEFPgVHQ5DwcK8I+k0T4GhSIFxHjtUg8upKviSw1PR3OXI9AxLFpbHNcTXz9Q06sPj59VgnXvIdUwdZ/usL3YOhWI10ouPQQVG6KLdDMZT/gjWlrARN1rXHhuWOzyG5l8HfaYBMczGqgA1H1Oqjc767GaojiJ2N6cQbmmdYZMzG3EuBwKedIloDL0/2hYtiivwoOIycFOPMZcYzBPr8IbxGkVUwkIWc9AU67AHTKRcXVecgSjGOWuhoLz0gd8kSvBCqzvJdAdh0gVxsgTRmsh2BFEmEkqJHckIgpVZC8yEp/UZMAm8yu8RSeIcoxlEZfLKKqqQbWs9iHDBSGFwD5FLi7rHAMmYG2k6zGew2Vse3qI5uXquJDJlyzurZdnxu6O9BFSN0LBgO4e9OGHrLnwPMjYHwCqcsleS3mM7+v8a7i3HPE+wBIjfh9X96Dl25k1OBhvy8Xuzr+cERGqsMWLr5m5eck3V23Y+/pbS6FiFfaYMjc4ewjtPGT3/51wcvOvUTbl5B52uHKwMqIszO/qXTmqm0roC/OA==";
+    private static final String TOKEN = "IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGM==";
     private static final AwsCredentials CREDENTIALS = AwsCredentials.builder()
         .setAccessKey("AKIDEXAMPLE")
         .setSecretKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY")
         .setToken(TOKEN)
         .build();
-    private String endpoint;
 
     @Mock
     private AwsRequestSigner requestSigner;
@@ -73,9 +64,16 @@ public class AwsEc2ApiTest {
 
     @Before
     public void setUp() {
-        given(requestSigner.authenticationHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
-        endpoint = String.format("http://localhost:%s", wireMockRule.port());
-        awsEc2Api = new AwsEc2Api(endpoint, AWS_CONFIG, requestSigner, CLOCK);
+        given(requestSigner.authHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
+
+        String endpoint = String.format("http://localhost:%s", wireMockRule.port());
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1585909518929L), ZoneId.systemDefault());
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setSecurityGroupName("hazelcast")
+            .setTagKey("aws-test-cluster")
+            .setTagValue("cluster1")
+            .build();
+        awsEc2Api = new AwsEc2Api(endpoint, awsConfig, requestSigner, clock);
     }
 
     @Test
@@ -186,14 +184,14 @@ public class AwsEc2ApiTest {
 
         // then
         assertEquals(2, result.size());
-        assertEquals(null, result.get("10.0.1.25"));
-        assertEquals(null, result.get("172.31.14.42"));
+        assertNull(result.get("10.0.1.25"));
+        assertNull(result.get("172.31.14.42"));
     }
 
     @Test
     public void describeNetworkInterfaces() {
         // given
-        List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
+        List<String> privateAddresses = asList("10.0.1.207", "10.0.1.82");
 
         String requestUrl = "/?Action=DescribeNetworkInterfaces"
             + "&Filter.1.Name=addresses.private-ip-address"
@@ -241,7 +239,7 @@ public class AwsEc2ApiTest {
     @Test
     public void describeNetworkInterfacesNoPublicIp() {
         // given
-        List<String> privateAddresses = Arrays.asList("10.0.1.207", "10.0.1.82");
+        List<String> privateAddresses = asList("10.0.1.207", "10.0.1.82");
 
         String requestUrl = "/?Action=DescribeNetworkInterfaces"
             + "&Filter.1.Name=addresses.private-ip-address"
@@ -273,8 +271,8 @@ public class AwsEc2ApiTest {
 
         // then
         assertEquals(2, result.size());
-        assertEquals(null, result.get("10.0.1.207"));
-        assertEquals(null, result.get("10.0.1.82"));
+        assertNull(result.get("10.0.1.207"));
+        assertNull(result.get("10.0.1.82"));
     }
 
     @Test

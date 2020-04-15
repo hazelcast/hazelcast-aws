@@ -27,7 +27,7 @@ import java.util.Optional;
 
 import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
 import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
-import static com.hazelcast.aws.AwsUrlUtils.formatCurrentTimestamp;
+import static com.hazelcast.aws.AwsUrlUtils.currentTimestamp;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
 /**
@@ -52,6 +52,8 @@ class AwsEc2Api {
 
     /**
      * Calls AWS EC2 Describe Instances API, parses the response, and returns mapping from private to public IPs.
+     * <p>
+     * Note that if EC2 Instance does not have a public IP, then an entry (private-ip, null) is returned.
      *
      * @return map from private to public IP
      * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html">EC2 Describe Instances</a>
@@ -59,33 +61,15 @@ class AwsEc2Api {
     Map<String, String> describeInstances(AwsCredentials credentials) {
         Map<String, String> attributes = createAttributesDescribeInstances();
         Map<String, String> headers = createHeaders(attributes, credentials);
-        String response = callServiceWithRetries(attributes, headers);
+        String response = callAwsService(attributes, headers);
         return parseDescribeInstances(response);
     }
 
     private Map<String, String> createAttributesDescribeInstances() {
-        Map<String, String> attributes = createGeneralAttributes();
+        Map<String, String> attributes = createSharedAttributes();
         attributes.put("Action", "DescribeInstances");
         attributes.putAll(filterAttributesDescribeInstances());
         return attributes;
-    }
-
-    private static Map<String, String> createGeneralAttributes() {
-        Map<String, String> attributes = new HashMap<>();
-        attributes.put("Version", "2016-11-15");
-        return attributes;
-    }
-
-    private Map<String, String> createHeaders(Map<String, String> attributes, AwsCredentials credentials) {
-        Map<String, String> headers = new HashMap<>();
-        if (credentials.getToken() != null) {
-            headers.put("X-Amz-Security-Token", credentials.getToken());
-        }
-        String timestamp = formatCurrentTimestamp(clock);
-        headers.put("X-Amz-Date", timestamp);
-        headers.put("Authorization", requestSigner.authenticationHeader(attributes, headers, credentials, timestamp, "", "GET"));
-
-        return headers;
     }
 
     private Map<String, String> filterAttributesDescribeInstances() {
@@ -109,14 +93,6 @@ class AwsEc2Api {
     }
 
     private static Map<String, String> parseDescribeInstances(String xmlResponse) {
-        try {
-            return tryParseDescribeInstances(xmlResponse);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Map<String, String> tryParseDescribeInstances(String xmlResponse) throws Exception {
         Map<String, String> result = new HashMap<>();
         XmlNode.create(xmlResponse)
             .getSubNodes("reservationset").stream()
@@ -159,6 +135,9 @@ class AwsEc2Api {
     /**
      * Calls AWS EC2 Describe Network Interfaces API, parses the response, and returns mapping from private to public
      * IPs.
+     * <p>
+     * Note that if the given private IP does not have a public IP association, then an entry (private-ip, null)
+     * is returned.
      *
      * @return map from private to public IP
      * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html">EC2 Describe Network Interfaces</a>
@@ -166,12 +145,12 @@ class AwsEc2Api {
     Map<String, String> describeNetworkInterfaces(List<String> privateAddresses, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributesDescribeNetworkInterfaces(privateAddresses);
         Map<String, String> headers = createHeaders(attributes, credentials);
-        String response = callServiceWithRetries(attributes, headers);
+        String response = callAwsService(attributes, headers);
         return parseDescribeNetworkInterfaces(response);
     }
 
     private Map<String, String> createAttributesDescribeNetworkInterfaces(List<String> privateAddresses) {
-        Map<String, String> attributes = createGeneralAttributes();
+        Map<String, String> attributes = createSharedAttributes();
         attributes.put("Action", "DescribeNetworkInterfaces");
         attributes.putAll(filterAttributesDescribeNetworkInterfaces(privateAddresses));
         return attributes;
@@ -183,26 +162,7 @@ class AwsEc2Api {
         return filter.getFilterAttributes();
     }
 
-    private String callServiceWithRetries(Map<String, String> attributes, Map<String, String> headers) {
-        String query = canonicalQueryString(attributes);
-        return createRestClient(urlFor(endpoint, query), awsConfig)
-            .withHeaders(headers)
-            .get();
-    }
-
-    private static String urlFor(String endpoint, String query) {
-        return AwsUrlUtils.urlFor(endpoint) + "/?" + query;
-    }
-
     private static Map<String, String> parseDescribeNetworkInterfaces(String xmlResponse) {
-        try {
-            return tryParseDescribeNetworkInterfaces(xmlResponse);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Map<String, String> tryParseDescribeNetworkInterfaces(String xmlResponse) throws Exception {
         Map<String, String> result = new HashMap<>();
         XmlNode.create(xmlResponse)
             .getSubNodes("networkinterfaceset").stream()
@@ -216,5 +176,35 @@ class AwsEc2Api {
                     .orElse(null)
             ));
         return result;
+    }
+
+    private static Map<String, String> createSharedAttributes() {
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("Version", "2016-11-15");
+        return attributes;
+    }
+
+    private Map<String, String> createHeaders(Map<String, String> attributes, AwsCredentials credentials) {
+        Map<String, String> headers = new HashMap<>();
+
+        if (credentials.getToken() != null) {
+            headers.put("X-Amz-Security-Token", credentials.getToken());
+        }
+        String timestamp = currentTimestamp(clock);
+        headers.put("X-Amz-Date", timestamp);
+        headers.put("Authorization", requestSigner.authHeader(attributes, headers, credentials, timestamp, "", "GET"));
+
+        return headers;
+    }
+
+    private String callAwsService(Map<String, String> attributes, Map<String, String> headers) {
+        String query = canonicalQueryString(attributes);
+        return createRestClient(urlFor(endpoint, query), awsConfig)
+            .withHeaders(headers)
+            .get();
+    }
+
+    private static String urlFor(String endpoint, String query) {
+        return AwsUrlUtils.urlFor(endpoint) + "/?" + query;
     }
 }

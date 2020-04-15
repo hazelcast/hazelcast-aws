@@ -41,13 +41,16 @@ final class XmlNode {
         this.node = node;
     }
 
-    static XmlNode create(String xmlString) throws ParserConfigurationException, IOException, SAXException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xmlString.getBytes(UTF_8)));
-
-        return new XmlNode(doc.getDocumentElement());
+    static XmlNode create(String xmlString)  {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xmlString.getBytes(UTF_8)));
+            return new XmlNode(doc.getDocumentElement());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     Node getNode() {
