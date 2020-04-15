@@ -29,23 +29,22 @@ class AwsClientConfigurator {
 
         String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
         AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, ec2Endpoint, EC2_SERVICE_NAME);
-        AwsEc2Api awsEc2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
-        AwsEc2MetadataApi ec2MetadataApi = new AwsEc2MetadataApi(awsConfig);
-        AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(ec2MetadataApi, awsConfig, new Environment());
+        AwsEc2Api ec2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
+        AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
+        AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(metadataApi, awsConfig, new Environment());
 
         // EC2 Discovery
         if (!isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
             LOGGER.info("Using AWS discovery for EC2 environment");
-            return new AwsEc2Client(ec2MetadataApi, awsEc2Api, awsCredentialsProvider);
+            return new AwsEc2Client(metadataApi, ec2Api, awsCredentialsProvider);
         }
 
         // ECS Discovery
         String ecsEndpoint = resolveEcsEndpoint(awsConfig, region);
         AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ecsEndpoint, ECS_SERVICE_NAME);
-        AwsEcsMetadataApi awsEcsMetadataApi = new AwsEcsMetadataApi(awsConfig);
-        AwsEcsApi awsEcsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner, Clock.systemUTC());
+        AwsEcsApi ecsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner, Clock.systemUTC());
         LOGGER.info("Using AWS discovery for ECS environment");
-        return new AwsEcsClient(awsEcsMetadataApi, awsEcsApi, awsEc2Api, awsCredentialsProvider);
+        return new AwsEcsClient(metadataApi, ecsApi, ec2Api, awsCredentialsProvider);
     }
 
     static String resolveRegion(AwsConfig awsConfig) {
@@ -57,8 +56,8 @@ class AwsClientConfigurator {
             return System.getenv("AWS_REGION");
         }
 
-        AwsEc2MetadataApi metadataApi = new AwsEc2MetadataApi(awsConfig);
-        String availabilityZone = metadataApi.availabilityZone();
+        AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
+        String availabilityZone = metadataApi.availabilityZoneEc2();
         return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 

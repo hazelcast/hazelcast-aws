@@ -1,6 +1,6 @@
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.AwsEcsMetadataApi.EcsMetadata;
+import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -13,23 +13,23 @@ import static java.util.Collections.emptyMap;
 class AwsEcsClient implements AwsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
 
-    private final AwsEcsMetadataApi awsEcsMetadataApi;
+    private final AwsMetadataApi awsMetadataApi;
     private final AwsEcsApi awsEcsApi;
     private final AwsEc2Api awsEc2Api;
     private final String clusterArn;
     private final String familyName;
     private final AwsCredentialsProvider awsCredentialsProvider;
 
-    AwsEcsClient(AwsEcsMetadataApi awsEcsMetadataApi, AwsEcsApi awsEcsApi,
+    AwsEcsClient(AwsMetadataApi awsMetadataApi, AwsEcsApi awsEcsApi,
                  AwsEc2Api awsEc2Api, AwsCredentialsProvider awsCredentialsProvider) {
-        this.awsEcsMetadataApi = awsEcsMetadataApi;
+        this.awsMetadataApi = awsMetadataApi;
         this.awsEcsApi = awsEcsApi;
         this.awsEc2Api = awsEc2Api;
         this.awsCredentialsProvider = awsCredentialsProvider;
 
         // TODO: Add config parameters
         LOGGER.info("Retrieving data from ECS Metadata service");
-        EcsMetadata metadata = awsEcsMetadataApi.metadata();
+        EcsMetadata metadata = awsMetadataApi.metadataEcs();
         this.clusterArn = metadata.getClusterArn();
         this.familyName = metadata.getFamilyName();
 

@@ -11,13 +11,13 @@ class AwsCredentialsProvider {
 
     private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
 
-    private final AwsEc2MetadataApi awsEc2MetadataApi;
+    private final AwsMetadataApi awsMetadataApi;
     private final AwsConfig awsConfig;
     private final Environment environment;
     private final String ec2IamRole;
 
-    AwsCredentialsProvider(AwsEc2MetadataApi awsEc2MetadataApi, AwsConfig awsConfig, Environment environment) {
-        this.awsEc2MetadataApi = awsEc2MetadataApi;
+    AwsCredentialsProvider(AwsMetadataApi awsMetadataApi, AwsConfig awsConfig, Environment environment) {
+        this.awsMetadataApi = awsMetadataApi;
         this.awsConfig = awsConfig;
         this.environment = environment;
         this.ec2IamRole = resolveEc2IamRole();
@@ -39,7 +39,7 @@ class AwsCredentialsProvider {
             return null;
         }
 
-        String ec2IamRole = awsEc2MetadataApi.defaultIamRole();
+        String ec2IamRole = awsMetadataApi.defaultIamRoleEc2();
         LOGGER.info(String.format("Using IAM Role attached to EC2 Instance: '%s'", ec2IamRole));
         // TODO: what if Role is not assigned?
         return ec2IamRole;
@@ -64,9 +64,9 @@ class AwsCredentialsProvider {
         LOGGER.fine(String.format("Fetching AWS Credentials using EC2 IAM Role: %s", ec2IamRole));
 
         try {
-            return awsEc2MetadataApi.credentials(ec2IamRole);
+            return awsMetadataApi.credentialsEc2(ec2IamRole);
         } catch (Exception e) {
-            throw new InvalidConfigurationException(String.format("Unable to retrieve credentials from IAM Role: "
+            throw new InvalidConfigurationException(String.format("Unable to retrieve credentialsEc2 from IAM Role: "
                 + "'%s', please make sure it's attached to your EC2 Instance", awsConfig.getIamRole()), e);
         }
     }
@@ -76,13 +76,13 @@ class AwsCredentialsProvider {
 
         String relativePath = environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME);
         if (relativePath == null) {
-            throw new InvalidConfigurationException("Could not acquire credentials! "
+            throw new InvalidConfigurationException("Could not acquire credentialsEc2! "
                 + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
         }
         try {
-            return awsEc2MetadataApi.credentialsFromEcs(relativePath);
+            return awsMetadataApi.credentialsEcs();
         } catch (Exception e) {
-            throw new InvalidConfigurationException(String.format("Unable to retrieve credentials from IAM Task Role."
+            throw new InvalidConfigurationException(String.format("Unable to retrieve credentialsEc2 from IAM Task Role."
                 + " URI: %s", relativePath));
         }
     }

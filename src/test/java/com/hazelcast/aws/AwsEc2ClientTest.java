@@ -42,7 +42,7 @@ public class AwsEc2ClientTest {
 //    private static final Map<String, String> ADDRESSES = Collections.singletonMap("192.168.1.2", "12.56.345.2");
 //
 //    @Mock
-//    private AwsEc2MetadataApi awsMetadataApi;
+//    private AwsMetadataApi awsMetadataApi;
 //
 //    @Mock
 //    private AwsEc2Api awsEc2Api;
@@ -53,7 +53,7 @@ public class AwsEc2ClientTest {
 //    @Before
 //    public void setUp() {
 //        given(awsEc2Api.describeInstances(CREDENTIALS)).willReturn(ADDRESSES);
-//        given(awsMetadataApi.credentials(IAM_ROLE)).willReturn(CREDENTIALS);
+//        given(awsMetadataApi.credentialsEc2(IAM_ROLE)).willReturn(CREDENTIALS);
 //    }
 //
 //    @Test(expected = InvalidConfigurationException.class)
@@ -100,7 +100,7 @@ public class AwsEc2ClientTest {
 //    @Test
 //    public void getAddressesNoRegionConfigured() {
 //        // given
-//        given(awsMetadataApi.availabilityZone()).willReturn("us-east-1a");
+//        given(awsMetadataApi.availabilityZoneEc2()).willReturn("us-east-1a");
 //        AwsConfig awsConfig = predefinedAwsConfig()
 //            .setRegion("")
 //            .build();
@@ -138,7 +138,7 @@ public class AwsEc2ClientTest {
 //            .setSecretKey("")
 //            .setIamRole("")
 //            .build();
-//        given(awsMetadataApi.defaultIamRole()).willReturn(IAM_ROLE);
+//        given(awsMetadataApi.defaultIamRoleEc2()).willReturn(IAM_ROLE);
 //        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsEc2Api, awsConfig, environment);
 //
 //        // when
@@ -157,7 +157,7 @@ public class AwsEc2ClientTest {
 //            .setSecretKey("")
 //            .setIamRole(iamRole)
 //            .build();
-//        given(awsMetadataApi.credentials(iamRole)).willThrow(new RuntimeException("Invalid IAM Role"));
+//        given(awsMetadataApi.credentialsEc2(iamRole)).willThrow(new RuntimeException("Invalid IAM Role"));
 //        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsEc2Api, awsConfig, environment);
 //
 //        // when
@@ -177,7 +177,7 @@ public class AwsEc2ClientTest {
 //            .build();
 //        String relativePath = "/some/relative/path";
 //        given(environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(relativePath);
-//        given(awsMetadataApi.credentialsFromEcs(relativePath)).willReturn(CREDENTIALS);
+//        given(awsMetadataApi.credentialsEcs(relativePath)).willReturn(CREDENTIALS);
 //        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsEc2Api, awsConfig, environment);
 //
 //        // when
@@ -197,7 +197,7 @@ public class AwsEc2ClientTest {
 //            .build();
 //        String invalidPath = "/some/relative/path";
 //        given(environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME)).willReturn(invalidPath);
-//        given(awsMetadataApi.credentialsFromEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata"));
+//        given(awsMetadataApi.credentialsEcs(invalidPath)).willThrow(new RuntimeException("Invalid ECS Metadata"));
 //        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsEc2Api, awsConfig, environment);
 //
 //        // when
@@ -228,8 +228,8 @@ public class AwsEc2ClientTest {
 //    @Test
 //    public void getAvailabilityZone() {
 //        // given
-//        String availabilityZone = "us-east-1a";
-//        given(awsMetadataApi.availabilityZone()).willReturn(availabilityZone);
+//        String availabilityZoneEc2 = "us-east-1a";
+//        given(awsMetadataApi.availabilityZoneEc2()).willReturn(availabilityZoneEc2);
 //        AwsClient awsClient = new AwsEc2Client(awsMetadataApi, awsEc2Api, predefinedAwsConfig().build(),
 //            environment);
 //
@@ -237,7 +237,7 @@ public class AwsEc2ClientTest {
 //        String result = awsClient.getAvailabilityZone();
 //
 //        // then
-//        assertEquals(availabilityZone, result);
+//        assertEquals(availabilityZoneEc2, result);
 //    }
 //
 //    private static AwsConfig.Builder predefinedAwsConfig() {
