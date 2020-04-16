@@ -41,9 +41,7 @@ class AwsEcsClient implements AwsClient {
             List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, credentials);
             LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", privateAddresses));
 
-            Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
-            LOGGER.fine(String.format("AWS EC2 DescribeNetworkInterfaces found the following (private, public) addresses: %s", privateToPublicAddresses));
-            return privateToPublicAddresses;
+            return fetchPublicAddresses(privateAddresses, credentials);
         }
         return emptyMap();
     }

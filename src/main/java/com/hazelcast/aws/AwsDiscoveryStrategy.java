@@ -28,6 +28,7 @@ import com.hazelcast.spi.partitiongroup.PartitionGroupMetaData;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.aws.AwsProperties.ACCESS_KEY;
@@ -51,6 +52,7 @@ import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
 public class AwsDiscoveryStrategy
     extends AbstractDiscoveryStrategy {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategy.class);
+
     private static final String DEFAULT_PORT_RANGE = "5701-5708";
     private static final Integer DEFAULT_CONNECTION_RETRIES = 3;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
@@ -72,7 +74,7 @@ public class AwsDiscoveryStrategy
     /**
      * For test purposes only.
      */
-    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsEcsClient client) {
+    AwsDiscoveryStrategy(Map<String, Comparable> properties, AwsClient client) {
         super(LOGGER, properties);
         this.awsClient = client;
         this.portRange = createAwsConfig().getHzPort();
@@ -124,32 +126,30 @@ public class AwsDiscoveryStrategy
     @Override
     public Iterable<DiscoveryNode> discoverNodes() {
         try {
-            final Map<String, String> privatePublicIpAddressPairs = awsClient.getAddresses();
-            if (privatePublicIpAddressPairs.isEmpty()) {
-                LOGGER.warning("No IP addresses found!");
-                return Collections.emptyList();
-            }
+            Map<String, String> addresses = awsClient.getAddresses();
+            logResult(addresses);
 
-            if (LOGGER.isFinestEnabled()) {
-                final StringBuilder sb = new StringBuilder("Found the following IPs:\n");
-                for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
-                    sb.append("    ").append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
-                }
-                LOGGER.finest(sb.toString());
-            }
-
-            final ArrayList<DiscoveryNode> nodes = new ArrayList<>(privatePublicIpAddressPairs.size());
-            for (Map.Entry<String, String> entry : privatePublicIpAddressPairs.entrySet()) {
+            List<DiscoveryNode> result = new ArrayList<>();
+            for (Map.Entry<String, String> entry : addresses.entrySet()) {
                 for (int port = portRange.getFromPort(); port <= portRange.getToPort(); port++) {
-                    nodes.add(new SimpleDiscoveryNode(new Address(entry.getKey(), port), new Address(entry.getValue(), port)));
+                    Address privateAddress = new Address(entry.getKey(), port);
+                    Address publicAddress = new Address(entry.getValue(), port);
+                    result.add(new SimpleDiscoveryNode(privateAddress, publicAddress));
                 }
             }
-
-            return nodes;
+            return result;
         } catch (Exception e) {
             LOGGER.warning("Cannot discover nodes, returning empty list", e);
             return Collections.emptyList();
         }
+    }
+
+    private static void logResult(Map<String, String> addresses) {
+        if (addresses.isEmpty()) {
+            LOGGER.warning("No IP addresses found!");
+        }
+
+        LOGGER.fine(String.format("Found the following (private => public) addresses: %s", addresses));
     }
 
     private String getOrNull(AwsProperties awsProperties) {

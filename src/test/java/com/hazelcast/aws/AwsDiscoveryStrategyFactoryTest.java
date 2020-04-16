@@ -21,12 +21,7 @@ import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.impl.DefaultDiscoveryService;
 import com.hazelcast.spi.discovery.integration.DiscoveryServiceSettings;
-import com.hazelcast.test.HazelcastParallelClassRunner;
-import com.hazelcast.test.HazelcastTestSupport;
-import com.hazelcast.test.annotation.QuickTest;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -35,14 +30,11 @@ import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(HazelcastParallelClassRunner.class)
-@Category(QuickTest.class)
-public class AwsDiscoveryStrategyFactoryTest
-    extends HazelcastTestSupport {
+public class AwsDiscoveryStrategyFactoryTest {
 
-    private static DiscoveryStrategy createStrategy(Map<String, Comparable> props) {
+    private static void createStrategy(Map<String, Comparable> props) {
         final AwsDiscoveryStrategyFactory factory = new AwsDiscoveryStrategyFactory();
-        return factory.newDiscoveryStrategy(null, null, props);
+        factory.newDiscoveryStrategy(null, null, props);
     }
 
     private static Config createConfig(String xmlFileName) {
@@ -52,7 +44,7 @@ public class AwsDiscoveryStrategyFactoryTest
 
     @Test
     public void testFull() {
-        final Map<String, Comparable> props = new HashMap<String, Comparable>();
+        final Map<String, Comparable> props = new HashMap<>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
         props.put("region", "us-east-1");
@@ -80,6 +72,6 @@ public class AwsDiscoveryStrategyFactoryTest
 
         assertTrue(strategies.hasNext());
         final DiscoveryStrategy strategy = strategies.next();
-        assertTrue(strategy != null && strategy instanceof AwsDiscoveryStrategy);
+        assertTrue(strategy instanceof AwsDiscoveryStrategy);
     }
 }

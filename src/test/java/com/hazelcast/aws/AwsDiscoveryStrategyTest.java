@@ -24,7 +24,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +52,7 @@ public class AwsDiscoveryStrategyTest {
     public void setUp() {
         Map<String, Comparable> properties = new HashMap<>();
         properties.put("hz-port", String.format("%s-%s", PORT1, PORT2));
-        awsDiscoveryStrategy = new AwsDiscoveryStrategy(properties, null);
+        awsDiscoveryStrategy = new AwsDiscoveryStrategy(properties, awsClient);
     }
 
     @Test(expected = InvalidConfigurationException.class)
@@ -110,7 +109,7 @@ public class AwsDiscoveryStrategyTest {
         // 8 ports in the port range
         Map<String, Comparable> properties = new HashMap<>();
         properties.put("hz-port", "5701-5708");
-        awsDiscoveryStrategy = new AwsDiscoveryStrategy(properties, null);
+        awsDiscoveryStrategy = new AwsDiscoveryStrategy(properties, awsClient);
 
         // 2 instances found
         given(awsClient.getAddresses()).willReturn(ImmutableMap.of(
