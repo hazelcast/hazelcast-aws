@@ -50,7 +50,7 @@ class AwsClientConfigurator {
         }
 
         if (environment.isRunningOnEcs()) {
-            return environment.getEnv("AWS_REGION");
+            return environment.getAwsRegionOnEcs();
         }
 
         String availabilityZone = metadataApi.availabilityZoneEc2();

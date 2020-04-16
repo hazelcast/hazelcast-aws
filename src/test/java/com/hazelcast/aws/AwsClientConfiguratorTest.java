@@ -36,7 +36,7 @@ public class AwsClientConfiguratorTest {
         AwsConfig awsConfig = AwsConfig.builder().build();
         AwsMetadataApi awsMetadataApi = mock(AwsMetadataApi.class);
         Environment environment = mock(Environment.class);
-        given(environment.getEnv("AWS_REGION")).willReturn(region);
+        given(environment.getAwsRegionOnEcs()).willReturn(region);
         given(environment.isRunningOnEcs()).willReturn(true);
 
         // when
