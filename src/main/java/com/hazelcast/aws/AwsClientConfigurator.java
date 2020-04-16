@@ -5,7 +5,6 @@ import com.hazelcast.logging.Logger;
 
 import java.time.Clock;
 
-import static com.hazelcast.aws.Environment.isRunningOnEcs;
 import static com.hazelcast.aws.RegionValidator.validateRegion;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
@@ -24,17 +23,19 @@ class AwsClientConfigurator {
     private static final String ECS_SERVICE_NAME = "ecs";
 
     static AwsClient createAwsClient(AwsConfig awsConfig) {
-        String region = resolveRegion(awsConfig);
+        Environment environment = new Environment();
+
+        String region = resolveRegion(awsConfig, environment);
         validateRegion(region);
 
         String ec2Endpoint = resolveEc2Endpoint(awsConfig, region);
         AwsRequestSigner ec2RequestSigner = new AwsRequestSigner(region, EC2_SERVICE_NAME);
         AwsEc2Api ec2Api = new AwsEc2Api(ec2Endpoint, awsConfig, ec2RequestSigner, Clock.systemUTC());
         AwsMetadataApi metadataApi = new AwsMetadataApi(awsConfig);
-        AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(metadataApi, awsConfig, new Environment());
+        AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(awsConfig, metadataApi, environment);
 
         // EC2 Discovery
-        if (!isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
+        if (!environment.isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
             LOGGER.info("Using AWS discovery for EC2 environment");
             return new AwsEc2Client(metadataApi, ec2Api, awsCredentialsProvider);
         }
@@ -47,12 +48,12 @@ class AwsClientConfigurator {
         return new AwsEcsClient(metadataApi, ecsApi, ec2Api, awsCredentialsProvider);
     }
 
-    static String resolveRegion(AwsConfig awsConfig) {
+    static String resolveRegion(AwsConfig awsConfig, Environment environment) {
         if (isNotEmpty(awsConfig.getRegion())) {
             return awsConfig.getRegion();
         }
 
-        if (isRunningOnEcs()) {
+        if (environment.isRunningOnEcs()) {
             return System.getenv("AWS_REGION");
         }
 

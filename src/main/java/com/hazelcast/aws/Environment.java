@@ -24,12 +24,8 @@ import static com.hazelcast.aws.StringUtils.isNotEmpty;
  */
 class Environment {
     private static final boolean IS_RUNNING_ON_ECS = isRunningOn("ECS");
-
-    String getEnv(String name) {
-        return System.getenv(name);
-    }
-
-    static boolean isRunningOnEcs() {
+    
+    boolean isRunningOnEcs() {
         return IS_RUNNING_ON_ECS;
     }
 

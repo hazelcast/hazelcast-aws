@@ -4,24 +4,19 @@ import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import static com.hazelcast.aws.Environment.isRunningOnEcs;
-
 class AwsCredentialsProvider {
     private static final ILogger LOGGER = Logger.getLogger(AwsCredentialsProvider.class);
 
-    private static final String ECS_CREDENTIALS_ENV_VAR_NAME = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI";
-
-    private final AwsMetadataApi awsMetadataApi;
     private final AwsConfig awsConfig;
+    private final AwsMetadataApi awsMetadataApi;
     private final Environment environment;
     private final String ec2IamRole;
 
-    AwsCredentialsProvider(AwsMetadataApi awsMetadataApi, AwsConfig awsConfig, Environment environment) {
-        this.awsMetadataApi = awsMetadataApi;
+    AwsCredentialsProvider(AwsConfig awsConfig, AwsMetadataApi awsMetadataApi, Environment environment) {
         this.awsConfig = awsConfig;
+        this.awsMetadataApi = awsMetadataApi;
         this.environment = environment;
         this.ec2IamRole = resolveEc2IamRole();
-
     }
 
     private String resolveEc2IamRole() {
@@ -34,14 +29,13 @@ class AwsCredentialsProvider {
             return awsConfig.getIamRole();
         }
 
-        if (isRunningOnEcs()) {
+        if (environment.isRunningOnEcs()) {
             // ECS has only one role assigned and no need to resolve it here
             return null;
         }
 
         String ec2IamRole = awsMetadataApi.defaultIamRoleEc2();
         LOGGER.info(String.format("Using IAM Role attached to EC2 Instance: '%s'", ec2IamRole));
-        // TODO: what if Role is not assigned?
         return ec2IamRole;
     }
 
@@ -52,11 +46,9 @@ class AwsCredentialsProvider {
                 .setSecretKey(awsConfig.getSecretKey())
                 .build();
         }
-
         if (StringUtils.isNotEmpty(ec2IamRole)) {
             return fetchCredentialsFromEc2();
         }
-
         return fetchCredentialsFromEcs();
     }
 
@@ -66,7 +58,7 @@ class AwsCredentialsProvider {
         try {
             return awsMetadataApi.credentialsEc2(ec2IamRole);
         } catch (Exception e) {
-            throw new InvalidConfigurationException(String.format("Unable to retrieve credentialsEc2 from IAM Role: "
+            throw new InvalidConfigurationException(String.format("Unable to retrieve credentials from IAM Role: "
                 + "'%s', please make sure it's attached to your EC2 Instance", awsConfig.getIamRole()), e);
         }
     }
@@ -74,16 +66,11 @@ class AwsCredentialsProvider {
     private AwsCredentials fetchCredentialsFromEcs() {
         LOGGER.fine("Fetching AWS Credentials from ECS");
 
-        String relativePath = environment.getEnv(ECS_CREDENTIALS_ENV_VAR_NAME);
-        if (relativePath == null) {
-            throw new InvalidConfigurationException("Could not acquire credentialsEc2! "
-                + "Did not find declared AWS access key or IAM Role, and could not discover IAM Task Role or default role.");
-        }
         try {
             return awsMetadataApi.credentialsEcs();
         } catch (Exception e) {
-            throw new InvalidConfigurationException(String.format("Unable to retrieve credentialsEc2 from IAM Task Role."
-                + " URI: %s", relativePath));
+            throw new InvalidConfigurationException("Unable to retrieve credentials from IAM Role attached to ECS Task,"
+                + " please check your configuration");
         }
     }
 }
