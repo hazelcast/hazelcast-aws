@@ -37,7 +37,7 @@ class AwsClientConfigurator {
         // EC2 Discovery
         if (!environment.isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
             LOGGER.info("Using AWS discovery for EC2 environment");
-            return new AwsEc2Client(metadataApi, ec2Api, awsCredentialsProvider);
+            return new AwsEc2Client(ec2Api, metadataApi, awsCredentialsProvider);
         }
 
         // ECS Discovery
@@ -45,7 +45,7 @@ class AwsClientConfigurator {
         AwsRequestSigner ecsRequestSigner = new AwsRequestSigner(region, ECS_SERVICE_NAME);
         AwsEcsApi ecsApi = new AwsEcsApi(ecsEndpoint, awsConfig, ecsRequestSigner, Clock.systemUTC());
         LOGGER.info("Using AWS discovery for ECS environment");
-        return new AwsEcsClient(metadataApi, ecsApi, ec2Api, awsCredentialsProvider);
+        return new AwsEcsClient(ecsApi, ec2Api, metadataApi, awsCredentialsProvider);
     }
 
     static String resolveRegion(AwsConfig awsConfig, Environment environment) {

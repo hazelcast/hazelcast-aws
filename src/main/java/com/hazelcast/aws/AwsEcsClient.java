@@ -13,46 +13,36 @@ import static java.util.Collections.emptyMap;
 class AwsEcsClient implements AwsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
 
-    private final AwsMetadataApi awsMetadataApi;
     private final AwsEcsApi awsEcsApi;
     private final AwsEc2Api awsEc2Api;
+    private final AwsCredentialsProvider awsCredentialsProvider;
     private final String clusterArn;
     private final String familyName;
-    private final AwsCredentialsProvider awsCredentialsProvider;
 
-    AwsEcsClient(AwsMetadataApi awsMetadataApi, AwsEcsApi awsEcsApi,
-                 AwsEc2Api awsEc2Api, AwsCredentialsProvider awsCredentialsProvider) {
-        this.awsMetadataApi = awsMetadataApi;
+    AwsEcsClient(AwsEcsApi awsEcsApi, AwsEc2Api awsEc2Api, AwsMetadataApi awsMetadataApi, AwsCredentialsProvider awsCredentialsProvider) {
         this.awsEcsApi = awsEcsApi;
         this.awsEc2Api = awsEc2Api;
         this.awsCredentialsProvider = awsCredentialsProvider;
 
-        // TODO: Add config parameters
-        LOGGER.info("Retrieving data from ECS Metadata service");
         EcsMetadata metadata = awsMetadataApi.metadataEcs();
         this.clusterArn = metadata.getClusterArn();
         this.familyName = metadata.getFamilyName();
-
-        LOGGER.info(String.format("AWS ECS Discovery: {cluster : '%s', family : '%s'}", clusterArn, familyName));
     }
 
     @Override
     public Map<String, String> getAddresses() {
-        LOGGER.info("Discovering Addresses from ECS");
-
-        LOGGER.info("Retrieving AWS Credentials from ECS");
         AwsCredentials credentials = awsCredentialsProvider.credentials();
 
-        LOGGER.info(String.format("Listing tasks from {cluster: '%s', family: '%s'}", clusterArn, familyName));
+        LOGGER.fine(String.format("Listing tasks from {cluster: '%s', family: '%s'}", clusterArn, familyName));
         List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, credentials);
-        LOGGER.info(String.format("Found the following tasks: %s", tasks));
+        LOGGER.fine(String.format("AWS ECS ListTasks found the following tasks: %s", tasks));
 
         if (!tasks.isEmpty()) {
             List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, credentials);
-            LOGGER.info(String.format("Found the following private addresses: %s", privateAddresses));
+            LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", privateAddresses));
 
             Map<String, String> privateToPublicAddresses = fetchPublicAddresses(privateAddresses, credentials);
-            LOGGER.info(String.format("The following (private, public) addresses found: %s", privateToPublicAddresses));
+            LOGGER.fine(String.format("AWS EC2 DescribeNetworkInterfaces found the following (private, public) addresses: %s", privateToPublicAddresses));
             return privateToPublicAddresses;
         }
         return emptyMap();
@@ -71,7 +61,7 @@ class AwsEcsClient implements AwsClient {
         try {
             return awsEc2Api.describeNetworkInterfaces(privateAddresses, credentials);
         } catch (Exception e) {
-            LOGGER.warning("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
+            LOGGER.info("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
                 + " Hazelcast with public IP, please check if your Task has IAM role which allows querying EC2 API");
             LOGGER.fine(e);
 

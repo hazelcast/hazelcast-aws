@@ -3,13 +3,13 @@ package com.hazelcast.aws;
 import java.util.Map;
 
 class AwsEc2Client implements AwsClient {
-    private final AwsMetadataApi awsMetadataApi;
     private final AwsEc2Api awsEc2Api;
+    private final AwsMetadataApi awsMetadataApi;
     private final AwsCredentialsProvider awsCredentialsProvider;
 
-    AwsEc2Client(AwsMetadataApi awsMetadataApi, AwsEc2Api awsEc2Api, AwsCredentialsProvider awsCredentialsProvider) {
-        this.awsMetadataApi = awsMetadataApi;
+    AwsEc2Client(AwsEc2Api awsEc2Api, AwsMetadataApi awsMetadataApi, AwsCredentialsProvider awsCredentialsProvider) {
         this.awsEc2Api = awsEc2Api;
+        this.awsMetadataApi = awsMetadataApi;
         this.awsCredentialsProvider = awsCredentialsProvider;
     }
 
