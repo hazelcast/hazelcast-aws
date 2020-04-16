@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
-import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
-import static com.hazelcast.aws.AwsUrlUtils.currentTimestamp;
+import static com.hazelcast.aws.AwsRequestUtils.canonicalQueryString;
+import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
+import static com.hazelcast.aws.AwsRequestUtils.currentTimestamp;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
 /**
@@ -76,19 +76,19 @@ class AwsEc2Api {
         Filter filter = new Filter();
         if (isNotEmpty(awsConfig.getTagKey())) {
             if (isNotEmpty(awsConfig.getTagValue())) {
-                filter.addFilter("tag:" + awsConfig.getTagKey(), awsConfig.getTagValue());
+                filter.add("tag:" + awsConfig.getTagKey(), awsConfig.getTagValue());
             } else {
-                filter.addFilter("tag-key", awsConfig.getTagKey());
+                filter.add("tag-key", awsConfig.getTagKey());
             }
         } else if (isNotEmpty(awsConfig.getTagValue())) {
-            filter.addFilter("tag-value", awsConfig.getTagValue());
+            filter.add("tag-value", awsConfig.getTagValue());
         }
 
         if (isNotEmpty(awsConfig.getSecurityGroupName())) {
-            filter.addFilter("instance.group-name", awsConfig.getSecurityGroupName());
+            filter.add("instance.group-name", awsConfig.getSecurityGroupName());
         }
 
-        filter.addFilter("instance-state-name", "running");
+        filter.add("instance-state-name", "running");
         return filter.getFilterAttributes();
     }
 
@@ -158,7 +158,7 @@ class AwsEc2Api {
 
     private Map<String, String> filterAttributesDescribeNetworkInterfaces(List<String> privateAddresses) {
         Filter filter = new Filter();
-        filter.addMultiValuedFilter("addresses.private-ip-address", privateAddresses);
+        filter.addMulti("addresses.private-ip-address", privateAddresses);
         return filter.getFilterAttributes();
     }
 
@@ -206,6 +206,6 @@ class AwsEc2Api {
     }
 
     private static String urlFor(String endpoint, String query) {
-        return AwsUrlUtils.urlFor(endpoint) + "/?" + query;
+        return AwsRequestUtils.urlFor(endpoint) + "/?" + query;
     }
 }

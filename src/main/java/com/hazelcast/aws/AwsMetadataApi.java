@@ -18,7 +18,7 @@ package com.hazelcast.aws;
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
 
-import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
+import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
 
 /**
  * Responsible for connecting to AWS EC2 and ECS Metadata API.

@@ -26,30 +26,15 @@ final class Filter {
 
     private Map<String, String> filters = new HashMap<>();
 
-    /**
-     * Filter index, each filter need to have a sequential index, starting from 1.
-     */
     private int index = 1;
 
-    /**
-     * Add a new filter with the given name and value to the query.
-     *
-     * @param name  Filter name
-     * @param value Filter value
-     */
-    void addFilter(String name, String value) {
+    void add(String name, String value) {
         filters.put("Filter." + index + ".Name", name);
         filters.put("Filter." + index + ".Value.1", value);
         ++index;
     }
 
-    /**
-     * Add a new filter with the given name and multiple values to the query.
-     *
-     * @param name  Filter name
-     * @param values Filter values
-     */
-    void addMultiValuedFilter(String name, Collection<String> values) {
+    void addMulti(String name, Collection<String> values) {
         if (values.size() > 0) {
             filters.put("Filter." + index + ".Name", name);
             int valueIndex = 1;

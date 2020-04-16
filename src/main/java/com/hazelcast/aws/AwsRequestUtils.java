@@ -32,11 +32,11 @@ import java.util.TimeZone;
 /**
  * Utility class to for AWS Requests.
  */
-final class AwsUrlUtils {
+final class AwsRequestUtils {
 
-    private AwsUrlUtils() {
+    private AwsRequestUtils() {
     }
-    
+
     static String currentTimestamp(Clock clock) {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));

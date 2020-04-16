@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static com.hazelcast.aws.AwsUrlUtils.createRestClient;
-import static com.hazelcast.aws.AwsUrlUtils.currentTimestamp;
-import static com.hazelcast.aws.AwsUrlUtils.urlFor;
+import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
+import static com.hazelcast.aws.AwsRequestUtils.currentTimestamp;
+import static com.hazelcast.aws.AwsRequestUtils.urlFor;
 import static java.util.Collections.emptyMap;
 
 /**

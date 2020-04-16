@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.hazelcast.aws.AwsUrlUtils.canonicalQueryString;
+import static com.hazelcast.aws.AwsRequestUtils.canonicalQueryString;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 

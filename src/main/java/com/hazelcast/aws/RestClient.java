@@ -43,11 +43,6 @@ final class RestClient {
         return new RestClient(url);
     }
 
-    RestClient withHeader(String key, String value) {
-        headers.add(new Parameter(key, value));
-        return this;
-    }
-
     RestClient withHeaders(Map<String, String> headers) {
         for (String key : headers.keySet()) {
             this.headers.add(new Parameter(key, headers.get(key)));
