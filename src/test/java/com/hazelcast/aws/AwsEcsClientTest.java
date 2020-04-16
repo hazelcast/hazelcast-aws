@@ -1,5 +1,6 @@
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.AwsEcsApi.Task;
 import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsEcsClientTest {
+    private static final String TASK_ARN = "task-arn";
     private static final String CLUSTER = "cluster-arn";
     private static final String FAMILY = "family-name";
     private static final AwsCredentials CREDENTIALS = AwsCredentials.builder()
@@ -45,6 +47,7 @@ public class AwsEcsClientTest {
     @Before
     public void setUp() {
         EcsMetadata ecsMetadata = mock(EcsMetadata.class);
+        given(ecsMetadata.getTaskArn()).willReturn(TASK_ARN);
         given(ecsMetadata.getClusterArn()).willReturn(CLUSTER);
         given(ecsMetadata.getFamilyName()).willReturn(FAMILY);
         given(awsMetadataApi.metadataEcs()).willReturn(ecsMetadata);
@@ -56,11 +59,12 @@ public class AwsEcsClientTest {
     @Test
     public void getAddresses() {
         // given
-        List<String> tasks = singletonList("task-arn");
+        List<String> taskArns = singletonList("task-arn");
         List<String> privateIps = singletonList("123.12.1.0");
+        List<Task> tasks = singletonList(new Task("123.12.1.0", null));
         Map<String, String> expectedResult = singletonMap("123.12.1.0", "1.4.6.2");
-        given(awsEcsApi.listTasks(CLUSTER, FAMILY, CREDENTIALS)).willReturn(tasks);
-        given(awsEcsApi.describeTasks(CLUSTER, tasks, CREDENTIALS)).willReturn(privateIps);
+        given(awsEcsApi.listTasks(CLUSTER, FAMILY, CREDENTIALS)).willReturn(taskArns);
+        given(awsEcsApi.describeTasks(CLUSTER, taskArns, CREDENTIALS)).willReturn(tasks);
         given(awsEc2Api.describeNetworkInterfaces(privateIps, CREDENTIALS)).willReturn(expectedResult);
 
         // when
@@ -73,10 +77,11 @@ public class AwsEcsClientTest {
     @Test
     public void getAddressesNoPublicAddresses() {
         // given
-        List<String> tasks = singletonList("task-arn");
+        List<String> taskArns = singletonList("task-arn");
         List<String> privateIps = singletonList("123.12.1.0");
-        given(awsEcsApi.listTasks(CLUSTER, FAMILY, CREDENTIALS)).willReturn(tasks);
-        given(awsEcsApi.describeTasks(CLUSTER, tasks, CREDENTIALS)).willReturn(privateIps);
+        List<Task> tasks = singletonList(new Task("123.12.1.0", null));
+        given(awsEcsApi.listTasks(CLUSTER, FAMILY, CREDENTIALS)).willReturn(taskArns);
+        given(awsEcsApi.describeTasks(CLUSTER, taskArns, CREDENTIALS)).willReturn(tasks);
         given(awsEc2Api.describeNetworkInterfaces(privateIps, CREDENTIALS)).willThrow(new RuntimeException());
 
         // when
@@ -101,6 +106,27 @@ public class AwsEcsClientTest {
 
     @Test
     public void getAvailabilityZone() {
-        assertEquals("unknown", awsEcsClient.getAvailabilityZone());
+        // given
+        String availabilityZone = "us-east-1";
+        given(awsEcsApi.describeTasks(CLUSTER, singletonList(TASK_ARN), CREDENTIALS))
+            .willReturn(singletonList(new Task(null, availabilityZone)));
+
+        // when
+        String result = awsEcsClient.getAvailabilityZone();
+
+        // then
+        assertEquals(availabilityZone, result);
+    }
+
+    @Test
+    public void getAvailabilityZoneUnknown() {
+        // given
+        given(awsEcsApi.describeTasks(CLUSTER, singletonList(TASK_ARN), CREDENTIALS)).willReturn(emptyList());
+
+        // when
+        String result = awsEcsClient.getAvailabilityZone();
+
+        // then
+        assertEquals("unknown", result);
     }
 }

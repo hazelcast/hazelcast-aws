@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -75,16 +76,16 @@ class AwsEcsApi {
             .collect(Collectors.toList());
     }
 
-    List<String> describeTasks(String clusterArn, List<String> tasks, AwsCredentials credentials) {
-        String body = createBodyDescribeTasks(clusterArn, tasks);
+    List<Task> describeTasks(String clusterArn, List<String> taskArns, AwsCredentials credentials) {
+        String body = createBodyDescribeTasks(clusterArn, taskArns);
         Map<String, String> headers = createHeadersDescribeTasks(body, credentials);
         String response = callAwsService(body, headers);
         return parseDescribeTasks(response);
     }
 
-    private String createBodyDescribeTasks(String cluster, List<String> tasks) {
+    private String createBodyDescribeTasks(String cluster, List<String> taskArns) {
         JsonArray jsonArray = new JsonArray();
-        tasks.stream().map(Json::value).forEach(jsonArray::add);
+        taskArns.stream().map(Json::value).forEach(jsonArray::add);
         return new JsonObject()
             .add("tasks", jsonArray)
             .add("cluster", cluster)
@@ -95,12 +96,19 @@ class AwsEcsApi {
         return createHeaders(body, credentials, "DescribeTasks");
     }
 
-    private List<String> parseDescribeTasks(String response) {
+    private List<Task> parseDescribeTasks(String response) {
         return toStream(toJson(response).get("tasks"))
-            .flatMap(e -> toStream(e.asObject().get("containers")))
+            .flatMap(e -> toTask(e).map(Stream::of).orElseGet(Stream::empty))
+            .collect(Collectors.toList());
+    }
+
+    private Optional<Task> toTask(JsonValue taskJson) {
+        String availabilityZone = taskJson.asObject().get("availabilityZone").asString();
+        return toStream(taskJson.asObject().get("containers"))
             .flatMap(e -> toStream(e.asObject().get("networkInterfaces")))
             .map(e -> e.asObject().get("privateIpv4Address").asString())
-            .collect(Collectors.toList());
+            .map(e -> new Task(e, availabilityZone))
+            .findFirst();
     }
 
     private Map<String, String> createHeaders(String body, AwsCredentials credentials,
@@ -134,5 +142,23 @@ class AwsEcsApi {
 
     private static Stream<JsonValue> toStream(JsonValue json) {
         return StreamSupport.stream(json.asArray().spliterator(), false);
+    }
+
+    static class Task {
+        private final String privateAddress;
+        private final String availabilityZone;
+
+        Task(String privateAddress, String availabilityZone) {
+            this.privateAddress = privateAddress;
+            this.availabilityZone = availabilityZone;
+        }
+
+        String getPrivateAddress() {
+            return privateAddress;
+        }
+
+        String getAvailabilityZone() {
+            return availabilityZone;
+        }
     }
 }

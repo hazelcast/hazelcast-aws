@@ -130,6 +130,8 @@ public class AwsMetadataApiTest {
         EcsMetadata result = awsMetadataApi.metadataEcs();
 
         // then
+        assertEquals("arn:aws:ecs:eu-central-1:665466731577:task/default/0dcf990c3ef3436c84e0c7430d14a3d4",
+            result.getTaskArn());
         assertEquals("arn:aws:ecs:eu-central-1:665466731577:cluster/default", result.getClusterArn());
         assertEquals("family-name", result.getFamilyName());
     }

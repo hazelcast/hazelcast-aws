@@ -1,5 +1,6 @@
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.AwsEcsApi.Task;
 import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
@@ -7,8 +8,10 @@ import com.hazelcast.logging.Logger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 
 class AwsEcsClient implements AwsClient {
     private static final ILogger LOGGER = Logger.getLogger(AwsClient.class);
@@ -16,6 +19,7 @@ class AwsEcsClient implements AwsClient {
     private final AwsEcsApi awsEcsApi;
     private final AwsEc2Api awsEc2Api;
     private final AwsCredentialsProvider awsCredentialsProvider;
+    private final String taskArn;
     private final String clusterArn;
     private final String familyName;
 
@@ -25,6 +29,7 @@ class AwsEcsClient implements AwsClient {
         this.awsCredentialsProvider = awsCredentialsProvider;
 
         EcsMetadata metadata = awsMetadataApi.metadataEcs();
+        this.taskArn = metadata.getTaskArn();
         this.clusterArn = metadata.getClusterArn();
         this.familyName = metadata.getFamilyName();
     }
@@ -34,14 +39,15 @@ class AwsEcsClient implements AwsClient {
         AwsCredentials credentials = awsCredentialsProvider.credentials();
 
         LOGGER.fine(String.format("Listing tasks from {cluster: '%s', family: '%s'}", clusterArn, familyName));
-        List<String> tasks = awsEcsApi.listTasks(clusterArn, familyName, credentials);
-        LOGGER.fine(String.format("AWS ECS ListTasks found the following tasks: %s", tasks));
+        List<String> taskArns = awsEcsApi.listTasks(clusterArn, familyName, credentials);
+        LOGGER.fine(String.format("AWS ECS ListTasks found the following tasks: %s", taskArns));
 
-        if (!tasks.isEmpty()) {
-            List<String> privateAddresses = awsEcsApi.describeTasks(clusterArn, tasks, credentials);
-            LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", privateAddresses));
+        if (!taskArns.isEmpty()) {
+            List<Task> tasks = awsEcsApi.describeTasks(clusterArn, taskArns, credentials);
+            List<String> taskAddresses = tasks.stream().map(Task::getPrivateAddress).collect(Collectors.toList());
+            LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", taskAddresses));
 
-            return fetchPublicAddresses(privateAddresses, credentials);
+            return fetchPublicAddresses(taskAddresses, credentials);
         }
         return emptyMap();
     }
@@ -71,7 +77,11 @@ class AwsEcsClient implements AwsClient {
 
     @Override
     public String getAvailabilityZone() {
-        // TODO: Return fetching availability zone
-        return "unknown";
+        AwsCredentials credentials = awsCredentialsProvider.credentials();
+        List<Task> taskDescriptions = awsEcsApi.describeTasks(clusterArn, singletonList(taskArn), credentials);
+        return taskDescriptions.stream()
+            .map(Task::getAvailabilityZone)
+            .findFirst()
+            .orElse("unknown");
     }
 }

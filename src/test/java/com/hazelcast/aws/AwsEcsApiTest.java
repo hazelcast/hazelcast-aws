@@ -1,6 +1,7 @@
 package com.hazelcast.aws;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.hazelcast.aws.AwsEcsApi.Task;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,6 +24,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -120,6 +122,7 @@ public class AwsEcsApiTest {
             + "  \"tasks\": [\n"
             + "    {\n"
             + "      \"taskArn\": \"arn:aws:ecs:eu-central-1-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a\",\n"
+            + "      \"availabilityZone\": \"eu-central-1a\",\n"
             + "      \"containers\": [\n"
             + "        {\n"
             + "          \"taskArn\": \"arn:aws:ecs:eu-central-1-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a\",\n"
@@ -133,6 +136,7 @@ public class AwsEcsApiTest {
             + "    },\n"
             + "    {\n"
             + "      \"taskArn\": \"arn:aws:ecs:eu-central-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207\",\n"
+            + "      \"availabilityZone\": \"eu-central-1a\",\n"
             + "      \"containers\": [\n"
             + "        {\n"
             + "          \"taskArn\": \"arn:aws:ecs:eu-central-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207\",\n"
@@ -158,10 +162,13 @@ public class AwsEcsApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        List<String> result = awsEcsApi.describeTasks(cluster, tasks, CREDENTIALS);
+        List<Task> result = awsEcsApi.describeTasks(cluster, tasks, CREDENTIALS);
 
         // then
-        assertThat(result, hasItems("10.0.1.16", "10.0.1.219"));
+        assertEquals("10.0.1.16", result.get(0).getPrivateAddress());
+        assertEquals("eu-central-1a", result.get(0).getAvailabilityZone());
+        assertEquals("10.0.1.219", result.get(1).getPrivateAddress());
+        assertEquals("eu-central-1a", result.get(1).getAvailabilityZone());
     }
 
     @Test
