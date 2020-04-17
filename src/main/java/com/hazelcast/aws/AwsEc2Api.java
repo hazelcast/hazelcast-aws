@@ -187,7 +187,7 @@ class AwsEc2Api {
     private Map<String, String> createHeaders(Map<String, String> attributes, AwsCredentials credentials) {
         Map<String, String> headers = new HashMap<>();
 
-        if (credentials.getToken() != null) {
+        if (isNotEmpty(credentials.getToken())) {
             headers.put("X-Amz-Security-Token", credentials.getToken());
         }
         headers.put("Host", endpoint);

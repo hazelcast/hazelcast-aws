@@ -34,12 +34,16 @@ final class AwsConfig {
     private final String accessKey;
     private final String secretKey;
     private final String iamRole;
+    private final String cluster;
+    private final String family;
+    private final String serviceName;
 
     @SuppressWarnings("checkstyle:parameternumber")
     // Constructor has a lot of parameters, but it's private.
     private AwsConfig(String accessKey, String secretKey, String region, String iamRole, String hostHeader,
                       String securityGroupName, String tagKey, String tagValue, int connectionTimeoutSeconds,
-                      int connectionRetries, int readTimeoutSeconds, PortRange hzPort) {
+                      int connectionRetries, int readTimeoutSeconds, PortRange hzPort, String cluster, String family,
+                      String serviceName) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.region = region;
@@ -52,6 +56,9 @@ final class AwsConfig {
         this.connectionRetries = connectionRetries;
         this.readTimeoutSeconds = readTimeoutSeconds;
         this.hzPort = hzPort;
+        this.cluster = cluster;
+        this.family = family;
+        this.serviceName = serviceName;
     }
 
     static Builder builder() {
@@ -106,13 +113,37 @@ final class AwsConfig {
         return hzPort;
     }
 
+    String getCluster() {
+        return cluster;
+    }
+
+    String getFamily() {
+        return family;
+    }
+
+    String getServiceName() {
+        return serviceName;
+    }
+
     @Override
     public String toString() {
-        return "AwsConfig{" + "accessKey='***', secretKey='***', region='" + region + '\'' + ", iamRole='" + iamRole + '\''
-            + ", hostHeader='" + hostHeader + '\'' + ", securityGroupName='" + securityGroupName + '\'' + ", tagKey='"
-            + tagKey + '\'' + ", tagValue='" + tagValue + '\'' + ", connectionTimeoutSeconds=" + connectionTimeoutSeconds
-            + ", readTimeoutSeconds=" + readTimeoutSeconds + ", connectionRetries=" + connectionRetries
-            + ", hzPort=" + hzPort + '}';
+        return "AwsConfig{" +
+            "accessKey='***'" +
+            ", secretKey='***'" +
+            ", iamRole='" + iamRole + '\'' +
+            ", region='" + region + '\'' +
+            ", hostHeader='" + hostHeader + '\'' +
+            ", securityGroupName='" + securityGroupName + '\'' +
+            ", tagKey='" + tagKey + '\'' +
+            ", tagValue='" + tagValue + '\'' +
+            ", hzPort=" + hzPort +
+            ", cluster='" + cluster + '\'' +
+            ", family='" + family + '\'' +
+            ", serviceName='" + serviceName + '\'' +
+            ", connectionTimeoutSeconds=" + connectionTimeoutSeconds +
+            ", connectionRetries=" + connectionRetries +
+            ", readTimeoutSeconds=" + readTimeoutSeconds +
+            '}';
     }
 
     static class Builder {
@@ -128,6 +159,9 @@ final class AwsConfig {
         private int connectionRetries;
         private int readTimeoutSeconds;
         private PortRange hzPort;
+        private String cluster;
+        private String family;
+        private String serviceName;
 
         Builder setAccessKey(String accessKey) {
             this.accessKey = accessKey;
@@ -189,9 +223,24 @@ final class AwsConfig {
             return this;
         }
 
+        Builder setCluster(String cluster) {
+            this.cluster = cluster;
+            return this;
+        }
+
+        Builder setFamily(String family) {
+            this.family = family;
+            return this;
+        }
+
+        Builder setServiceName(String serviceName) {
+            this.serviceName = serviceName;
+            return this;
+        }
+
         AwsConfig build() {
             return new AwsConfig(accessKey, secretKey, region, iamRole, hostHeader, securityGroupName, tagKey, tagValue,
-                connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort);
+                connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort, cluster, family, serviceName);
         }
     }
 }

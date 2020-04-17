@@ -1,5 +1,6 @@
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
 import org.junit.Test;
 
 import static com.hazelcast.aws.AwsClientConfigurator.resolveEc2Endpoint;
@@ -87,6 +88,15 @@ public class AwsClientConfiguratorTest {
         assertFalse(AwsClientConfigurator.explicitlyEc2Configured(
             AwsConfig.builder().setHostHeader("ecs.us-east-1.amazonaws.com").build()));
         assertFalse(AwsClientConfigurator.explicitlyEc2Configured(AwsConfig.builder().build()));
+    }
+
+    @Test
+    public void resolveCluster() {
+        EcsMetadata metadata = new EcsMetadata(null, "service-name-metadata");
+        assertEquals("service-name-config",
+            AwsClientConfigurator.resolveCluster(AwsConfig.builder().setCluster("service-name-config").build(), metadata));
+        assertEquals("service-name-metadata",
+            AwsClientConfigurator.resolveCluster(AwsConfig.builder().build(), metadata));
     }
 
 }

@@ -32,8 +32,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.aws.AwsProperties.ACCESS_KEY;
+import static com.hazelcast.aws.AwsProperties.CLUSTER;
 import static com.hazelcast.aws.AwsProperties.CONNECTION_RETRIES;
 import static com.hazelcast.aws.AwsProperties.CONNECTION_TIMEOUT_SECONDS;
+import static com.hazelcast.aws.AwsProperties.FAMILY;
 import static com.hazelcast.aws.AwsProperties.HOST_HEADER;
 import static com.hazelcast.aws.AwsProperties.IAM_ROLE;
 import static com.hazelcast.aws.AwsProperties.PORT;
@@ -41,6 +43,7 @@ import static com.hazelcast.aws.AwsProperties.READ_TIMEOUT_SECONDS;
 import static com.hazelcast.aws.AwsProperties.REGION;
 import static com.hazelcast.aws.AwsProperties.SECRET_KEY;
 import static com.hazelcast.aws.AwsProperties.SECURITY_GROUP_NAME;
+import static com.hazelcast.aws.AwsProperties.SERVICE_NAME;
 import static com.hazelcast.aws.AwsProperties.TAG_KEY;
 import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
 
@@ -96,6 +99,9 @@ public class AwsDiscoveryStrategy
                 .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
                 .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
                 .setHzPort(new PortRange(getPortRange()))
+                .setCluster(getOrNull(CLUSTER))
+                .setFamily(getOrNull(FAMILY))
+                .setServiceName(getOrNull(SERVICE_NAME))
                 .build();
 
         } catch (IllegalArgumentException e) {

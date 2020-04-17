@@ -96,21 +96,18 @@ class AwsMetadataApi {
     private EcsMetadata parseEcsMetadata(String response) {
         JsonObject metadata = Json.parse(response).asObject();
         JsonObject labels = metadata.get("Labels").asObject();
-        String clusterArn = labels.getString("com.amazonaws.ecs.cluster", null);
-        String familyName = labels.getString("com.amazonaws.ecs.task-definition-family", null);
         String taskArn = labels.getString("com.amazonaws.ecs.task-arn", null);
-        return new EcsMetadata(taskArn, clusterArn, familyName);
+        String clusterArn = labels.getString("com.amazonaws.ecs.cluster", null);
+        return new EcsMetadata(taskArn, clusterArn);
     }
 
     static class EcsMetadata {
         private final String taskArn;
         private final String clusterArn;
-        private final String familyName;
 
-        private EcsMetadata(String taskArn, String clusterArn, String familyName) {
+        EcsMetadata(String taskArn, String clusterArn) {
             this.taskArn = taskArn;
             this.clusterArn = clusterArn;
-            this.familyName = familyName;
         }
 
         String getTaskArn() {
@@ -119,10 +116,6 @@ class AwsMetadataApi {
 
         String getClusterArn() {
             return clusterArn;
-        }
-
-        String getFamilyName() {
-            return familyName;
         }
     }
 }

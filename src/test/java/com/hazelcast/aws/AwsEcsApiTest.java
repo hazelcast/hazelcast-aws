@@ -32,6 +32,7 @@ import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsEcsApiTest {
+    private static final Clock CLOCK = Clock.fixed(Instant.ofEpochMilli(1585909518929L), ZoneId.systemDefault());
     private static final String AUTHORIZATION_HEADER = "authorization-header";
     private static final String TOKEN = "IQoJb3JpZ2luX2VjEFIaDGV1LWNlbnRyYWwtMSJGM==";
     private static final AwsCredentials CREDENTIALS = AwsCredentials.builder()
@@ -45,6 +46,8 @@ public class AwsEcsApiTest {
 
     private AwsEcsApi awsEcsApi;
 
+    private String endpoint;
+
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
 
@@ -52,22 +55,19 @@ public class AwsEcsApiTest {
     public void setUp() {
         given(requestSigner.authHeader(any(), any(), any(), any(), any(), any())).willReturn(AUTHORIZATION_HEADER);
 
-        String endpoint = String.format("http://localhost:%s", wireMockRule.port());
-        Clock clock = Clock.fixed(Instant.ofEpochMilli(1585909518929L), ZoneId.systemDefault());
+        endpoint = String.format("http://localhost:%s", wireMockRule.port());
         AwsConfig awsConfig = AwsConfig.builder().build();
-        awsEcsApi = new AwsEcsApi(endpoint, awsConfig, requestSigner, clock);
+        awsEcsApi = new AwsEcsApi(endpoint, awsConfig, requestSigner, CLOCK);
     }
 
     @Test
     public void listTasks() {
         // given
         String cluster = "arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster";
-        String family = "family-name";
 
         //language=JSON
         String requestBody = "{\n"
-            + "  \"cluster\" : \"arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster\",\n"
-            + "  \"family\" : \"family-name\"\n"
+            + "  \"cluster\": \"arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster\"\n"
             + "}";
 
         //language=JSON
@@ -89,7 +89,53 @@ public class AwsEcsApiTest {
             .willReturn(aResponse().withStatus(200).withBody(response)));
 
         // when
-        List<String> tasks = awsEcsApi.listTasks(cluster, family, CREDENTIALS);
+        List<String> tasks = awsEcsApi.listTasks(cluster, CREDENTIALS);
+
+        // then
+        assertThat(tasks, hasItems(
+            "arn:aws:ecs:us-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a",
+            "arn:aws:ecs:us-east-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207"
+            )
+        );
+    }
+
+    @Test
+    public void listTasksFiltered() {
+        // given
+        String cluster = "arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster";
+        AwsConfig awsConfig = AwsConfig.builder()
+            .setFamily("family-name")
+            .setServiceName("service-name")
+            .build();
+        AwsEcsApi awsEcsApi = new AwsEcsApi(endpoint, awsConfig, requestSigner, CLOCK);
+
+        //language=JSON
+        String requestBody = "{\n"
+            + "  \"cluster\": \"arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster\",\n"
+            + "  \"family\": \"family-name\",\n"
+            + "  \"serviceName\": \"service-name\"\n"
+            + "}";
+
+        //language=JSON
+        String response = "{\n"
+            + "  \"taskArns\": [\n"
+            + "    \"arn:aws:ecs:us-east-1:012345678910:task/0b69d5c0-d655-4695-98cd-5d2d526d9d5a\",\n"
+            + "    \"arn:aws:ecs:us-east-1:012345678910:task/51a01bdf-d00e-487e-ab14-7645330b6207\"\n"
+            + "  ]\n"
+            + "}";
+
+        stubFor(post("/")
+            .withHeader("X-Amz-Date", equalTo("20200403T102518Z"))
+            .withHeader("Authorization", equalTo(AUTHORIZATION_HEADER))
+            .withHeader("X-Amz-Target", equalTo("AmazonEC2ContainerServiceV20141113.ListTasks"))
+            .withHeader("Content-Type", equalTo("application/x-amz-json-1.1"))
+            .withHeader("Accept-Encoding", equalTo("identity"))
+            .withHeader("X-Amz-Security-Token", equalTo(TOKEN))
+            .withRequestBody(equalToJson(requestBody))
+            .willReturn(aResponse().withStatus(200).withBody(response)));
+
+        // when
+        List<String> tasks = awsEcsApi.listTasks(cluster, CREDENTIALS);
 
         // then
         assertThat(tasks, hasItems(
@@ -181,7 +227,7 @@ public class AwsEcsApiTest {
 
         // when
         RestClientException exception = assertThrows(RestClientException.class,
-            () -> awsEcsApi.listTasks("cluster-arn", "family-name", CREDENTIALS));
+            () -> awsEcsApi.listTasks("cluster-arn", CREDENTIALS));
 
         // then
         assertTrue(exception.getMessage().contains(Integer.toString(errorCode)));

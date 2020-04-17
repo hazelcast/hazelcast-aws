@@ -40,8 +40,9 @@ enum AwsProperties {
     SECRET_KEY("secret-key", STRING, true),
 
     /**
-     * The region where your members are running. Default value is us-east-1. You need to specify this if the region is other
-     * than the default one.
+     * The region where your members are running.
+     * <p>
+     * If not defined, the current instance region is used.
      */
     REGION("region", STRING, true),
 
@@ -100,7 +101,33 @@ enum AwsProperties {
      * <p>
      * The default value is "5701-5708".
      */
-    PORT("hz-port", STRING, true);
+    PORT("hz-port", STRING, true),
+
+    /**
+     * ECS Cluster name or Cluster ARN.
+     * <p>
+     * If not defined, the current ECS Task cluster is used.
+     */
+    CLUSTER("cluster", STRING, true),
+
+    /**
+     * ECS Task Family name that is used to narrow the Hazelcast members to be within the same Task Definition
+     * family.
+     * <p>
+     * It is optional.
+     * <p>
+     * Note that this option is mutually exclusive with "service-name".
+     */
+    FAMILY("family", STRING, true),
+
+    /**
+     * ECS Task Service Name that is used to narrow the Hazelcast members to be within the same ECS Service.
+     * <p>
+     * It is optional.
+     * <p>
+     * Note that this option is mutually exclusive with "family".
+     */
+    SERVICE_NAME("service-name", STRING, true);
 
     private final PropertyDefinition propertyDefinition;
 

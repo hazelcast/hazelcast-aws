@@ -1,5 +1,6 @@
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -43,9 +44,12 @@ class AwsClientConfigurator {
         }
 
         // ECS Discovery
+        EcsMetadata metadata = metadataApi.metadataEcs();
+        String taskArn = metadata.getTaskArn();
+        String cluster = resolveCluster(awsConfig, metadata);
         AwsEcsApi ecsApi = createEcsApi(awsConfig, region);
-        logEcsEnvironment(awsConfig, region);
-        return new AwsEcsClient(ecsApi, ec2Api, metadataApi, awsCredentialsProvider);
+        logEcsEnvironment(awsConfig, region, cluster);
+        return new AwsEcsClient(taskArn, cluster, ecsApi, ec2Api, awsCredentialsProvider);
     }
 
     static String resolveRegion(AwsConfig awsConfig, AwsMetadataApi metadataApi, Environment environment) {
@@ -107,6 +111,14 @@ class AwsClientConfigurator {
         return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2");
     }
 
+    static String resolveCluster(AwsConfig awsConfig, EcsMetadata metadata) {
+        if (isNotEmpty(awsConfig.getCluster())) {
+            return awsConfig.getCluster();
+        }
+        LOGGER.info("No ECS cluster defined, using current cluster: " + metadata.getClusterArn());
+        return metadata.getClusterArn();
+    }
+
     private static void logEc2Environment(AwsConfig awsConfig, String region) {
         Map<String, String> filters = new HashMap<>();
         filters.put("tag-key", awsConfig.getTagKey());
@@ -120,13 +132,13 @@ class AwsClientConfigurator {
         );
     }
 
-    private static void logEcsEnvironment(AwsConfig awsConfig, String region) {
+    private static void logEcsEnvironment(AwsConfig awsConfig, String region, String cluster) {
         Map<String, String> filters = new HashMap<>();
         filters.put("hz-port", awsConfig.getHzPort().toString());
 
         LOGGER.info(String.format(
-            "AWS plugin performing discovery in ECS environment for region: '%s' filtered by: '%s'",
-            region, logFilters(filters))
+            "AWS plugin performing discovery in ECS environment for region: '%s' for cluster: '%s' filtered by: '%s'",
+            region, cluster, logFilters(filters))
         );
     }
 

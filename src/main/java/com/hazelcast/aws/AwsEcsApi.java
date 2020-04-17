@@ -32,6 +32,7 @@ import java.util.stream.StreamSupport;
 import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
 import static com.hazelcast.aws.AwsRequestUtils.currentTimestamp;
 import static com.hazelcast.aws.AwsRequestUtils.urlFor;
+import static com.hazelcast.aws.StringUtils.isNotEmpty;
 import static java.util.Collections.emptyMap;
 
 /**
@@ -52,17 +53,22 @@ class AwsEcsApi {
         this.clock = clock;
     }
 
-    List<String> listTasks(String clusterArn, String familyName, AwsCredentials credentials) {
-        String body = createBodyListTasks(clusterArn, familyName);
+    List<String> listTasks(String cluster, AwsCredentials credentials) {
+        String body = createBodyListTasks(cluster);
         Map<String, String> headers = createHeadersListTasks(body, credentials);
         String response = callAwsService(body, headers);
         return parseListTasks(response);
     }
 
-    private String createBodyListTasks(String clusterArn, String familyName) {
+    private String createBodyListTasks(String cluster) {
         JsonObject body = new JsonObject();
-        body.add("cluster", clusterArn);
-        body.add("family", familyName);
+        body.add("cluster", cluster);
+        if (isNotEmpty(awsConfig.getFamily())) {
+            body.add("family", awsConfig.getFamily());
+        }
+        if (isNotEmpty(awsConfig.getServiceName())) {
+            body.add("serviceName", awsConfig.getServiceName());
+        }
         return body.toString();
     }
 
@@ -115,7 +121,7 @@ class AwsEcsApi {
                                               String awsTargetAction) {
         Map<String, String> headers = new HashMap<>();
 
-        if (credentials.getToken() != null) {
+        if (isNotEmpty(credentials.getToken())) {
             headers.put("X-Amz-Security-Token", credentials.getToken());
         }
         headers.put("Host", endpoint);
