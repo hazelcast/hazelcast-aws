@@ -45,7 +45,7 @@ final class RestClient {
 
     RestClient withHeaders(Map<String, String> headers) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            this.headers.add(new Parameter(entry.getKey(), headers.get(entry.getValue())));
+            this.headers.add(new Parameter(entry.getKey(), entry.getValue()));
         }
         return this;
     }
