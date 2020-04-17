@@ -140,7 +140,8 @@ class AwsEc2Api {
      * is returned.
      *
      * @return map from private to public IP
-     * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html">EC2 Describe Network Interfaces</a>
+     * @see <a href="http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html">
+     * EC2 Describe Network Interfaces</a>
      */
     Map<String, String> describeNetworkInterfaces(List<String> privateAddresses, AwsCredentials credentials) {
         Map<String, String> attributes = createAttributesDescribeNetworkInterfaces(privateAddresses);

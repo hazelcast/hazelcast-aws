@@ -26,7 +26,7 @@ final class StringUtils {
         }
         return s.trim().isEmpty();
     }
-    
+
     static boolean isNotEmpty(String s) {
         return !isEmpty(s);
     }

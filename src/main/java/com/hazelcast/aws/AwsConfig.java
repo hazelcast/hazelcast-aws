@@ -166,23 +166,23 @@ final class AwsConfig {
 
     @Override
     public String toString() {
-        return "AwsConfig{" +
-            "accessKey='***'" +
-            ", secretKey='***'" +
-            ", iamRole='" + iamRole + '\'' +
-            ", region='" + region + '\'' +
-            ", hostHeader='" + hostHeader + '\'' +
-            ", securityGroupName='" + securityGroupName + '\'' +
-            ", tagKey='" + tagKey + '\'' +
-            ", tagValue='" + tagValue + '\'' +
-            ", hzPort=" + hzPort +
-            ", cluster='" + cluster + '\'' +
-            ", family='" + family + '\'' +
-            ", serviceName='" + serviceName + '\'' +
-            ", connectionTimeoutSeconds=" + connectionTimeoutSeconds +
-            ", connectionRetries=" + connectionRetries +
-            ", readTimeoutSeconds=" + readTimeoutSeconds +
-            '}';
+        return "AwsConfig{"
+            + "accessKey='***'"
+            + ", secretKey='***'"
+            + ", iamRole='" + iamRole + '\''
+            + ", region='" + region + '\''
+            + ", hostHeader='" + hostHeader + '\''
+            + ", securityGroupName='" + securityGroupName + '\''
+            + ", tagKey='" + tagKey + '\''
+            + ", tagValue='" + tagValue + '\''
+            + ", hzPort=" + hzPort
+            + ", cluster='" + cluster + '\''
+            + ", family='" + family + '\''
+            + ", serviceName='" + serviceName + '\''
+            + ", connectionTimeoutSeconds=" + connectionTimeoutSeconds
+            + ", connectionRetries=" + connectionRetries
+            + ", readTimeoutSeconds=" + readTimeoutSeconds
+            + '}';
     }
 
     static class Builder {

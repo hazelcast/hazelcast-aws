@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Hazelcast Inc.
+ *
+ * Licensed under the Hazelcast Community License (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * http://hazelcast.com/hazelcast-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
@@ -18,7 +33,7 @@ import static com.hazelcast.aws.StringUtils.isNotEmpty;
  * <p>
  * Note that it also creates and injects all dependencies.
  */
-class AwsClientConfigurator {
+final class AwsClientConfigurator {
     private static final ILogger LOGGER = Logger.getLogger(AwsClientConfigurator.class);
 
     private static final String DEFAULT_EC2_HOST_HEADER = "ec2.amazonaws.com";
@@ -26,6 +41,9 @@ class AwsClientConfigurator {
 
     private static final String EC2_SERVICE_NAME = "ec2";
     private static final String ECS_SERVICE_NAME = "ecs";
+
+    private AwsClientConfigurator() {
+    }
 
     static AwsClient createAwsClient(AwsConfig awsConfig) {
         Environment environment = new Environment();
@@ -79,9 +97,9 @@ class AwsClientConfigurator {
 
     static String resolveEc2Endpoint(AwsConfig awsConfig, String region) {
         String ec2HostHeader = awsConfig.getHostHeader();
-        if (StringUtils.isEmpty(ec2HostHeader) ||
-            ec2HostHeader.startsWith("ecs") ||
-            ec2HostHeader.equals("ec2")
+        if (StringUtils.isEmpty(ec2HostHeader)
+            || ec2HostHeader.startsWith("ecs")
+            || ec2HostHeader.equals("ec2")
         ) {
             ec2HostHeader = DEFAULT_EC2_HOST_HEADER;
         }
@@ -90,8 +108,8 @@ class AwsClientConfigurator {
 
     static String resolveEcsEndpoint(AwsConfig awsConfig, String region) {
         String ecsHostHeader = awsConfig.getHostHeader();
-        if (StringUtils.isEmpty(ecsHostHeader) ||
-            ecsHostHeader.equals("ecs")
+        if (StringUtils.isEmpty(ecsHostHeader)
+            || ecsHostHeader.equals("ecs")
         ) {
             ecsHostHeader = DEFAULT_ECS_HOST_HEADER;
         }
