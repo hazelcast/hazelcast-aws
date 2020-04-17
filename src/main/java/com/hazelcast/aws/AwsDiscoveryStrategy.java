@@ -103,7 +103,6 @@ public class AwsDiscoveryStrategy
                 .setFamily(getOrNull(FAMILY))
                 .setServiceName(getOrNull(SERVICE_NAME))
                 .build();
-
         } catch (IllegalArgumentException e) {
             throw new InvalidConfigurationException("AWS configuration is not valid", e);
         }

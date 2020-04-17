@@ -15,6 +15,11 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.config.InvalidConfigurationException;
+
+import static com.hazelcast.aws.StringUtils.isEmpty;
+import static com.hazelcast.aws.StringUtils.isNotEmpty;
+
 /**
  * AWS Discovery Strategy configuration that corresponds to the properties passed in the Hazelcast configuration and listed in
  * {@link AwsProperties}.
@@ -59,6 +64,40 @@ final class AwsConfig {
         this.cluster = cluster;
         this.family = family;
         this.serviceName = serviceName;
+
+        validateConfig();
+    }
+
+    private void validateConfig() {
+        if (anyOfEc2PropertiesConfigured() && anyOfEcsPropertiesConfigured()) {
+            throw new InvalidConfigurationException(
+                "You have to configure either EC2 properties ('iam-role', 'security-group-name', 'tag-key', 'tag-value')"
+                    + " or ECS properties ('cluster', 'family', 'service-name'). You cannot define both of them"
+            );
+        }
+        if (isNotEmpty(family) && isNotEmpty(serviceName)) {
+            throw new InvalidConfigurationException(
+                "You cannot configure ECS discovery with both 'family' and 'service-name', these filters are mutually"
+                    + " exclusive"
+            );
+        }
+        if (isNotEmpty(iamRole) && (isNotEmpty(accessKey) || isNotEmpty(secretKey))) {
+            throw new InvalidConfigurationException(
+                "You cannot define both 'iam-role' and 'access-key'/'secret-key'. Choose how you want to authenticate"
+                    + " with AWS API, either with IAM Role or with hardcoded AWS Credentials");
+        }
+        if ((isEmpty(accessKey) && isNotEmpty(secretKey)) || (isNotEmpty(accessKey) && isEmpty(secretKey))) {
+            throw new InvalidConfigurationException(
+                "You have to either define both ('access-key', 'secret-key') or none of them");
+        }
+    }
+
+    private boolean anyOfEc2PropertiesConfigured() {
+        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || isNotEmpty(tagKey) || isNotEmpty(tagValue);
+    }
+
+    private boolean anyOfEcsPropertiesConfigured() {
+        return isNotEmpty(cluster) || isNotEmpty(family) || isNotEmpty(serviceName);
     }
 
     static Builder builder() {
@@ -147,6 +186,7 @@ final class AwsConfig {
     }
 
     static class Builder {
+
         private String accessKey;
         private String secretKey;
         private String region;

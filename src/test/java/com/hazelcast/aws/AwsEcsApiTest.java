@@ -105,15 +105,13 @@ public class AwsEcsApiTest {
         String cluster = "arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster";
         AwsConfig awsConfig = AwsConfig.builder()
             .setFamily("family-name")
-            .setServiceName("service-name")
             .build();
         AwsEcsApi awsEcsApi = new AwsEcsApi(endpoint, awsConfig, requestSigner, CLOCK);
 
         //language=JSON
         String requestBody = "{\n"
             + "  \"cluster\": \"arn:aws:ecs:eu-central-1:665466731577:cluster/rafal-test-cluster\",\n"
-            + "  \"family\": \"family-name\",\n"
-            + "  \"serviceName\": \"service-name\"\n"
+            + "  \"family\": \"family-name\"\n"
             + "}";
 
         //language=JSON

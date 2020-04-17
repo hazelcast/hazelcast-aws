@@ -43,18 +43,31 @@ public class AwsDiscoveryStrategyFactoryTest {
     }
 
     @Test
-    public void testFull() {
+    public void testEc2() {
         final Map<String, Comparable> props = new HashMap<>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");
         props.put("region", "us-east-1");
-        props.put("iam-role", "test-value");
         props.put("host-header", "ec2.test-value");
         props.put("security-group-name", "test-value");
         props.put("tag-key", "test-value");
         props.put("tag-value", "test-value");
         props.put("connection-timeout-seconds", 10);
         props.put("hz-port", 1234);
+        createStrategy(props);
+    }
+
+    @Test
+    public void testEcc() {
+        final Map<String, Comparable> props = new HashMap<>();
+        props.put("access-key", "test-value");
+        props.put("secret-key", "test-value");
+        props.put("region", "us-east-1");
+        props.put("host-header", "ecs.test-value");
+        props.put("connection-timeout-seconds", 10);
+        props.put("hz-port", 1234);
+        props.put("cluster", "cluster-name");
+        props.put("service-name", "service-name");
         createStrategy(props);
     }
 
