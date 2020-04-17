@@ -67,6 +67,8 @@ public class AwsDiscoveryStrategy
         super(LOGGER, properties);
 
         AwsConfig awsConfig = createAwsConfig();
+        LOGGER.info("Using AWS discovery plugin with configuration: " + awsConfig);
+
         this.awsClient = AwsClientConfigurator.createAwsClient(awsConfig);
         this.portRange = awsConfig.getHzPort();
     }
@@ -118,7 +120,9 @@ public class AwsDiscoveryStrategy
     @Override
     public Map<String, String> discoverLocalMetadata() {
         if (memberMetadata.isEmpty()) {
-            memberMetadata.put(PartitionGroupMetaData.PARTITION_GROUP_ZONE, awsClient.getAvailabilityZone());
+            String availabilityZone = awsClient.getAvailabilityZone();
+            LOGGER.info(String.format("Availability zone found: '%s'", availabilityZone));
+            memberMetadata.put(PartitionGroupMetaData.PARTITION_GROUP_ZONE, availabilityZone);
         }
         return memberMetadata;
     }

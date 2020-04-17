@@ -31,6 +31,7 @@ class AwsCredentialsProvider {
 
         if (environment.isRunningOnEcs()) {
             // ECS has only one role assigned and no need to resolve it here
+            LOGGER.info("Using IAM Task Role attached to ECS Task");
             return null;
         }
 
@@ -64,7 +65,7 @@ class AwsCredentialsProvider {
     }
 
     private AwsCredentials fetchCredentialsFromEcs() {
-        LOGGER.fine("Fetching AWS Credentials from ECS");
+        LOGGER.fine("Fetching AWS Credentials from ECS IAM Task Role");
 
         try {
             return awsMetadataApi.credentialsEcs();

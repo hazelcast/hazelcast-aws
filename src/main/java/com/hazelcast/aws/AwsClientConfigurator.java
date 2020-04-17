@@ -4,6 +4,10 @@ import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
 import java.time.Clock;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.RegionValidator.validateRegion;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
@@ -34,13 +38,13 @@ class AwsClientConfigurator {
 
         // EC2 Discovery
         if (!environment.isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
-            LOGGER.info("Using AWS discovery for EC2 environment");
+            logEc2Environment(awsConfig, region);
             return new AwsEc2Client(ec2Api, metadataApi, awsCredentialsProvider);
         }
 
         // ECS Discovery
         AwsEcsApi ecsApi = createEcsApi(awsConfig, region);
-        LOGGER.info("Using AWS discovery for ECS environment");
+        logEcsEnvironment(awsConfig, region);
         return new AwsEcsClient(ecsApi, ec2Api, metadataApi, awsCredentialsProvider);
     }
 
@@ -101,5 +105,36 @@ class AwsClientConfigurator {
      */
     static boolean explicitlyEc2Configured(AwsConfig awsConfig) {
         return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2");
+    }
+
+    private static void logEc2Environment(AwsConfig awsConfig, String region) {
+        Map<String, String> filters = new HashMap<>();
+        filters.put("tag-key", awsConfig.getTagKey());
+        filters.put("tag-value", awsConfig.getTagValue());
+        filters.put("security-group-name", awsConfig.getSecurityGroupName());
+        filters.put("hz-port", awsConfig.getHzPort().toString());
+
+        LOGGER.info(String.format(
+            "AWS plugin performing discovery in EC2 environment for region: '%s' filtered by: '%s'",
+            region, logFilters(filters))
+        );
+    }
+
+    private static void logEcsEnvironment(AwsConfig awsConfig, String region) {
+        Map<String, String> filters = new HashMap<>();
+        filters.put("hz-port", awsConfig.getHzPort().toString());
+
+        LOGGER.info(String.format(
+            "AWS plugin performing discovery in ECS environment for region: '%s' filtered by: '%s'",
+            region, logFilters(filters))
+        );
+    }
+
+    private static String logFilters(Map<String, String> parameters) {
+        return parameters.entrySet().stream()
+            .filter(e -> e.getValue() != null)
+            .sorted(Comparator.comparing(Map.Entry::getKey))
+            .map(e -> String.format("%s:%s", e.getKey(), e.getValue()))
+            .collect(Collectors.joining(", "));
     }
 }
