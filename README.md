@@ -14,7 +14,7 @@ This repository contains a plugin which provides the automatic Hazelcast member 
 
 ## Embedded mode
 
-To use Hazelcast embedded in your application, you need to add the plugin dependency into your Maven/Gradle file. Then, when you provide `hazelcast.xml`/`hazelcast.yaml` as presented below or an equivalent Java-based configuration, your Hazelcast instances discover themselves automatically.
+To use Hazelcast embedded in your application, you need to add the plugin dependency into your Maven/Gradle file (or use [hazelcast-all](https://mvnrepository.com/artifact/com.hazelcast/hazelcast-all) which includes the plugin). Then, when you provide `hazelcast.xml`/`hazelcast.yaml` as presented below or an equivalent Java-based configuration, your Hazelcast instances discover themselves automatically.
 
 #### Maven
 
@@ -34,19 +34,28 @@ compile group: "com.hazelcast", name: "hazelcast-aws", version: "${hazelcast-aws
 
 ## Understanding AWS Discovery Strategy
 
-Hazelcast member starts by fetching a list of all instances (accessible by the user) filtered by region, security group, and instance tag key/value. Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under IP:PORT, then it joins the cluster.
+Hazelcast member starts by fetching a list of all running instances filtered by the plugin parameters (`region`, etc.). Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under IP:PORT, then it joins the cluster.
 
-If users want to create multiple Hazelcast clusters in one region, then they need to manually tag the instances.
+Note that this plugin supports [Hazelcast Zone Aware](https://docs.hazelcast.org/docs/latest/manual/html-single/#zone_aware) feature.
 
 ## Configuration
 
-The plugin supports **Members Discovery SPI** and **Zone Aware** features.
+The plugin is prepared to work for both **AWS EC2** and **AWS ECS/Fargate** environments. However, note that the filter parameters and the requirements vary depending on the environment used.
 
-### Hazelcast Members Discovery SPI
+### EC2 environment
 
-Make sure you have the `hazelcast-aws.jar` dependency in your classpath. Then, you can configure Hazelcast in one of the following manners.
+The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast cluster) and **Hazelcast Client Discovery**.
 
-#### XML Configuration
+#### Hazelcast Member Discovery
+
+Make sure that:
+
+* you have the `hazelcast-aws.jar` (or `hazelcast-all.jar`) dependency in your classpath
+* your IAM Role has `ec2:DescribeInstances` permission
+
+Then, you can configure Hazelcast in one of the following manners.
+
+##### XML Configuration
 
 ```xml
 <hazelcast>
@@ -54,76 +63,258 @@ Make sure you have the `hazelcast-aws.jar` dependency in your classpath. Then, y
     <join>
       <multicast enabled="false"/>
       <aws enabled="true">
-        <access-key>my-access-key</access-key>
-        <secret-key>my-secret-key</secret-key>
-        <region>us-west-1</region>
-        <security-group-name>hazelcast</security-group-name>
-        <tag-key>aws-test-cluster</tag-key>
-        <tag-value>cluster1</tag-value>
-        <hz-port>5701-5708</hz-port>
-        <connection-retries>3</connection-retries>
+        <tag-key>my-ec2-instance-tag-key</tag-key>
+        <tag-value>my-ec2-instance-tag-value</tag-value>
       </aws>
     </join>
   </network>
 </hazelcast>
 ```
 
-#### YAML Configuration
+##### YAML Configuration
 
 ```yaml
 hazelcast:
   network:
-      join:
-        multicast:
-          enabled: false
-        aws:
-          enabled: true
-          access-key: my-access-key
-          secret-key: my-secret-key
-          iam-role: dummy
-          region: us-west-1
-          host-header: ec2.amazonaws.com
-          security-group-name: hazelcast-sg
-          tag-key: type
-          tag-value: hz-nodes
-          hz-port: 5701-5708
-          connection-retries: 3
+    join:
+      multicast:
+        enabled: false
+      aws:
+        enabled: true
+        tag-key: my-ec2-instance-tag-key
+        tag-value: my-ec2-instance-tag-value
 ```
 
-#### Java-based Configuration
+##### Java-based Configuration
 
 ```java
 config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
 config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(true)
+      .setProperty("tag-key", "my-ec2-instance-tag-key")
+      .setProperty("tag-value", "my-ec2-instance-tag-value");
+```
+
+The following properties can be configured (all are optional).
+
+
+* `access-key`, `secret-key`: access and secret keys of your AWS account; if not set, `iam-role` is used
+* `iam-role`: IAM Role attached to EC2 instance used to fetch credentials (if `access-key`/`secret-key` not specified); if not set, default IAM Role attached to EC2 instance is used
+* `region`: region where Hazelcast members are running; default is the current region
+* `host-header`: `ec2`, `ecs`, or the URL of a EC2/ECS API endpoint; automatically detected by default
+* `security-group-name`: filter to look only for EC2 instances with the given security group
+* `tag-key`, `tag-value`: filter to look only for EC2 Instances with the given `tag-key`/`tag-value`
+* `connection-timeout-seconds`, `read-timeout-seconds`: connection and read timeouts when making a call to AWS API; default to `10`
+* `connection-retries`: number of retries while connecting to AWS API; default to `3`
+* `hz-port`: a range of ports where the plugin looks for Hazelcast members; default is `5701-5708`
+
+Note that if you don't specify any of the properties, then the plugin uses the IAM Role assigned to EC2 Instance and forms a cluster from all Hazelcast members running in same region.
+
+#### Hazelcast Client Configuration
+
+Hazelcast Client discovery parameters are the same as mentioned above.
+
+If Hazelcast Client is run **outside AWS**, then you need to always specify the following parameters:
+- `access-key`, `secret-key` - IAM role cannot be used from outside AWS
+- `region` - it cannot be detected automatically
+- `use-public-ip` - must be set to `true`
+
+Note also that your EC2 instances must have public IP assigned.
+
+Following are example declarative and programmatic configuration snippets.
+
+##### XML Configuration
+
+```xml
+<hazelcast-client>
+  <network>
+    <aws enabled="true">
+      <access-key>my-access-key</access-key>
+      <secret-key>my-secret-key</secret-key>
+      <region>us-west-1</region>
+      <tag-key>my-ec2-instance-tag-key</tag-key>
+      <tag-value>my-ec2-instance-tag-value</tag-value>
+      <use-public-ip>true</use-public-ip>
+    </aws>
+  </network>
+</hazelcast-client>
+```
+
+##### YAML Configuration
+
+```yaml
+hazelcast-client:
+  network:
+    aws:
+      enabled: true
+      access-key: my-access-key
+      secret-key: my-secret-key
+      region: us-west-1
+      tag-key: my-ec2-instance-tag-key
+      tag-value: my-ec2-instance-tag-value
+      use-public-ip: true
+```
+
+##### Java-based Configuration
+
+```java
+clientConfig.getNetworkConfig().getAwsConfig()
+      .setEnabled(true)
       .setProperty("access-key", "my-access-key")
       .setProperty("secret-key", "my-secret-key")
       .setProperty("region", "us-west-1")
-      .setProperty("security-group-name", "hazelcast")
-      .setProperty("tag-key", "aws-test-cluster")
-      .setProperty("tag-value", "cluster1")
-      .setProperty("hz-port", "5701-5708")
-      .setProperty("connection-retries", 3);
+      .setProperty("tag-key", "my-ec2-instance-tag-key")
+      .setProperty("tag-value", "my-ec2-instance-tag-value")
+      .setProperty("use-public-ip", "true");
 ```
 
-Here are the definitions of the properties
+### ECS/Fargate environment
 
-* `access-key`, `secret-key`: access and secret keys of your account on EC2; if not set, `iam-role` is used
-* `iam-role`: AWS IAM Role to fetch credentials (used if `access-key`/`secret-key` not specified); if not set, the default IAM Role assigned to EC2 Instance is used
-* `region`: region where Hazelcast members are running; if not set, `us-east-1` region is used
-* `host-header`: URL that is the entry point for a web service; it is optional
-* `security-group-name`: filter to look only for EC2 Instances with the given security group; it is optional
-* `tag-key`, `tag-value`: filter to look only for EC2 Instances with the given `tag-key`/`tag-value`; they are optional
-* `connection-timeout-seconds`: maximum amount of time Hazelcast will try to connect to a well known member before giving up; setting this value too low could mean that a member is not able to connect to a cluster; setting the value too high means that member startup could slow down because of longer timeouts (for example, when a well known member is not up); its default value is 5
-* `hz-port`: a range of ports where the plugin looks for Hazelcast members; if not set, the default value `5701-5708` is used
-* `connection-retries`: number of retries while connecting to AWS Services; default to 10
+The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast cluster) and **Hazelcast Client Discovery**.
 
-Note that:
-* If you don't specify any of the properties, then the plugin uses the IAM Role assigned to EC2 Instance and forms a cluster from all Hazelcast members running in the default region `us-east-1`
-* If you use the plugin in the Hazelcast Client running outside of the AWS network, then the following parameters are mandatory: `access-key` and `secret-key`
+#### Hazelcast Member Discovery
 
-### Zone Aware
+Make sure that IAM Task Role has the following permissions:
+* `ecs:ListTasks`
+* `ecs:DescribeTasks`
+* `ec2:DescribeNetworkInterfaces` (needed only if task have public IPs)
 
-When using `ZONE_AWARE` configuration, backups are created in the other Availability Zone.
+Then, you can configure Hazelcast in one of the following manners. Please note that `10.0.*.*` value depends on your VPC CIDR block definition.
+
+##### XML Configuration
+
+```xml
+<hazelcast>
+  <network>
+    <join>
+      <multicast enabled="false"/>
+      <aws enabled="true" />
+      </aws>
+    </join>
+    <interfaces enabled="true">
+      <interface>10.0.*.*</interface>
+    </interfaces>
+  </network>
+</hazelcast>
+```
+
+##### YAML Configuration
+
+```yaml
+hazelcast:
+  network:
+    join:
+      multicast:
+        enabled: false
+      aws:
+        enabled: true
+    interfaces:
+      enabled: true
+      interfaces:
+        - 10.0.*.*
+```
+
+##### Java-based Configuration
+
+```java
+config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(true);
+config.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("10.0.*.*");
+```
+
+The following properties can be configured (all are optional).
+
+* `access-key`, `secret-key`: access and secret keys of AWS your account; if not set, IAM Task Role is used
+* `region`: region where Hazelcast members are running; default is the current region
+* `cluster`: ECS cluster short name or ARN; default is the current cluster
+* `family`: filter to look only for ECS tasks with the given family name; mutually exclusive with `service-name`
+* `service-name`: filter to look only for ECS tasks from the given service; mutually exclusive with `family`
+* `host-header`: `ec2`, `ecs`, or the URL of a EC2/ECS API endpoint; automatically detected by default
+* `connection-timeout-seconds`, `read-timeout-seconds`: connection and read timeouts when making a call to AWS API; default to `10`
+* `connection-retries`: number of retries while connecting to AWS API; default to `3`
+* `hz-port`: a range of ports where the plugin looks for Hazelcast members; default is `5701-5708`
+
+Note that if you don't specify any of the properties, then the plugin discovers all Hazelcast members running in the current ECS cluster.
+
+#### Hazelcast Client Configuration
+
+Hazelcast Client discovery parameters are the same as mentioned above.
+
+If Hazelcast Client is run **outside ECS cluster**, then you need to always specify the following parameters:
+- `access-key`, `secret-key` - IAM role cannot be used from outside AWS
+- `region` - it cannot be detected automatically
+- `cluster` - it cannot be detected automatically
+- `use-public-ip` - must be set to `true`
+
+Note also that your ECS Tasks must have public IP assigned and your IAM Task Role must have `ec2:DescribeNetworkInterfaces` permission.
+
+Following are example declarative and programmatic configuration snippets.
+
+##### XML Configuration
+
+```xml
+<hazelcast-client>
+  <network>
+    <aws enabled="true">
+      <access-key>my-access-key</access-key>
+      <secret-key>my-secret-key</secret-key>
+      <region>eu-central-1</region>
+      <cluster>my-cluster</cluster>
+      <use-public-ip>true</use-public-ip>
+    </aws>
+  </network>
+</hazelcast-client>
+```
+
+##### YAML Configuration
+
+```yaml
+hazelcast-client:
+  network:
+    aws:
+      enabled: true
+      access-key: my-access-key
+      secret-key: my-secret-key
+      region: eu-central-1
+      cluster: my-cluster
+      use-public-ip: true
+```
+
+##### Java-based Configuration
+
+```java
+clientConfig.getNetworkConfig().getAwsConfig()
+      .setEnabled(true)
+      .setProperty("access-key", "my-access-key")
+      .setProperty("secret-key", "my-secret-key")
+      .setProperty("region", "eu-central-1")
+      .setProperty("cluster", "my-cluster")
+      .setProperty("use-public-ip", "true");
+```
+
+### ECS environment with EC2 discovery
+
+If you use ECS on EC2 instances (not Fargate), you may also set up your ECS Tasks to use `host` network mode and then use EC2 discovery mode instead of ECS. In that case, your Hazelcast configuration would look as follows.
+
+```yaml
+hazelcast:
+  network:
+    join:
+      multicast:
+        enabled: false
+      aws:
+        enabled: true
+        host-header: ec2
+    interfaces:
+      enabled: true
+      interfaces:
+        - 10.0.*.*
+```
+
+All other parameters can be used exactly the same as described in the EC2-related section.
+
+## Zone Aware
+
+Hazelcast AWS Discovery plugin supports Hazelcast Zone Aware feature for both EC2 and ECS. When using `ZONE_AWARE` configuration, backups are created in the other Availability Zone.
 
 #### XML Configuration
 
@@ -151,67 +342,11 @@ config.getPartitionGroupConfig()
 ***NOTE:*** *When using the `ZONE_AWARE` partition grouping, a cluster spanning multiple Availability Zones (AZ) should have an equal number of members in each AZ. Otherwise, it will result in uneven partition distribution among the members.*
 
 
-### Hazelcast Client with Discovery SPI
 
-If Hazelcast Client is run inside AWS, then the configuration is exactly the same as for the Member.
 
-If Hazelcast Client is run outside AWS, then you always need to specify the following parameters:
-- `access-key`, `secret-key` - IAM role cannot be used from outside AWS
-- `use-public-ip` - must be set to `true`
 
-Following are example declarative and programmatic configuration snippets.
 
-#### XML Configuration
 
-```xml
-<hazelcast-client>
-  <network>
-    <aws enabled="true">
-      <access-key>my-access-key</access-key>
-      <secret-key>my-secret-key</secret-key>
-      <region>us-west-1</region>
-      <security-group-name>hazelcast</security-group-name>
-      <tag-key>aws-test-cluster</tag-key>
-      <tag-value>cluster1</tag-value>
-      <hz-port>5701-5708</hz-port>
-      <connection-retries>3</connection-retries>
-      <use-public-ip>true</use-public-ip>
-    </aws>
-  </network>
-</hazelcast-client>
-```
-
-#### YAML Configuration
-
-```yaml
-hazelcast-client:
-  network:
-    aws:
-      enabled: true
-      access-key: TEST_ACCESS_KEY
-      secret-key: TEST_SECRET_KEY
-      region: us-east-1
-      security-group-name: hazelcast-sg
-      tag-key: type
-      tag-value: hz-nodes
-      connection-retries: 3
-      use-public-ip: true
-```
-
-#### Java-based Configuration
-
-```java
-clientConfig.getAwsConfig().setEnabled(true)
-      .setProperty("access-key", "my-access-key")
-      .setProperty("secret-key", "my-secret-key")
-      .setProperty("region", "us-west-1")
-      .setProperty("security-group-name", "hazelcast")
-      .setProperty("tag-key", "aws-test-cluster")
-      .setProperty("tag-value", "cluster1")
-      .setProperty("hz-port", "5701-5708")
-      .setProperty("connection-retries", 3)
-      .setProperty("use-public-ip", "true");
-```
 
 ## Configuration for AWS ECS
 
@@ -239,34 +374,11 @@ hazelcast:
 Please note that `10.0.*.*` value depends on your CIDR block definition.
 If more than one `subnet` or `custom VPC` is used for cluster, it should be checked that `container instances` within cluster have network connectivity or have `tracepath` to each other. 
 
-## IAM Roles
-
-hazelcast-aws strongly recommends to use IAM Roles. When `iam-role` tag defined in hazelcast configuration, hazelcast-aws fetches your credentials by using defined iam-role name. If you want to use iam-role assigned to your machine, you don't have to define anything. hazelcast-aws will automatically retrieve credentials using default iam-role.
 
 ### IAM Roles in ECS Environment
 
 hazelcast-aws supports ECS and will fetch default credentials if hazelcast is deployed into ECS environment. You don't have to configure `iam-role` tag. However, if you have a specific IAM Role to use, you can still use it via `iam-role` tag.
 
-### Policy for IAM User
-
-If you are using IAM role configuration (`iam-role`) for EC2 discovery, you need to give the following policy to your IAM user at the least:
-
-`"ec2:DescribeInstances"`
-```
-{
-  "Version": "XXXXXXXX",
-  "Statement": [
-    {
-      "Sid": "XXXXXXXX",
-      "Action": [
-        "ec2:DescribeInstances"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-```
 
 ## AWS Autoscaling
 
