@@ -56,13 +56,13 @@ final class AwsClientConfigurator {
         AwsEc2Api ec2Api = createEc2Api(awsConfig, region);
 
         // EC2 Discovery
-        if (!environment.isRunningOnEcs() || explicitlyEc2Configured(awsConfig)) {
+        if ((!environment.isRunningOnEcs() && !explicitlyEcsConfigured(awsConfig)) || explicitlyEc2Configured(awsConfig)) {
             logEc2Environment(awsConfig, region);
             return new AwsEc2Client(ec2Api, metadataApi, awsCredentialsProvider);
         }
 
         // ECS Discovery
-        EcsMetadata metadata = metadataApi.metadataEcs();
+        EcsMetadata metadata = tryToFetchEcsMetadata(metadataApi);
         String taskArn = metadata.getTaskArn();
         String cluster = resolveCluster(awsConfig, metadata);
         AwsEcsApi ecsApi = createEcsApi(awsConfig, region);
@@ -116,6 +116,11 @@ final class AwsClientConfigurator {
         return ecsHostHeader.replace("ecs.", "ecs." + region + ".");
     }
 
+    static boolean explicitlyEcsConfigured(AwsConfig awsConfig) {
+        return isNotEmpty(awsConfig.getCluster())
+            || (isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ecs"));
+    }
+
     /**
      * Checks if EC2 environment was explicitly configured in the Hazelcast configuration.
      * <p>
@@ -127,6 +132,16 @@ final class AwsClientConfigurator {
      */
     static boolean explicitlyEc2Configured(AwsConfig awsConfig) {
         return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2");
+    }
+
+    private static EcsMetadata tryToFetchEcsMetadata(AwsMetadataApi metadataApi) {
+        try {
+            return metadataApi.metadataEcs();
+        } catch (Exception e) {
+            LOGGER.fine(e);
+            // if no access to metadata, just return an empty EcsMetadata
+            return new EcsMetadata(null, null);
+        }
     }
 
     static String resolveCluster(AwsConfig awsConfig, EcsMetadata metadata) {

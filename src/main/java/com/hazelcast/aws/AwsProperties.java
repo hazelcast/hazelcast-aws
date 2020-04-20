@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.config.properties.PropertyTypeConverter;
 import com.hazelcast.config.properties.SimplePropertyDefinition;
@@ -75,7 +74,8 @@ enum AwsProperties {
     TAG_VALUE("tag-value", STRING, true),
 
     /**
-     * Sets the connect timeout in seconds. See {@link TcpIpConfig#setConnectionTimeoutSeconds(int)} for more information.
+     * Sets the connect timeout in seconds.
+     * <p>
      * Its default value is 5.
      */
     CONNECTION_TIMEOUT_SECONDS("connection-timeout-seconds", INTEGER, true),

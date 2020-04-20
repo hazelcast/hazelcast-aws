@@ -81,6 +81,15 @@ public class AwsClientConfiguratorTest {
     }
 
     @Test
+    public void explicitlyEcsConfigured() {
+        assertTrue(AwsClientConfigurator.explicitlyEcsConfigured(AwsConfig.builder().setHostHeader("ecs").build()));
+        assertTrue(AwsClientConfigurator.explicitlyEcsConfigured(
+            AwsConfig.builder().setHostHeader("ecs.us-east-1.amazonaws.com").build()));
+        assertTrue(AwsClientConfigurator.explicitlyEcsConfigured(AwsConfig.builder().setCluster("cluster").build()));
+        assertFalse(AwsClientConfigurator.explicitlyEcsConfigured(AwsConfig.builder().build()));
+    }
+
+    @Test
     public void explicitlyEc2Configured() {
         assertTrue(AwsClientConfigurator.explicitlyEc2Configured(AwsConfig.builder().setHostHeader("ec2").build()));
         assertTrue(AwsClientConfigurator.explicitlyEc2Configured(
