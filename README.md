@@ -2,7 +2,7 @@
 
 This repository contains a plugin which provides the automatic Hazelcast member discovery in the Amazon Web Services Platform.
 
-## Requirements
+# Requirements
 
 * Hazelcast 3.6+
 * Linux Kernel 3.19+ (TCP connections may get stuck when used with older Kernel versions, resulting in undefined timeouts)
@@ -12,9 +12,9 @@ This repository contains a plugin which provides the automatic Hazelcast member 
   * hazelcast-aws 2.3 is compatible with hazelcast 3.11.x
   * hazelcast-aws 2.2 is compatible with older hazelcast versions
 
-## Embedded mode
+# Embedded mode
 
-To use Hazelcast embedded in your application, you need to add the plugin dependency into your Maven/Gradle file (or use [hazelcast-all](https://mvnrepository.com/artifact/com.hazelcast/hazelcast-all) which includes the plugin). Then, when you provide `hazelcast.xml`/`hazelcast.yaml` as presented below or an equivalent Java-based configuration, your Hazelcast instances discover themselves automatically.
+To use Hazelcast embedded in your application, you need to add the plugin dependency into your Maven/Gradle file (or use [hazelcast-all](https://mvnrepository.com/artifact/com.hazelcast/hazelcast-all) which already includes the plugin). Then, when you provide `hazelcast.xml`/`hazelcast.yaml` as presented below or an equivalent Java-based configuration, your Hazelcast instances discover themselves automatically.
 
 #### Maven
 
@@ -34,19 +34,19 @@ compile group: "com.hazelcast", name: "hazelcast-aws", version: "${hazelcast-aws
 
 ## Understanding AWS Discovery Strategy
 
-Hazelcast member starts by fetching a list of all running instances filtered by the plugin parameters (`region`, etc.). Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under IP:PORT, then it joins the cluster.
+Hazelcast member starts by fetching a list of all running instances filtered by the plugin parameters (`region`, etc.). Then, each instance is checked one-by-one with its IP and each of the ports defined in the `hz-port` property. When a member is discovered under `IP:PORT`, then it joins the cluster.
 
 Note that this plugin supports [Hazelcast Zone Aware](https://docs.hazelcast.org/docs/latest/manual/html-single/#zone_aware) feature.
 
-## Configuration
+# Configuration
 
-The plugin is prepared to work for both **AWS EC2** and **AWS ECS/Fargate** environments. However, note that the filter parameters and the requirements vary depending on the environment used.
+The plugin is prepared to work for both **AWS EC2** and **AWS ECS/Fargate** environments. However, note that requirements and plugin properties vary depending on the environment you use.
 
-### EC2 environment
+## EC2 environment
 
-The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast cluster) and **Hazelcast Client Discovery**.
+The plugin works both for **Hazelcast Member Discovery** and **Hazelcast Client Discovery**.
 
-#### Hazelcast Member Discovery
+### Hazelcast Member Discovery
 
 Make sure that:
 
@@ -55,7 +55,7 @@ Make sure that:
 
 Then, you can configure Hazelcast in one of the following manners.
 
-##### XML Configuration
+#### XML Configuration
 
 ```xml
 <hazelcast>
