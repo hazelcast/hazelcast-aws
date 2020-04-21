@@ -171,7 +171,7 @@ The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast clus
 
 ### ECS Hazelcast Member Discovery
 
-Make sure that IAM Task Role has the following permissions:
+Make sure that your IAM Task Role has the following permissions:
 * `ecs:ListTasks`
 * `ecs:DescribeTasks`
 * `ec2:DescribeNetworkInterfaces` (needed only if task have public IPs)
@@ -186,7 +186,6 @@ Then, you can configure Hazelcast in one of the following manners. Please note t
     <join>
       <multicast enabled="false"/>
       <aws enabled="true" />
-      </aws>
     </join>
     <interfaces enabled="true">
       <interface>10.0.*.*</interface>
@@ -226,7 +225,7 @@ The following properties can be configured (all are optional).
 * `cluster`: ECS cluster short name or ARN; default is the current cluster
 * `family`: filter to look only for ECS tasks with the given family name; mutually exclusive with `service-name`
 * `service-name`: filter to look only for ECS tasks from the given service; mutually exclusive with `family`
-* `host-header`: `ec2`, `ecs`, or the URL of a EC2/ECS API endpoint; automatically detected by default
+* `host-header`: `ecs` or the URL of a ECS API endpoint; automatically detected by default
 * `connection-timeout-seconds`, `read-timeout-seconds`: connection and read timeouts when making a call to AWS API; default to `10`
 * `connection-retries`: number of retries while connecting to AWS API; default to `3`
 * `hz-port`: a range of ports where the plugin looks for Hazelcast members; default is `5701-5708`
@@ -243,7 +242,7 @@ If Hazelcast Client is run **outside ECS cluster**, then you need to always spec
 - `cluster` - it cannot be detected automatically
 - `use-public-ip` - must be set to `true`
 
-Note also that your ECS Tasks must have public IP assigned and your IAM Task Role must have `ec2:DescribeNetworkInterfaces` permission.
+Note also that your ECS Tasks must have public IPs assigned and your IAM Task Role must have `ec2:DescribeNetworkInterfaces` permission.
 
 Following are example declarative and programmatic configuration snippets.
 
@@ -342,7 +341,7 @@ config.getPartitionGroupConfig()
 
 ## Autoscaling
 
-Hazelcast is prepared to work correctly with in the autoscaling environments. Note that there are two specific requirements to prevent data data loss in the Hazelcast cluster:
+Hazelcast is prepared to work correctly within the autoscaling environments. Note that there are two specific requirements to prevent Hazelcast data:
 * the number of members must change by 1 at the time
 * when a member is launched or terminated, the cluster must be in the safe state
 
