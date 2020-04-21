@@ -38,15 +38,13 @@ Hazelcast member starts by fetching a list of all running instances filtered by 
 
 Note that this plugin supports [Hazelcast Zone Aware](https://docs.hazelcast.org/docs/latest/manual/html-single/#zone_aware) feature.
 
-## Configuration
-
 The plugin is prepared to work for both **AWS EC2** and **AWS ECS/Fargate** environments. However, note that requirements and plugin properties vary depending on the environment you use.
 
-### EC2 environment
+## EC2 Configuration
 
 The plugin works both for **Hazelcast Member Discovery** and **Hazelcast Client Discovery**.
 
-#### Hazelcast Member Discovery
+### EC2 Hazelcast Member Discovery
 
 Make sure that:
 
@@ -55,7 +53,7 @@ Make sure that:
 
 Then, you can configure Hazelcast in one of the following manners.
 
-##### XML Configuration
+#### XML Configuration
 
 ```xml
 <hazelcast>
@@ -71,7 +69,7 @@ Then, you can configure Hazelcast in one of the following manners.
 </hazelcast>
 ```
 
-##### YAML Configuration
+#### YAML Configuration
 
 ```yaml
 hazelcast:
@@ -85,7 +83,7 @@ hazelcast:
         tag-value: my-ec2-instance-tag-value
 ```
 
-##### Java-based Configuration
+#### Java-based Configuration
 
 ```java
 config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
@@ -109,7 +107,7 @@ The following properties can be configured (all are optional).
 
 Note that if you don't specify any of the properties, then the plugin uses the IAM Role assigned to EC2 Instance and forms a cluster from all Hazelcast members running in same region.
 
-#### Hazelcast Client Configuration
+### EC2 Hazelcast Client Configuration
 
 Hazelcast Client discovery parameters are the same as mentioned above.
 
@@ -122,7 +120,7 @@ Note also that your EC2 instances must have public IP assigned.
 
 Following are example declarative and programmatic configuration snippets.
 
-##### XML Configuration
+#### XML Configuration
 
 ```xml
 <hazelcast-client>
@@ -139,7 +137,7 @@ Following are example declarative and programmatic configuration snippets.
 </hazelcast-client>
 ```
 
-##### YAML Configuration
+#### YAML Configuration
 
 ```yaml
 hazelcast-client:
@@ -154,7 +152,7 @@ hazelcast-client:
       use-public-ip: true
 ```
 
-##### Java-based Configuration
+#### Java-based Configuration
 
 ```java
 clientConfig.getNetworkConfig().getAwsConfig()
@@ -167,11 +165,11 @@ clientConfig.getNetworkConfig().getAwsConfig()
       .setProperty("use-public-ip", "true");
 ```
 
-### ECS/Fargate environment
+## ECS/Fargate Configuration
 
 The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast cluster) and **Hazelcast Client Discovery**.
 
-#### Hazelcast Member Discovery
+### ECS Hazelcast Member Discovery
 
 Make sure that IAM Task Role has the following permissions:
 * `ecs:ListTasks`
@@ -180,7 +178,7 @@ Make sure that IAM Task Role has the following permissions:
 
 Then, you can configure Hazelcast in one of the following manners. Please note that `10.0.*.*` value depends on your VPC CIDR block definition.
 
-##### XML Configuration
+#### XML Configuration
 
 ```xml
 <hazelcast>
@@ -197,7 +195,7 @@ Then, you can configure Hazelcast in one of the following manners. Please note t
 </hazelcast>
 ```
 
-##### YAML Configuration
+#### YAML Configuration
 
 ```yaml
 hazelcast:
@@ -213,7 +211,7 @@ hazelcast:
         - 10.0.*.*
 ```
 
-##### Java-based Configuration
+#### Java-based Configuration
 
 ```java
 config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
@@ -235,7 +233,7 @@ The following properties can be configured (all are optional).
 
 Note that if you don't specify any of the properties, then the plugin discovers all Hazelcast members running in the current ECS cluster.
 
-#### Hazelcast Client Configuration
+### ECS Hazelcast Client Configuration
 
 Hazelcast Client discovery parameters are the same as mentioned above.
 
@@ -249,7 +247,7 @@ Note also that your ECS Tasks must have public IP assigned and your IAM Task Rol
 
 Following are example declarative and programmatic configuration snippets.
 
-##### XML Configuration
+#### XML Configuration
 
 ```xml
 <hazelcast-client>
@@ -265,7 +263,7 @@ Following are example declarative and programmatic configuration snippets.
 </hazelcast-client>
 ```
 
-##### YAML Configuration
+#### YAML Configuration
 
 ```yaml
 hazelcast-client:
@@ -279,7 +277,7 @@ hazelcast-client:
       use-public-ip: true
 ```
 
-##### Java-based Configuration
+#### Java-based Configuration
 
 ```java
 clientConfig.getNetworkConfig().getAwsConfig()
@@ -291,7 +289,7 @@ clientConfig.getNetworkConfig().getAwsConfig()
       .setProperty("use-public-ip", "true");
 ```
 
-### ECS environment with EC2 discovery
+## ECS Environment with EC2 Discovery
 
 If you use ECS on EC2 instances (not Fargate), you may also set up your ECS Tasks to use `host` network mode and then use EC2 discovery mode instead of ECS. In that case, your Hazelcast configuration would look as follows.
 
