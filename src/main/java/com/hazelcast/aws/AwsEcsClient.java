@@ -32,16 +32,16 @@ class AwsEcsClient implements AwsClient {
 
     private final AwsEcsApi awsEcsApi;
     private final AwsEc2Api awsEc2Api;
+    private final AwsMetadataApi awsMetadataApi;
     private final AwsCredentialsProvider awsCredentialsProvider;
-    private final String taskArn;
     private final String cluster;
 
-    AwsEcsClient(String taskArn, String cluster, AwsEcsApi awsEcsApi, AwsEc2Api awsEc2Api,
+    AwsEcsClient(String cluster, AwsEcsApi awsEcsApi, AwsEc2Api awsEc2Api, AwsMetadataApi awsMetadataApi,
                  AwsCredentialsProvider awsCredentialsProvider) {
-        this.taskArn = taskArn;
         this.cluster = cluster;
         this.awsEcsApi = awsEcsApi;
         this.awsEc2Api = awsEc2Api;
+        this.awsMetadataApi = awsMetadataApi;
         this.awsCredentialsProvider = awsCredentialsProvider;
     }
 
@@ -88,9 +88,10 @@ class AwsEcsClient implements AwsClient {
 
     @Override
     public String getAvailabilityZone() {
+        String taskArn = awsMetadataApi.metadataEcs().getTaskArn();
         AwsCredentials credentials = awsCredentialsProvider.credentials();
-        List<Task> taskDescriptions = awsEcsApi.describeTasks(cluster, singletonList(taskArn), credentials);
-        return taskDescriptions.stream()
+        List<Task> tasks = awsEcsApi.describeTasks(cluster, singletonList(taskArn), credentials);
+        return tasks.stream()
             .map(Task::getAvailabilityZone)
             .findFirst()
             .orElse("unknown");

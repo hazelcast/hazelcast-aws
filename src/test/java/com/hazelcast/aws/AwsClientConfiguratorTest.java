@@ -1,6 +1,7 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
+import com.hazelcast.config.InvalidConfigurationException;
 import org.junit.Test;
 
 import static com.hazelcast.aws.AwsClientConfigurator.resolveEc2Endpoint;
@@ -100,12 +101,47 @@ public class AwsClientConfiguratorTest {
     }
 
     @Test
-    public void resolveCluster() {
-        EcsMetadata metadata = new EcsMetadata(null, "service-name-metadata");
-        assertEquals("service-name-config",
-            AwsClientConfigurator.resolveCluster(AwsConfig.builder().setCluster("service-name-config").build(), metadata));
-        assertEquals("service-name-metadata",
-            AwsClientConfigurator.resolveCluster(AwsConfig.builder().build(), metadata));
+    public void resolveClusterAwsConfig() {
+        // given
+        String cluster = "service-name";
+        AwsConfig config = AwsConfig.builder().setCluster(cluster).build();
+
+        // when
+        String result = AwsClientConfigurator.resolveCluster(config, null, null);
+
+        // then
+        assertEquals(cluster, result);
+    }
+
+    @Test
+    public void resolveClusterAwsEcsMetadata() {
+        // given
+        String cluster = "service-name";
+        AwsConfig config = AwsConfig.builder().build();
+        AwsMetadataApi metadataApi = mock(AwsMetadataApi.class);
+        given(metadataApi.metadataEcs()).willReturn(new EcsMetadata(null, cluster));
+        Environment environment = mock(Environment.class);
+        given(environment.isRunningOnEcs()).willReturn(true);
+
+        // when
+        String result = AwsClientConfigurator.resolveCluster(config, metadataApi, environment);
+
+        // then
+        assertEquals(cluster, result);
+    }
+
+    @Test(expected = InvalidConfigurationException.class)
+    public void resolveClusterInvalidConfiguration() {
+        // given
+        AwsConfig config = AwsConfig.builder().build();
+        Environment environment = mock(Environment.class);
+        given(environment.isRunningOnEcs()).willReturn(false);
+
+        // when
+        AwsClientConfigurator.resolveCluster(config, null, environment);
+
+        // then
+        // throws exception
     }
 
 }

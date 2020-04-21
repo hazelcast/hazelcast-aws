@@ -15,7 +15,7 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.AwsMetadataApi.EcsMetadata;
+import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -62,12 +62,10 @@ final class AwsClientConfigurator {
         }
 
         // ECS Discovery
-        EcsMetadata metadata = tryToFetchEcsMetadata(metadataApi);
-        String taskArn = metadata.getTaskArn();
-        String cluster = resolveCluster(awsConfig, metadata);
+        String cluster = resolveCluster(awsConfig, metadataApi, environment);
         AwsEcsApi ecsApi = createEcsApi(awsConfig, region);
         logEcsEnvironment(awsConfig, region, cluster);
-        return new AwsEcsClient(taskArn, cluster, ecsApi, ec2Api, awsCredentialsProvider);
+        return new AwsEcsClient(cluster, ecsApi, ec2Api, metadataApi, awsCredentialsProvider);
     }
 
     static String resolveRegion(AwsConfig awsConfig, AwsMetadataApi metadataApi, Environment environment) {
@@ -134,22 +132,16 @@ final class AwsClientConfigurator {
         return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2");
     }
 
-    private static EcsMetadata tryToFetchEcsMetadata(AwsMetadataApi metadataApi) {
-        try {
-            return metadataApi.metadataEcs();
-        } catch (Exception e) {
-            LOGGER.fine(e);
-            // if no access to metadata, just return an empty EcsMetadata
-            return new EcsMetadata(null, null);
-        }
-    }
-
-    static String resolveCluster(AwsConfig awsConfig, EcsMetadata metadata) {
+    static String resolveCluster(AwsConfig awsConfig, AwsMetadataApi metadataApi, Environment environment) {
         if (isNotEmpty(awsConfig.getCluster())) {
             return awsConfig.getCluster();
         }
-        LOGGER.info("No ECS cluster defined, using current cluster: " + metadata.getClusterArn());
-        return metadata.getClusterArn();
+        if (environment.isRunningOnEcs()) {
+            String clusterArn = metadataApi.metadataEcs().getClusterArn();
+            LOGGER.info("No ECS cluster defined, using current cluster: " + clusterArn);
+            return clusterArn;
+        }
+        throw new InvalidConfigurationException("You must define 'cluster' property if not running inside ECS cluster");
     }
 
     private static void logEc2Environment(AwsConfig awsConfig, String region) {

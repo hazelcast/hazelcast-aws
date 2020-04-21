@@ -51,7 +51,7 @@ public class AwsEcsClientTest {
         given(awsMetadataApi.metadataEcs()).willReturn(ecsMetadata);
         given(awsCredentialsProvider.credentials()).willReturn(CREDENTIALS);
 
-        awsEcsClient = new AwsEcsClient(TASK_ARN, CLUSTER, awsEcsApi, awsEc2Api, awsCredentialsProvider);
+        awsEcsClient = new AwsEcsClient(CLUSTER, awsEcsApi, awsEc2Api, awsMetadataApi, awsCredentialsProvider);
     }
 
     @Test
