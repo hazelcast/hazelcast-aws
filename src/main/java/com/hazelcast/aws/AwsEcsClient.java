@@ -76,9 +76,8 @@ class AwsEcsClient implements AwsClient {
         try {
             return awsEc2Api.describeNetworkInterfaces(privateAddresses, credentials);
         } catch (Exception e) {
-            LOGGER.info("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
-                + " Hazelcast with public IP, please check if your Task has IAM role which allows querying EC2 API");
-            LOGGER.fine(e);
+            LOGGER.fine("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
+                + " Hazelcast with public IP, please check if your Task has IAM role which allows querying EC2 API", e);
 
             Map<String, String> map = new HashMap<>();
             privateAddresses.forEach(k -> map.put(k, null));
