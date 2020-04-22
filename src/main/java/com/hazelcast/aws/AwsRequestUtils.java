@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * Utility class to for AWS Requests.
+ * Utility class for AWS Requests.
  */
 final class AwsRequestUtils {
 

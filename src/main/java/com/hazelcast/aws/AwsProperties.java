@@ -53,7 +53,6 @@ enum AwsProperties {
 
     /**
      * The URL that is the entry point for a web service (the address where the EC2 API can be found).
-     * Default value is ec2.amazonaws.com.
      */
     HOST_HEADER("host-header", STRING, true),
 
@@ -76,7 +75,7 @@ enum AwsProperties {
     /**
      * Sets the connect timeout in seconds.
      * <p>
-     * Its default value is 5.
+     * Its default value is 10.
      */
     CONNECTION_TIMEOUT_SECONDS("connection-timeout-seconds", INTEGER, true),
 

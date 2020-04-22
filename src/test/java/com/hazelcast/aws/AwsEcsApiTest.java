@@ -44,9 +44,9 @@ public class AwsEcsApiTest {
     @Mock
     private AwsRequestSigner requestSigner;
 
-    private AwsEcsApi awsEcsApi;
-
     private String endpoint;
+
+    private AwsEcsApi awsEcsApi;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());

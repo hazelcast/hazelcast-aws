@@ -96,8 +96,8 @@ class AwsMetadataApi {
     private EcsMetadata parseEcsMetadata(String response) {
         JsonObject metadata = Json.parse(response).asObject();
         JsonObject labels = metadata.get("Labels").asObject();
-        String taskArn = labels.getString("com.amazonaws.ecs.task-arn", null);
-        String clusterArn = labels.getString("com.amazonaws.ecs.cluster", null);
+        String taskArn = labels.get("com.amazonaws.ecs.task-arn").asString();
+        String clusterArn = labels.get("com.amazonaws.ecs.cluster").asString();
         return new EcsMetadata(taskArn, clusterArn);
     }
 

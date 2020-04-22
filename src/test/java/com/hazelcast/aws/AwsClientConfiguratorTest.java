@@ -23,7 +23,6 @@ public class AwsClientConfiguratorTest {
         AwsMetadataApi awsMetadataApi = mock(AwsMetadataApi.class);
         Environment environment = mock(Environment.class);
 
-
         // when
         String result = resolveRegion(awsConfig, awsMetadataApi, environment);
 

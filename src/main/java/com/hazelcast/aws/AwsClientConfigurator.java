@@ -52,20 +52,20 @@ final class AwsClientConfigurator {
         String region = resolveRegion(awsConfig, metadataApi, environment);
         validateRegion(region);
 
-        AwsCredentialsProvider awsCredentialsProvider = new AwsCredentialsProvider(awsConfig, metadataApi, environment);
+        AwsCredentialsProvider credentialsProvider = new AwsCredentialsProvider(awsConfig, metadataApi, environment);
         AwsEc2Api ec2Api = createEc2Api(awsConfig, region);
 
         // EC2 Discovery
-        if ((!environment.isRunningOnEcs() && !explicitlyEcsConfigured(awsConfig)) || explicitlyEc2Configured(awsConfig)) {
+        if (explicitlyEc2Configured(awsConfig) || (!explicitlyEcsConfigured(awsConfig) && !environment.isRunningOnEcs())) {
             logEc2Environment(awsConfig, region);
-            return new AwsEc2Client(ec2Api, metadataApi, awsCredentialsProvider);
+            return new AwsEc2Client(ec2Api, metadataApi, credentialsProvider);
         }
 
         // ECS Discovery
         String cluster = resolveCluster(awsConfig, metadataApi, environment);
         AwsEcsApi ecsApi = createEcsApi(awsConfig, region);
         logEcsEnvironment(awsConfig, region, cluster);
-        return new AwsEcsClient(cluster, ecsApi, ec2Api, metadataApi, awsCredentialsProvider);
+        return new AwsEcsClient(cluster, ecsApi, ec2Api, metadataApi, credentialsProvider);
     }
 
     static String resolveRegion(AwsConfig awsConfig, AwsMetadataApi metadataApi, Environment environment) {
@@ -114,11 +114,6 @@ final class AwsClientConfigurator {
         return ecsHostHeader.replace("ecs.", "ecs." + region + ".");
     }
 
-    static boolean explicitlyEcsConfigured(AwsConfig awsConfig) {
-        return isNotEmpty(awsConfig.getCluster())
-            || (isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ecs"));
-    }
-
     /**
      * Checks if EC2 environment was explicitly configured in the Hazelcast configuration.
      * <p>
@@ -130,6 +125,11 @@ final class AwsClientConfigurator {
      */
     static boolean explicitlyEc2Configured(AwsConfig awsConfig) {
         return isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ec2");
+    }
+
+    static boolean explicitlyEcsConfigured(AwsConfig awsConfig) {
+        return isNotEmpty(awsConfig.getCluster())
+            || (isNotEmpty(awsConfig.getHostHeader()) && awsConfig.getHostHeader().startsWith("ecs"));
     }
 
     static String resolveCluster(AwsConfig awsConfig, AwsMetadataApi metadataApi, Environment environment) {
@@ -159,6 +159,8 @@ final class AwsClientConfigurator {
 
     private static void logEcsEnvironment(AwsConfig awsConfig, String region, String cluster) {
         Map<String, String> filters = new HashMap<>();
+        filters.put("family", awsConfig.getFamily());
+        filters.put("service-name", awsConfig.getServiceName());
         filters.put("hz-port", awsConfig.getHzPort().toString());
 
         LOGGER.info(String.format(

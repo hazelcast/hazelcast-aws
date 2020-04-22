@@ -117,8 +117,7 @@ class AwsEcsApi {
             .findFirst();
     }
 
-    private Map<String, String> createHeaders(String body, AwsCredentials credentials,
-                                              String awsTargetAction) {
+    private Map<String, String> createHeaders(String body, AwsCredentials credentials, String awsTargetAction) {
         Map<String, String> headers = new HashMap<>();
 
         if (isNotEmpty(credentials.getToken())) {

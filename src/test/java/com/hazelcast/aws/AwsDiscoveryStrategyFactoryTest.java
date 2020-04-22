@@ -58,7 +58,7 @@ public class AwsDiscoveryStrategyFactoryTest {
     }
 
     @Test
-    public void testEcc() {
+    public void testEcs() {
         final Map<String, Comparable> props = new HashMap<>();
         props.put("access-key", "test-value");
         props.put("secret-key", "test-value");

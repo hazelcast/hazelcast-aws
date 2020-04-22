@@ -66,7 +66,7 @@ class AwsEcsClient implements AwsClient {
     /**
      * Fetches private addresses for the tasks.
      * <p>
-     * Note that this is done as best-effort and does not fail if no public describeInstances are not found, because:
+     * Note that this is done as best-effort and does not fail if no public addresses are found, because:
      * <ul>
      * <li>Task may not have public IP addresses</li>
      * <li>Task may not have access rights to query for public addresses</li>
