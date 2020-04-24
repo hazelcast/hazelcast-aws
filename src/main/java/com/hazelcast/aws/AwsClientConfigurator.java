@@ -77,7 +77,10 @@ final class AwsClientConfigurator {
             return environment.getAwsRegionOnEcs();
         }
 
-        String availabilityZone = metadataApi.availabilityZoneEc2();
+        return regionFrom(metadataApi.availabilityZoneEc2());
+    }
+
+    private static String regionFrom(String availabilityZone) {
         return availabilityZone.substring(0, availabilityZone.length() - 1);
     }
 
