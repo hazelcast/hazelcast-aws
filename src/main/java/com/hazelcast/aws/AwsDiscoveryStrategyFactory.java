@@ -16,11 +16,17 @@
 package com.hazelcast.aws;
 
 import com.hazelcast.config.properties.PropertyDefinition;
+import com.hazelcast.internal.nio.IOUtil;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.DiscoveryStrategyFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -49,5 +55,64 @@ public class AwsDiscoveryStrategyFactory
             definitions.add(prop.getDefinition());
         }
         return definitions;
+    }
+
+    /**
+     * To check if Hazelcast is running on AWS, we first check machine uuid which should start with "ec2" or "EC2". There is
+     * a small chance that a non-AWS machine has uuid starting from the mentioned prefix. That is why, to be sure, we make
+     * an API call to a local, non-routable address http://169.254.169.254/latest/dynamic/instance-identity/.
+     *
+     * @return true if running in the AWS (EC2, ECS/EC2, ECS/Fargate) environment
+     * @see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+     */
+    @Override
+    public boolean isAutoDetectionApplicable() {
+        return uuidContainsEc2() && instanceIdentityExists();
+
+    }
+
+    private boolean uuidContainsEc2() {
+        String uuidPath = "/sys/hypervisor/uuid";
+        if (new File(uuidPath).exists()) {
+            String uuid = readFileContents(uuidPath);
+            return uuid.startsWith("ec2") || uuid.startsWith("EC2");
+        }
+        return false;
+    }
+
+    private boolean instanceIdentityExists() {
+        String metadataUrl = "http://169.254.169.254/latest/dynamic/instance-identity/";
+        int timeoutInSeconds = 1;
+        try {
+            return !RestClient.create(metadataUrl)
+                    .withConnectTimeoutSeconds(timeoutInSeconds)
+                    .withReadTimeoutSeconds(timeoutInSeconds)
+                    .withRetries(0)
+                    .get()
+                    .isEmpty();
+        } catch (Exception e) {
+            // any exception means that we're not running on AWS
+            return false;
+        }
+    }
+
+    @Override
+    public DiscoveryStrategyLevel discoveryStrategyLevel() {
+        return DiscoveryStrategyLevel.CLOUD_VM;
+    }
+
+    static String readFileContents(String fileName) {
+        InputStream is = null;
+        try {
+            File file = new File(fileName);
+            byte[] data = new byte[(int) file.length()];
+            is = new FileInputStream(file);
+            is.read(data);
+            return new String(data, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not get " + fileName, e);
+        } finally {
+            IOUtil.closeResource(is);
+        }
     }
 }
