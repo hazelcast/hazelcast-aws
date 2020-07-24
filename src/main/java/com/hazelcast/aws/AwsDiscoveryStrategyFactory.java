@@ -18,6 +18,7 @@ package com.hazelcast.aws;
 import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.internal.nio.IOUtil;
 import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.DiscoveryStrategyFactory;
@@ -36,6 +37,8 @@ import java.util.Map;
  */
 public class AwsDiscoveryStrategyFactory
         implements DiscoveryStrategyFactory {
+    private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategyFactory.class);
+
     @Override
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
         return AwsDiscoveryStrategy.class;
@@ -58,20 +61,23 @@ public class AwsDiscoveryStrategyFactory
     }
 
     /**
-     * To check if Hazelcast is running on AWS, we first check machine uuid which should start with "ec2" or "EC2". There is
+     * To check if Hazelcast is running on AWS, we first check that the machine uuid starts with "ec2" or "EC2". There is
      * a small chance that a non-AWS machine has uuid starting from the mentioned prefix. That is why, to be sure, we make
      * an API call to a local, non-routable address http://169.254.169.254/latest/dynamic/instance-identity/.
+     * <p>
+     * We also check if the IAM Role is attached to the EC2 instance, because without any IAM Role the Hazelcast AWS discovery
+     * won't work.
      *
      * @return true if running in the AWS (EC2, ECS/EC2, ECS/Fargate) environment
      * @see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
      */
     @Override
     public boolean isAutoDetectionApplicable() {
-        return uuidContainsEc2() && instanceIdentityExists();
+        return uuidWithEc2Prefix() && instanceIdentityExists() && iamRoleAttached();
 
     }
 
-    private boolean uuidContainsEc2() {
+    private boolean uuidWithEc2Prefix() {
         String uuidPath = "/sys/hypervisor/uuid";
         if (new File(uuidPath).exists()) {
             String uuid = readFileContents(uuidPath);
@@ -81,19 +87,33 @@ public class AwsDiscoveryStrategyFactory
     }
 
     private boolean instanceIdentityExists() {
-        String metadataUrl = "http://169.254.169.254/latest/dynamic/instance-identity/";
-        int timeoutInSeconds = 1;
+        String url = "http://169.254.169.254/latest/dynamic/instance-identity/";
         try {
-            return !RestClient.create(metadataUrl)
-                    .withConnectTimeoutSeconds(timeoutInSeconds)
-                    .withReadTimeoutSeconds(timeoutInSeconds)
-                    .withRetries(0)
-                    .get()
-                    .isEmpty();
+            return isEndpointAvailable(url);
         } catch (Exception e) {
             // any exception means that we're not running on AWS
             return false;
         }
+    }
+
+    private boolean iamRoleAttached() {
+        String url = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
+        try {
+            return isEndpointAvailable(url);
+        } catch (Exception e) {
+            LOGGER.warning("Hazelcast running on EC2 instance, but no IAM Role attached. Cannot use Hazelcast AWS discovery.");
+            return false;
+        }
+    }
+
+    private boolean isEndpointAvailable(String url) throws Exception {
+        int timeoutInSeconds = 1;
+        return !RestClient.create(url)
+                .withConnectTimeoutSeconds(timeoutInSeconds)
+                .withReadTimeoutSeconds(timeoutInSeconds)
+                .withRetries(0)
+                .get()
+                .isEmpty();
     }
 
     @Override
