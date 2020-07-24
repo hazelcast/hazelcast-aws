@@ -52,7 +52,7 @@ final class RetryUtils {
             } catch (Exception e) {
                 retryCount++;
                 if (retryCount > retries) {
-                    throw ExceptionUtil.rethrow(e);
+                    throw rethrowUnchecked(e);
                 }
                 long waitIntervalMs = backoffIntervalForRetry(retryCount);
                 LOGGER.fine(String.format("Couldn't connect to the AWS service, [%s] retrying in %s seconds...",
@@ -60,6 +60,13 @@ final class RetryUtils {
                 sleep(waitIntervalMs);
             }
         }
+    }
+
+    private static RuntimeException rethrowUnchecked(Exception e) {
+        if (e instanceof RuntimeException) {
+            return (RuntimeException) e;
+        }
+        return new HazelcastException(e);
     }
 
     private static long backoffIntervalForRetry(int retryCount) {
