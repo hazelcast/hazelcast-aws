@@ -18,7 +18,6 @@ package com.hazelcast.aws;
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import com.hazelcast.internal.util.ExceptionUtil;
 
 import java.util.concurrent.Callable;
 
@@ -52,7 +51,7 @@ final class RetryUtils {
             } catch (Exception e) {
                 retryCount++;
                 if (retryCount > retries) {
-                    throw rethrowUnchecked(e);
+                    throw unchecked(e);
                 }
                 long waitIntervalMs = backoffIntervalForRetry(retryCount);
                 LOGGER.fine(String.format("Couldn't connect to the AWS service, [%s] retrying in %s seconds...",
@@ -62,7 +61,7 @@ final class RetryUtils {
         }
     }
 
-    private static RuntimeException rethrowUnchecked(Exception e) {
+    private static RuntimeException unchecked(Exception e) {
         if (e instanceof RuntimeException) {
             return (RuntimeException) e;
         }
