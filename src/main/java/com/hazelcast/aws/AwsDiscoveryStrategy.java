@@ -66,7 +66,7 @@ public class AwsDiscoveryStrategy
 
     private final Map<String, String> memberMetadata = new HashMap<>();
 
-    private boolean isNoCredentialsExceptionAlreadyLogged;
+    private boolean isKnownExceptionAlreadyLogged;
 
     AwsDiscoveryStrategy(Map<String, Comparable> properties) {
         super(LOGGER, properties);
@@ -150,10 +150,21 @@ public class AwsDiscoveryStrategy
             }
             return result;
         } catch (NoCredentialsException e) {
-            if (!isNoCredentialsExceptionAlreadyLogged) {
+            if (!isKnownExceptionAlreadyLogged) {
                 LOGGER.warning("No AWS credentials found! Starting standalone. To use Hazelcast AWS discovery, configure"
                         + " properties (access-key, secret-key) or assign the required IAM Role to your EC2 instance");
-                isNoCredentialsExceptionAlreadyLogged = true;
+                LOGGER.finest(e);
+                isKnownExceptionAlreadyLogged = true;
+            }
+        } catch (RestClientException e) {
+            if (e.getHttpErrorCode() == 403) {
+                if (!isKnownExceptionAlreadyLogged) {
+                    LOGGER.warning("AWS IAM Role Policy is missing 'ec2:DescribeInstances' Action! Starting standalone.");
+                    isKnownExceptionAlreadyLogged = true;
+                }
+                LOGGER.finest(e);
+            } else {
+                LOGGER.warning("Cannot discover nodes. Starting standalone.", e);
             }
         } catch (Exception e) {
             LOGGER.warning("Cannot discover nodes. Starting standalone.", e);
