@@ -159,7 +159,7 @@ public class AwsDiscoveryStrategy
         } catch (RestClientException e) {
             if (e.getHttpErrorCode() == 403) {
                 if (!isKnownExceptionAlreadyLogged) {
-                    LOGGER.warning("AWS IAM Role Policy is missing 'ec2:DescribeInstances' Action! Starting standalone.");
+                    LOGGER.warning("AWS IAM Role Policy missing 'ec2:DescribeInstances' Action! Starting standalone.");
                     isKnownExceptionAlreadyLogged = true;
                 }
                 LOGGER.finest(e);
