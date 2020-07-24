@@ -152,7 +152,7 @@ public class AwsDiscoveryStrategy
         } catch (NoCredentialsException e) {
             if (!isNoCredentialsExceptionAlreadyLogged) {
                 LOGGER.warning("No AWS credentials found! Starting standalone. To use Hazelcast AWS discovery, configure"
-                        + "(access-key, secret-key) properties or assign the needed IAM Role to your EC2 instance");
+                        + " properties (access-key, secret-key) or assign the required IAM Role to your EC2 instance");
                 isNoCredentialsExceptionAlreadyLogged = true;
             }
         } catch (Exception e) {
