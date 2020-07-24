@@ -53,7 +53,7 @@ import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
  * @see AwsClient
  */
 public class AwsDiscoveryStrategy
-    extends AbstractDiscoveryStrategy {
+        extends AbstractDiscoveryStrategy {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategy.class);
 
     private static final String DEFAULT_PORT_RANGE = "5701-5708";
@@ -147,15 +147,20 @@ public class AwsDiscoveryStrategy
                 }
             }
             return result;
+        } catch (NoCredentialsException e) {
+            LOGGER.warning("No AWS credentials found! Starting standalone. To use Hazelcast AWS discovery, configure"
+                    + "(access-key, secret-key) properties or assign the needed IAM Role to your EC2 instance"
+            );
+
         } catch (Exception e) {
-            LOGGER.warning("Cannot discover nodes, returning empty list", e);
-            return Collections.emptyList();
+            LOGGER.warning("Cannot discover nodes. Starting standalone.", e);
         }
+        return Collections.emptyList();
     }
 
     private static void logResult(Map<String, String> addresses) {
         if (addresses.isEmpty()) {
-            LOGGER.warning("No IP addresses found!");
+            LOGGER.warning("No IP addresses found! Starting standalone.");
         }
 
         LOGGER.fine(String.format("Found the following (private => public) addresses: %s", addresses));

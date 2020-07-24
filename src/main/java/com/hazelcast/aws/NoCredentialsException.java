@@ -15,23 +15,5 @@
 
 package com.hazelcast.aws;
 
-/**
- * Exception to indicate any issues while executing a REST call.
- */
-class RestClientException
-        extends RuntimeException {
-    private int httpErrorCode;
-
-    RestClientException(String message, int httpErrorCode) {
-        super(String.format("%s. HTTP Error Code: %s", message, httpErrorCode));
-        this.httpErrorCode = httpErrorCode;
-    }
-
-    RestClientException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    int getHttpErrorCode() {
-        return httpErrorCode;
-    }
+public class NoCredentialsException extends RuntimeException {
 }
