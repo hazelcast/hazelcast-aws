@@ -76,7 +76,12 @@ public class AwsDiscoveryStrategyFactory
      */
     @Override
     public boolean isAutoDetectionApplicable() {
-        return isRunningOnEc2() && !isRunningOnEcs();
+        try {
+            return isRunningOnEc2() && !isRunningOnEcs();
+        } catch (Exception e) {
+            LOGGER.finest(e);
+            return false;
+        }
     }
 
     private static boolean isRunningOnEc2() {
@@ -85,25 +90,30 @@ public class AwsDiscoveryStrategyFactory
 
     private static boolean uuidWithEc2Prefix() {
         String uuidPath = "/sys/hypervisor/uuid";
-        try {
-            if (new File(uuidPath).exists()) {
-                String uuid = readFileContents(uuidPath);
-                return uuid.startsWith("ec2") || uuid.startsWith("EC2");
-            }
-        } catch (Exception e) {
-            LOGGER.finest(e);
+        if (new File(uuidPath).exists()) {
+            String uuid = readFileContents(uuidPath);
+            return uuid.startsWith("ec2") || uuid.startsWith("EC2");
         }
         return false;
     }
 
-    private static boolean instanceIdentityExists() {
+    static String readFileContents(String fileName) {
+        InputStream is = null;
         try {
-            return isEndpointAvailable("http://169.254.169.254/latest/dynamic/instance-identity/");
-        } catch (Exception e) {
-            // any exception means that we're not running on AWS
-            LOGGER.finest(e);
-            return false;
+            File file = new File(fileName);
+            byte[] data = new byte[(int) file.length()];
+            is = new FileInputStream(file);
+            is.read(data);
+            return new String(data, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not get " + fileName, e);
+        } finally {
+            IOUtil.closeResource(is);
         }
+    }
+
+    private static boolean instanceIdentityExists() {
+        return isEndpointAvailable("http://169.254.169.254/latest/dynamic/instance-identity/");
     }
 
     private static boolean iamRoleAttached() {
@@ -134,20 +144,5 @@ public class AwsDiscoveryStrategyFactory
     @Override
     public DiscoveryStrategyLevel discoveryStrategyLevel() {
         return DiscoveryStrategyLevel.CLOUD_VM;
-    }
-
-    static String readFileContents(String fileName) {
-        InputStream is = null;
-        try {
-            File file = new File(fileName);
-            byte[] data = new byte[(int) file.length()];
-            is = new FileInputStream(file);
-            is.read(data);
-            return new String(data, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not get " + fileName, e);
-        } finally {
-            IOUtil.closeResource(is);
-        }
     }
 }
