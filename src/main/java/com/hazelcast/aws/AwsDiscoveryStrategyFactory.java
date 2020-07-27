@@ -61,23 +61,29 @@ public class AwsDiscoveryStrategyFactory
     }
 
     /**
-     * To check if Hazelcast is running on AWS, we first check that the machine uuid starts with "ec2" or "EC2". There is
-     * a small chance that a non-AWS machine has uuid starting from the mentioned prefix. That is why, to be sure, we make
-     * an API call to a local, non-routable address http://169.254.169.254/latest/dynamic/instance-identity/.
+     * Checks if Hazelcast is running on an AWS EC2 instance.
      * <p>
-     * We also check if the IAM Role is attached to the EC2 instance, because without any IAM Role the Hazelcast AWS discovery
-     * won't work.
+     * Note that this method returns {@code false} for any ECS environment, since currently there is no way to auto-configure
+     * Hazelcast network interfaces (required for ECS).
+     * <p>
+     * To check if Hazelcast is running on EC2, we first check that the machine uuid starts with "ec2" or "EC2". There is
+     * a small chance that a non-AWS machine has uuid starting from the mentioned prefix. That is why, to be sure, we slo make
+     * an API call to a local, non-routable address http://169.254.169.254/latest/dynamic/instance-identity/. Finally, we also
+     * check if the IAM Role is attached to the EC2 instance, because without any IAM Role the Hazelcast AWS discovery won't work.
      *
-     * @return true if running in the AWS (EC2, ECS/EC2, ECS/Fargate) environment
+     * @return true if running in the AWS EC2 environment
      * @see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
      */
     @Override
     public boolean isAutoDetectionApplicable() {
-        return uuidWithEc2Prefix() && instanceIdentityExists() && iamRoleAttached();
-
+        return isRunningOnEc2() && !isRunningOnEcs();
     }
 
-    private boolean uuidWithEc2Prefix() {
+    private static boolean isRunningOnEc2() {
+        return uuidWithEc2Prefix() && instanceIdentityExists() && iamRoleAttached();
+    }
+
+    private static boolean uuidWithEc2Prefix() {
         String uuidPath = "/sys/hypervisor/uuid";
         if (new File(uuidPath).exists()) {
             String uuid = readFileContents(uuidPath);
@@ -86,7 +92,7 @@ public class AwsDiscoveryStrategyFactory
         return false;
     }
 
-    private boolean instanceIdentityExists() {
+    private static boolean instanceIdentityExists() {
         String url = "http://169.254.169.254/latest/dynamic/instance-identity/";
         try {
             return isEndpointAvailable(url);
@@ -96,7 +102,7 @@ public class AwsDiscoveryStrategyFactory
         }
     }
 
-    private boolean iamRoleAttached() {
+    private static boolean iamRoleAttached() {
         String url = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         try {
             return isEndpointAvailable(url);
@@ -106,7 +112,7 @@ public class AwsDiscoveryStrategyFactory
         }
     }
 
-    private boolean isEndpointAvailable(String url) throws Exception {
+    private static boolean isEndpointAvailable(String url) throws Exception {
         int timeoutInSeconds = 1;
         return !RestClient.create(url)
                 .withConnectTimeoutSeconds(timeoutInSeconds)
@@ -114,6 +120,10 @@ public class AwsDiscoveryStrategyFactory
                 .withRetries(0)
                 .get()
                 .isEmpty();
+    }
+
+    private static boolean isRunningOnEcs() {
+        return new Environment().isRunningOnEcs();
     }
 
     @Override
