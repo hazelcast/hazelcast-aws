@@ -85,9 +85,13 @@ public class AwsDiscoveryStrategyFactory
 
     private static boolean uuidWithEc2Prefix() {
         String uuidPath = "/sys/hypervisor/uuid";
-        if (new File(uuidPath).exists()) {
-            String uuid = readFileContents(uuidPath);
-            return uuid.startsWith("ec2") || uuid.startsWith("EC2");
+        try {
+            if (new File(uuidPath).exists()) {
+                String uuid = readFileContents(uuidPath);
+                return uuid.startsWith("ec2") || uuid.startsWith("EC2");
+            }
+        } catch (Exception e) {
+            LOGGER.finest(e);
         }
         return false;
     }
@@ -97,6 +101,7 @@ public class AwsDiscoveryStrategyFactory
             return isEndpointAvailable("http://169.254.169.254/latest/dynamic/instance-identity/");
         } catch (Exception e) {
             // any exception means that we're not running on AWS
+            LOGGER.finest(e);
             return false;
         }
     }
@@ -106,6 +111,7 @@ public class AwsDiscoveryStrategyFactory
             return isEndpointAvailable("http://169.254.169.254/latest/meta-data/iam/security-credentials/");
         } catch (Exception e) {
             LOGGER.warning("Hazelcast running on EC2 instance, but no IAM Role attached. Cannot use Hazelcast AWS discovery.");
+            LOGGER.finest(e);
             return false;
         }
     }
