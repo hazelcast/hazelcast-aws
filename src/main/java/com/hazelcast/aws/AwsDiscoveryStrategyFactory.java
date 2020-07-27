@@ -93,21 +93,11 @@ public class AwsDiscoveryStrategyFactory
     }
 
     private static boolean instanceIdentityExists() {
-        try {
-            return isEndpointAvailable("http://169.254.169.254/latest/dynamic/instance-identity/");
-        } catch (Exception e) {
-            // any exception means that we're not running on AWS
-            return false;
-        }
+        return isEndpointAvailable("http://169.254.169.254/latest/dynamic/instance-identity/");
     }
 
     private static boolean iamRoleAttached() {
-        try {
-            return isEndpointAvailable("http://169.254.169.254/latest/meta-data/iam/security-credentials/");
-        } catch (Exception e) {
-            LOGGER.warning("Hazelcast running on EC2 instance, but no IAM Role attached. Cannot use Hazelcast AWS discovery.");
-            return false;
-        }
+        return isEndpointAvailable("http://169.254.169.254/latest/meta-data/iam/security-credentials/");
     }
 
     static boolean isEndpointAvailable(String url) {
@@ -120,7 +110,7 @@ public class AwsDiscoveryStrategyFactory
                     .get()
                     .isEmpty();
         } catch (Exception e) {
-            // any exception means that connecting to the endpoint does not work
+            // any exception means that endpoint is not available
             return false;
         }
     }
