@@ -43,7 +43,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AwsDiscoveryStrategyFactoryTest {
@@ -118,20 +117,6 @@ public class AwsDiscoveryStrategyFactoryTest {
 
         // then
         assertTrue(isAvailable);
-    }
-
-    @Test
-    public void isEndpointAvailableNotAvailable() {
-        // given
-        String endpoint = "/some-endpoint";
-        String url = String.format("http://localhost:%d%s", wireMockRule.port(), endpoint);
-        stubFor(get(urlEqualTo(endpoint)).willReturn(aResponse().withStatus(404).withBody("some-body")));
-
-        // when
-        boolean isAvailable = AwsDiscoveryStrategyFactory.isEndpointAvailable(url);
-
-        // then
-        assertFalse(isAvailable);
     }
 
     @Test
