@@ -76,12 +76,7 @@ public class AwsDiscoveryStrategyFactory
      */
     @Override
     public boolean isAutoDetectionApplicable() {
-        try {
-            return isRunningOnEc2() && !isRunningOnEcs();
-        } catch (Exception e) {
-            LOGGER.finest(e);
-            return false;
-        }
+        return isRunningOnEc2() && !isRunningOnEcs();
     }
 
     private static boolean isRunningOnEc2() {
