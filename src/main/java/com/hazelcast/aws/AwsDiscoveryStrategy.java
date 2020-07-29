@@ -56,6 +56,8 @@ public class AwsDiscoveryStrategy
         extends AbstractDiscoveryStrategy {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategy.class);
 
+    private static final int HTTP_FORBIDDEN = 403;
+
     private static final String DEFAULT_PORT_RANGE = "5701-5708";
     private static final Integer DEFAULT_CONNECTION_RETRIES = 3;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
@@ -157,7 +159,7 @@ public class AwsDiscoveryStrategy
                 isKnownExceptionAlreadyLogged = true;
             }
         } catch (RestClientException e) {
-            if (e.getHttpErrorCode() == 403) {
+            if (e.getHttpErrorCode() == HTTP_FORBIDDEN) {
                 if (!isKnownExceptionAlreadyLogged) {
                     LOGGER.warning("AWS IAM Role Policy missing 'ec2:DescribeInstances' Action! Starting standalone.");
                     isKnownExceptionAlreadyLogged = true;

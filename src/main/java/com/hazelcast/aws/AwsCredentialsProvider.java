@@ -22,6 +22,8 @@ import com.hazelcast.logging.Logger;
 class AwsCredentialsProvider {
     private static final ILogger LOGGER = Logger.getLogger(AwsCredentialsProvider.class);
 
+    private static final int HTTP_NOT_FOUND = 404;
+
     private final AwsConfig awsConfig;
     private final AwsMetadataApi awsMetadataApi;
     private final Environment environment;
@@ -55,7 +57,7 @@ class AwsCredentialsProvider {
             LOGGER.info(String.format("Using IAM Role attached to EC2 Instance: '%s'", ec2IamRole));
             return ec2IamRole;
         } catch (RestClientException e) {
-            if (e.getHttpErrorCode() == 404) {
+            if (e.getHttpErrorCode() == HTTP_NOT_FOUND) {
                 // no IAM Role attached to EC2 instance, no need to log any warning at this point
                 LOGGER.finest("IAM Role not found", e);
             } else {
