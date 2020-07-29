@@ -15,5 +15,8 @@
 
 package com.hazelcast.aws;
 
-public class NoCredentialsException extends RuntimeException {
+/**
+ * Exception to indicate that no credentials are possible to retrieve.
+ */
+class NoCredentialsException extends RuntimeException {
 }

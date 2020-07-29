@@ -56,6 +56,7 @@ class AwsCredentialsProvider {
             return ec2IamRole;
         } catch (RestClientException e) {
             if (e.getHttpErrorCode() == 404) {
+                // no IAM Role attached to EC2 instance, no need to log any warning at this point
                 LOGGER.finest("IAM Role not found", e);
             } else {
                 LOGGER.warning("Couldn't retrieve IAM Role from EC2 instance", e);

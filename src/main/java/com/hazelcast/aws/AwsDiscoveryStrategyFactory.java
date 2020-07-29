@@ -67,11 +67,11 @@ public class AwsDiscoveryStrategyFactory
      * Hazelcast network interfaces (required for ECS).
      * <p>
      * To check if Hazelcast is running on EC2, we first check that the machine uuid starts with "ec2" or "EC2". There is
-     * a small chance that a non-AWS machine has uuid starting from the mentioned prefix. That is why, to be sure, we slo make
+     * a small chance that a non-AWS machine has uuid starting with the mentioned prefix. That is why, to be sure, we make
      * an API call to a local, non-routable address http://169.254.169.254/latest/dynamic/instance-identity/. Finally, we also
-     * check if the IAM Role is attached to the EC2 instance, because without any IAM Role the Hazelcast AWS discovery won't work.
+     * check if an IAM Role is attached to the EC2 instance, because without any IAM Role the Hazelcast AWS discovery won't work.
      *
-     * @return true if running in the AWS EC2 environment
+     * @return true if running on EC2 Instance which has an IAM Role attached
      * @see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
      */
     @Override
@@ -129,7 +129,6 @@ public class AwsDiscoveryStrategyFactory
                 .withRetries(0)
                 .get()
                 .isEmpty();
-
     }
 
     private static boolean isRunningOnEcs() {
