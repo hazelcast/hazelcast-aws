@@ -125,7 +125,7 @@ public class AwsDiscoveryStrategyFactory
         return !RestClient.create(url)
                 .withConnectTimeoutSeconds(1)
                 .withReadTimeoutSeconds(1)
-                .withRetries(0)
+                .withRetries(1)
                 .get()
                 .isEmpty();
     }
