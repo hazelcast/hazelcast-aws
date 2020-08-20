@@ -1,0 +1,103 @@
+name: build
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash
+    env:
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+      SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8' ]
+        architecture: [ 'x64' ]
+    steps:
+      # SET UP JDK
+      - name: Setup JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+          architecture: ${{ matrix.architecture }}
+
+      - run: java -version
+
+      - run: mvn --version
+
+      - run : mkdir ~/lib
+
+      #BUILD HAZELCAST SNAPSHOT
+      - uses: actions/checkout@v2
+        with:
+          repository: hazelcast/hazelcast
+          ref: refs/heads/master
+          path: hazelcast
+
+      - name: Build hazelcast jar
+        run: |
+          cd hazelcast
+          mvn clean install -DskipTests
+          cp hazelcast/target/hazelcast*SNAPSHOT.jar ~/lib/hazelcast.jar
+
+      # BUILD HAZELCAST AWS SNAPSHOT
+      - uses: actions/checkout@v2
+        with:
+          path: hazelcast-aws
+
+      - name: Build hazelcast-aws jar
+        run: |
+          cd hazelcast-aws
+          mvn clean install -DskipTests
+          cp target/hazelcast-aws-*-SNAPSHOT.jar ~/lib/hazelcast-aws.jar
+
+      #BUILD TERRAFORM
+      - name : Set-up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: cd hazelcast-aws/.github/terraform && terraform init
+
+      - name: Terraform Format
+        run: cd hazelcast-aws/.github/terraform  && terraform fmt
+
+      - name: Install private key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          name: id_rsa # optional
+          known_hosts: " "
+
+      - name: Install public key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PUBLIC_KEY }}
+          name: id_rsa.pub # optional
+          known_hosts: " "
+
+      #   - id: plan
+      #     run: cd hazelcast-aws/terraform && terraform plan
+
+      - name: Terraform Apply
+        run: |
+          cd hazelcast-aws/.github/terraform  && terraform apply -auto-approve
+
+      - name: Terraform Show
+        if: ${{ always() }}
+        run: |
+          cd hazelcast-aws/.github/terraform  && terraform show
+
+      - name: Terraform Destroy
+        if: ${{ always() }}
+        run: |
+          cd hhazelcast-aws/.github/terraform  && terraform destroy -auto-approve
