@@ -65,6 +65,11 @@ jobs:
       - name : Set-up Terraform
         uses: hashicorp/setup-terraform@v1
 
+      - name: Create unique prefix for resources
+        run: |
+          sed -i -e "s/SET_PREFIX/${GITHUB_WORKFLOW}-${GITHUB_RUN_ID}/g" hazelcast-aws/.github/terraform/hazelcast.yaml
+          sed -i -e "s/SET_PREFIX/\"${GITHUB_WORKFLOW}-${GITHUB_RUN_ID}\"/g" hazelcast-aws/.github/terraform/terraform.tfvars
+
       - name: Terraform Init
         run: cd hazelcast-aws/.github/terraform && terraform init
 

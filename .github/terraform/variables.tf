@@ -10,7 +10,7 @@ variable "local_key_path" {
   default = "~/.ssh/"
 }
 
-variable "username"{
+variable "username" {
   default = "ubuntu"
 }
 
@@ -46,4 +46,8 @@ variable "aws_connection_retries" {
 variable "hazelcast_mancenter_version" {
   type    = string
   default = "4.2020.08"
+}
+
+variable "prefix" {
+  type = string
 }
