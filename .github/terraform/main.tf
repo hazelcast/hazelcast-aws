@@ -136,6 +136,15 @@ resource "aws_instance" "hazelcast_member" {
     private_key = file("${var.local_key_path}/${var.aws_key_name}")
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /home/${var.username}/jars",
+      "mkdir -p /home/${var.username}/logs",
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+      "sudo apt-get update",
+      "sudo apt-get -y install openjdk-8-jdk wget",
+    ]
+  }
 
   provisioner "file" {
     source      = "scripts/start_aws_hazelcast_member.sh"
@@ -162,16 +171,6 @@ resource "aws_instance" "hazelcast_member" {
     destination = "/home/${var.username}/hazelcast.yaml"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "mkdir -p /home/${var.username}/jars",
-      "mkdir -p /home/${var.username}/logs",
-      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
-      "sudo apt-get update",
-      "sudo apt-get -y install openjdk-8-jdk wget",
-      "sleep 10"
-    ]
-  }
   provisioner "remote-exec" {
     inline = [
       "cd /home/${var.username}",
