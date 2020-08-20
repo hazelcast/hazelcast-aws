@@ -100,4 +100,4 @@ jobs:
       - name: Terraform Destroy
         if: ${{ always() }}
         run: |
-          cd hhazelcast-aws/.github/terraform  && terraform destroy -auto-approve
+          cd hazelcast-aws/.github/terraform  && terraform destroy -auto-approve
