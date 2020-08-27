@@ -63,6 +63,8 @@ jobs:
       #BUILD TERRAFORM
       - name : Set-up Terraform
         uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.13.0
 
       - name: Create unique prefix for resources
         run: |
