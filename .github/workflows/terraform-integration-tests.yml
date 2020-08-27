@@ -80,27 +80,19 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          name: id_rsa # optional
+          name: id_rsa
           known_hosts: " "
 
       - name: Install public key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PUBLIC_KEY }}
-          name: id_rsa.pub # optional
+          name: id_rsa.pub
           known_hosts: " "
-
-      #   - id: plan
-      #     run: cd hazelcast-aws/terraform && terraform plan
 
       - name: Terraform Apply
         run: |
           cd hazelcast-aws/.github/terraform  && terraform apply -auto-approve
-
-      - name: Terraform Show
-        if: ${{ always() }}
-        run: |
-          cd hazelcast-aws/.github/terraform  && terraform show
 
       - name: Terraform Destroy
         if: ${{ always() }}
