@@ -2,11 +2,10 @@ name: Integration-tests
 on:
   workflow_dispatch:
   push:
-    paths-ignore:
-      - '**.md'
-  pull_request:
-    paths-ignore:
-      - '**.md'
+    branches:
+      - master
+    paths:
+      - '**.java'
 
 jobs:
   build:
