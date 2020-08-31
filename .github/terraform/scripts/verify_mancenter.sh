@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-# set -o pipefail
 
 EXPECTED_SIZE=$1
 

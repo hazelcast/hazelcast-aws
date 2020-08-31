@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -x
 
 REGION=$1
