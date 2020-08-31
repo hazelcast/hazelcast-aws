@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/**'
       - 'pom.xml'
+      - '.github/terraform/**'
 
 jobs:
   build:
