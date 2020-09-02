@@ -5,13 +5,11 @@ set -x
 REGION=$1
 TAG_KEY=$2
 TAG_VALUE=$3
-CONN_RETRIES=$4
 
 
 sed -i -e "s/REGION/${REGION}/g" ${HOME}/hazelcast.yaml
 sed -i -e "s/TAG_KEY/${TAG_KEY}/g" ${HOME}/hazelcast.yaml
 sed -i -e "s/TAG_VALUE/${TAG_VALUE}/g" ${HOME}/hazelcast.yaml
-sed -i -e "s/CONN_RETRIES/${CONN_RETRIES}/g" ${HOME}/hazelcast.yaml
 
 CLASSPATH="${HOME}/jars/hazelcast.jar:${HOME}/jars/hazelcast-aws.jar:${HOME}/hazelcast.yaml"
 

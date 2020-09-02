@@ -175,7 +175,7 @@ resource "aws_instance" "hazelcast_member" {
     inline = [
       "cd /home/${var.username}",
       "chmod 0755 start_aws_hazelcast_member.sh",
-      "./start_aws_hazelcast_member.sh  ${var.aws_region} ${var.aws_tag_key} ${var.aws_tag_value} ${var.aws_connection_retries}",
+      "./start_aws_hazelcast_member.sh  ${var.aws_region} ${var.aws_tag_key} ${var.aws_tag_value} ",
       "sleep 5",
     ]
   }

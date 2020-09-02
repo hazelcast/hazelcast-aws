@@ -6,9 +6,11 @@ MANCENTER_VERSION=$1
 REGION=$2
 TAG_KEY=$3
 TAG_VALUE=$4
+
 mkdir -p ${HOME}/lib
 mkdir -p ${HOME}/logs
 mkdir -p ${HOME}/man
+
 LOG_DIR=${HOME}/logs
 MAN_CENTER_HOME=${HOME}/man
 

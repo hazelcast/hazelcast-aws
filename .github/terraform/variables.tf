@@ -38,11 +38,6 @@ variable "aws_tag_value" {
   default = "hazelcast-aws-discovery"
 }
 
-variable "aws_connection_retries" {
-  type    = string
-  default = "3"
-}
-
 variable "hazelcast_mancenter_version" {
   type    = string
   default = "4.2020.08"
