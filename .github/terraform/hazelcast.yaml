@@ -12,3 +12,5 @@ hazelcast:
         tag-key: TAG_KEY
         tag-value: TAG_VALUE
         connection-retries: CONN_RETRIES
+    rest-api:
+      enabled: true

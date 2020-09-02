@@ -38,19 +38,6 @@ jobs:
 
       - run : mkdir ~/lib
 
-      #BUILD HAZELCAST SNAPSHOT
-      - uses: actions/checkout@v2
-        with:
-          repository: hazelcast/hazelcast
-          ref: refs/heads/master
-          path: hazelcast
-
-      - name: Build hazelcast jar
-        run: |
-          cd hazelcast
-          mvn clean install -DskipTests
-          cp hazelcast/target/hazelcast*SNAPSHOT.jar ~/lib/hazelcast.jar
-
       # BUILD HAZELCAST AWS SNAPSHOT
       - uses: actions/checkout@v2
         with:
@@ -61,6 +48,21 @@ jobs:
           cd hazelcast-aws
           mvn clean install -DskipTests
           cp target/hazelcast-aws-*-SNAPSHOT.jar ~/lib/hazelcast-aws.jar
+
+      # DOWNLOAD HAZELCAST JAR WITH VERSION DEFINED IN POM.XML
+      - name: Download latest Hazelcast version
+        run: |
+          hz_version=$(cat hazelcast-aws/pom.xml | grep -m 1 -Po "<hazelcast.version>\K[-_.a-zA-Z0-9]+(?=</hazelcast.version)")
+          if [[ $hz_version == *"SNAPSHOT"* ]]; then
+            wo_SNAPSHOT=$( echo $hz_version | grep -Po "[.a-zA-Z0-9]+(?=-SNAPSHOT)" )
+            snapshot_link=$(curl -s "https://oss.sonatype.org/content/repositories/snapshots/com/hazelcast/hazelcast/$hz_version/" 2>&1 \
+                 | grep -Po  "hazelcast-$wo_SNAPSHOT-\d{8}.\d{6}-\d+\.jar" | head -1)
+            wget -q "https://oss.sonatype.org/content/repositories/snapshots/com/hazelcast/hazelcast/$hz_version/$snapshot_link"
+          else
+            wget -q "https://repo1.maven.org/maven2/com/hazelcast/hazelcast/$hz_version/hazelcast-$hz_version.jar"
+          fi
+          cp hazelcast*.jar ~/lib/hazelcast.jar
+          echo "DONE"
 
       #BUILD TERRAFORM
       - name : Set-up Terraform
