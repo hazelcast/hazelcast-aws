@@ -28,8 +28,7 @@ data "aws_ami" "image" {
   owners = ["099720109477"]
 }
 
-#################### IAM role creation for discovery ###################
-
+# IAM Role required for Hazelcast AWS Discovery
 resource "aws_iam_role" "discovery_role" {
   name = "${var.prefix}_discovery_role"
 

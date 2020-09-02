@@ -19,14 +19,13 @@ MANCENTER_JAR_URL=https://download.hazelcast.com/management-center/hazelcast-man
 pushd ${HOME}/lib
     echo "Downloading JAR..."
     if wget -q "$MANCENTER_JAR_URL"; then
-        echo "Hazelcast Management JAR downloaded succesfully."
+        echo "Hazelcast Management JAR downloaded successfully."
     else
         echo "Hazelcast Management JAR could NOT be downloaded!"
         exit 1;
     fi
     unzip hazelcast-management-center-${MANCENTER_VERSION}.zip
     cp hazelcast-management-center-${MANCENTER_VERSION}/* ./
-
 popd
 
 
