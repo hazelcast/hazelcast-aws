@@ -25,7 +25,7 @@ pushd ${HOME}/lib
         exit 1;
     fi
     unzip hazelcast-management-center-${MANCENTER_VERSION}.zip
-    cp hazelcast-management-center-${MANCENTER_VERSION}/* ./
+    cp -R hazelcast-management-center-${MANCENTER_VERSION}/* ./
 popd
 
 
