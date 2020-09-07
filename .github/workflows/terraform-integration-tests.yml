@@ -47,6 +47,7 @@ jobs:
         run: |
           cd hazelcast-aws
           mvn clean install -DskipTests
+          echo "Hazelcast AWS jar is: " target/hazelcast-aws-*-SNAPSHOT.jar
           cp target/hazelcast-aws-*-SNAPSHOT.jar ~/lib/hazelcast-aws.jar
 
       # DOWNLOAD HAZELCAST JAR WITH VERSION DEFINED IN POM.XML
@@ -61,8 +62,8 @@ jobs:
           else
             wget -q "https://repo1.maven.org/maven2/com/hazelcast/hazelcast/$hz_version/hazelcast-$hz_version.jar"
           fi
+          echo "Hazelcast jar is: " hazelcast*.jar
           cp hazelcast*.jar ~/lib/hazelcast.jar
-          echo "DONE"
 
       #BUILD TERRAFORM
       - name : Set-up Terraform
