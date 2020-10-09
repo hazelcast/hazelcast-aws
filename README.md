@@ -318,8 +318,6 @@ The plugin works correctly on the AWS Elastic Beanstalk environment. While deplo
 * IAM instance profile contains IAM role which has `ec2:DescribeInstances` permission (or your Hazelcast configuration contains `access-key` and `secret-key`)
 * Deployment policy is `Rolling` (instead of the default `All at once` which may cause the whole Hazelcast members to restart at the same time and therefore lose data)
 
-
-
 ## Zone Aware
 
 Hazelcast AWS Discovery plugin supports Hazelcast Zone Aware feature for both EC2 and ECS. When using `ZONE_AWARE` configuration, backups are created in the other Availability Zone.
