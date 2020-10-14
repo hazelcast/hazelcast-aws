@@ -314,7 +314,7 @@ All other parameters can be used exactly the same as described in the EC2-relate
 ## AWS Elastic Beanstalk
 
 The plugin works correctly on the AWS Elastic Beanstalk environment. While deploying your application into the Java Platform, please make sure your Elastic Beanstalk Environment Configuration satisfies the following requirements:
-* EC2 security groups contains a group which allows the port `5701`
+* EC2 security groups contain a group which allows the port `5701`
 * IAM instance profile contains IAM role which has `ec2:DescribeInstances` permission (or your Hazelcast configuration contains `access-key` and `secret-key`)
 * Deployment policy is `Rolling` (instead of the default `All at once` which may cause the whole Hazelcast members to restart at the same time and therefore lose data)
 
