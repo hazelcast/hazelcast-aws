@@ -46,6 +46,7 @@ import static com.hazelcast.aws.AwsProperties.SECURITY_GROUP_NAME;
 import static com.hazelcast.aws.AwsProperties.SERVICE_NAME;
 import static com.hazelcast.aws.AwsProperties.TAG_KEY;
 import static com.hazelcast.aws.AwsProperties.TAG_VALUE;
+import static com.hazelcast.aws.AwsProperties.USE_PUBLIC_IP;
 
 /**
  * AWS implementation of {@link DiscoveryStrategy}.
@@ -62,6 +63,7 @@ public class AwsDiscoveryStrategy
     private static final Integer DEFAULT_CONNECTION_RETRIES = 3;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
+    private static final boolean DEFAULT_USE_PUBLIC_IP = false;
 
     private final AwsClient awsClient;
     private final PortRange portRange;
@@ -103,6 +105,7 @@ public class AwsDiscoveryStrategy
                 .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
                 .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
                 .setHzPort(new PortRange(getPortRange()))
+                .setUsePublicId(getOrDefault(USE_PUBLIC_IP.getDefinition(), DEFAULT_USE_PUBLIC_IP))
                 .setCluster(getOrNull(CLUSTER))
                 .setFamily(getOrNull(FAMILY))
                 .setServiceName(getOrNull(SERVICE_NAME))

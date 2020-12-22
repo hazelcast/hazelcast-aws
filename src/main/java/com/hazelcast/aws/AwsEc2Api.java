@@ -65,6 +65,10 @@ class AwsEc2Api {
         return parseDescribeInstances(response);
     }
 
+    boolean isUsePublicIp() {
+        return awsConfig.isUsePublicId();
+    }
+
     private Map<String, String> createAttributesDescribeInstances() {
         Map<String, String> attributes = createSharedAttributes();
         attributes.put("Action", "DescribeInstances");

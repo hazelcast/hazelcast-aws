@@ -19,6 +19,7 @@ import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.config.properties.PropertyTypeConverter;
 import com.hazelcast.config.properties.SimplePropertyDefinition;
 
+import static com.hazelcast.config.properties.PropertyTypeConverter.BOOLEAN;
 import static com.hazelcast.config.properties.PropertyTypeConverter.INTEGER;
 import static com.hazelcast.config.properties.PropertyTypeConverter.STRING;
 
@@ -101,6 +102,14 @@ enum AwsProperties {
      * The default value is "5701-5708".
      */
     PORT("hz-port", STRING, true),
+
+    /**
+     * If set to true, public addresses are preferred over private ones and used when establishing connection
+     * between instances.
+     * <p>
+     * The default value is false.
+     */
+    USE_PUBLIC_IP("use-public-ip", BOOLEAN, true),
 
     /**
      * ECS Cluster name or Cluster ARN.

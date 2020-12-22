@@ -53,14 +53,17 @@ class AwsEcsClient implements AwsClient {
         List<String> taskArns = awsEcsApi.listTasks(cluster, credentials);
         LOGGER.fine(String.format("AWS ECS ListTasks found the following tasks: %s", taskArns));
 
-        if (!taskArns.isEmpty()) {
-            List<Task> tasks = awsEcsApi.describeTasks(cluster, taskArns, credentials);
-            List<String> taskAddresses = tasks.stream().map(Task::getPrivateAddress).collect(Collectors.toList());
-            LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", taskAddresses));
-
-            return fetchPublicAddresses(taskAddresses, credentials);
+        if (taskArns.isEmpty()) {
+            return emptyMap();
         }
-        return emptyMap();
+
+        List<Task> tasks = awsEcsApi.describeTasks(cluster, taskArns, credentials);
+        List<String> taskAddresses = tasks.stream().map(Task::getPrivateAddress).collect(Collectors.toList());
+        LOGGER.fine(String.format("AWS ECS DescribeTasks found the following addresses: %s", taskAddresses));
+
+        return awsEc2Api.isUsePublicIp() ?
+                fetchPublicAddresses(taskAddresses, credentials) :
+                mapToNullValues(taskAddresses);
     }
 
     /**
@@ -79,10 +82,20 @@ class AwsEcsClient implements AwsClient {
             LOGGER.fine("Cannot fetch public IPs of ECS Tasks, only private addresses are used. If you need to access"
                 + " Hazelcast with public IP, please check if your Task has IAM role which allows querying EC2 API", e);
 
-            Map<String, String> map = new HashMap<>();
-            privateAddresses.forEach(k -> map.put(k, null));
-            return map;
+            return mapToNullValues(privateAddresses);
         }
+    }
+
+    /**
+     * Creates a map with {@code keys} mapped to null values.
+     *
+     * @param keys  Key set of the result map.
+     * @return      Map with {@code keys} as entry set mapped to null values.
+     */
+    private Map<String, String> mapToNullValues(List<String> keys) {
+        Map<String, String> map = new HashMap<>();
+        keys.forEach(k -> map.put(k, null));
+        return map;
     }
 
     @Override
