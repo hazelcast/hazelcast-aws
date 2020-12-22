@@ -67,13 +67,12 @@ public class AwsEcsClientTest {
         given(ecsMetadata.getClusterArn()).willReturn(CLUSTER);
         given(awsMetadataApi.metadataEcs()).willReturn(ecsMetadata);
         given(awsCredentialsProvider.credentials()).willReturn(CREDENTIALS);
-        given(awsEc2Api.isUsePublicIp()).willReturn(true);
 
         awsEcsClient = new AwsEcsClient(CLUSTER, awsEcsApi, awsEc2Api, awsMetadataApi, awsCredentialsProvider);
     }
 
     @Test
-    public void getAddresses() {
+    public void getAddressesUsingPublicIp() {
         // given
         List<String> taskArns = singletonList("task-arn");
         List<String> privateIps = singletonList("123.12.1.0");
@@ -82,6 +81,7 @@ public class AwsEcsClientTest {
         given(awsEcsApi.listTasks(CLUSTER, CREDENTIALS)).willReturn(taskArns);
         given(awsEcsApi.describeTasks(CLUSTER, taskArns, CREDENTIALS)).willReturn(tasks);
         given(awsEc2Api.describeNetworkInterfaces(privateIps, CREDENTIALS)).willReturn(expectedResult);
+        given(awsEc2Api.isUsePublicIp()).willReturn(true);
 
         // when
         Map<String, String> result = awsEcsClient.getAddresses();
@@ -91,7 +91,7 @@ public class AwsEcsClientTest {
     }
 
     @Test
-    public void getAddressesWithAwsConfig() {
+    public void getAddressesUsingPublicIpWithAwsConfig() {
         // given
         List<String> taskArns = singletonList("task-arn");
         List<String> privateIps = singletonList("123.12.1.0");
@@ -100,6 +100,7 @@ public class AwsEcsClientTest {
         given(awsEcsApi.listTasks(CLUSTER, CREDENTIALS)).willReturn(taskArns);
         given(awsEcsApi.describeTasks(CLUSTER, taskArns, CREDENTIALS)).willReturn(tasks);
         given(awsEc2Api.describeNetworkInterfaces(privateIps, CREDENTIALS)).willReturn(expectedResult);
+        given(awsEc2Api.isUsePublicIp()).willReturn(true);
 
         // when
         Map<String, String> result = awsEcsClient.getAddresses();
@@ -109,7 +110,7 @@ public class AwsEcsClientTest {
     }
 
     @Test
-    public void usePrivateAddressesOnly() {
+    public void getAddressesUsingPrivateIp() {
         // given
         List<String> taskArns = singletonList("task-arn");
         List<String> privateIps = singletonList("123.12.1.0");
