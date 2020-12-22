@@ -36,7 +36,7 @@ final class AwsConfig {
     private final int connectionRetries;
     private final int readTimeoutSeconds;
     private final PortRange hzPort;
-    private final boolean usePublicId;
+    private final boolean usePublicIp;
     private final String accessKey;
     private final String secretKey;
     private final String iamRole;
@@ -48,7 +48,7 @@ final class AwsConfig {
     // Constructor has a lot of parameters, but it's private.
     private AwsConfig(String accessKey, String secretKey, String region, String iamRole, String hostHeader,
                       String securityGroupName, String tagKey, String tagValue, int connectionTimeoutSeconds,
-                      int connectionRetries, int readTimeoutSeconds, PortRange hzPort, boolean usePublicId,
+                      int connectionRetries, int readTimeoutSeconds, PortRange hzPort, boolean usePublicIp,
                       String cluster, String family, String serviceName) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
@@ -62,7 +62,7 @@ final class AwsConfig {
         this.connectionRetries = connectionRetries;
         this.readTimeoutSeconds = readTimeoutSeconds;
         this.hzPort = hzPort;
-        this.usePublicId = usePublicId;
+        this.usePublicIp = usePublicIp;
         this.cluster = cluster;
         this.family = family;
         this.serviceName = serviceName;
@@ -154,8 +154,8 @@ final class AwsConfig {
         return hzPort;
     }
 
-    boolean isUsePublicId() {
-        return usePublicId;
+    boolean isUsePublicIp() {
+        return usePublicIp;
     }
 
     String getCluster() {
@@ -182,7 +182,7 @@ final class AwsConfig {
             + ", tagKey='" + tagKey + '\''
             + ", tagValue='" + tagValue + '\''
             + ", hzPort=" + hzPort
-            + ", usePublicId=" + usePublicId
+            + ", usePublicIp=" + usePublicIp
             + ", cluster='" + cluster + '\''
             + ", family='" + family + '\''
             + ", serviceName='" + serviceName + '\''
@@ -206,7 +206,7 @@ final class AwsConfig {
         private int connectionRetries;
         private int readTimeoutSeconds;
         private PortRange hzPort;
-        private boolean usePublicId;
+        private boolean usePublicIp;
         private String cluster;
         private String family;
         private String serviceName;
@@ -271,8 +271,8 @@ final class AwsConfig {
             return this;
         }
 
-        Builder setUsePublicId(boolean usePublicId) {
-            this.usePublicId = usePublicId;
+        Builder setUsePublicIp(boolean usePublicIp) {
+            this.usePublicIp = usePublicIp;
             return this;
         }
 
@@ -293,7 +293,7 @@ final class AwsConfig {
 
         AwsConfig build() {
             return new AwsConfig(accessKey, secretKey, region, iamRole, hostHeader, securityGroupName, tagKey, tagValue,
-                connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort, usePublicId, cluster, family,
+                connectionTimeoutSeconds, connectionRetries, readTimeoutSeconds, hzPort, usePublicIp, cluster, family,
                     serviceName);
         }
     }

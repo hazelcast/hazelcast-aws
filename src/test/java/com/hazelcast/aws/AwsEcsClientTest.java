@@ -33,6 +33,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsEcsClientTest {
@@ -65,6 +67,7 @@ public class AwsEcsClientTest {
         given(ecsMetadata.getClusterArn()).willReturn(CLUSTER);
         given(awsMetadataApi.metadataEcs()).willReturn(ecsMetadata);
         given(awsCredentialsProvider.credentials()).willReturn(CREDENTIALS);
+        given(awsEc2Api.isUsePublicIp()).willReturn(true);
 
         awsEcsClient = new AwsEcsClient(CLUSTER, awsEcsApi, awsEc2Api, awsMetadataApi, awsCredentialsProvider);
     }
@@ -103,6 +106,25 @@ public class AwsEcsClientTest {
 
         // then
         assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void usePrivateAddressesOnly() {
+        // given
+        List<String> taskArns = singletonList("task-arn");
+        List<String> privateIps = singletonList("123.12.1.0");
+        List<Task> tasks = singletonList(new Task("123.12.1.0", null));
+        Map<String, String> expectedResult = singletonMap("123.12.1.0", null);
+        given(awsEcsApi.listTasks(CLUSTER, CREDENTIALS)).willReturn(taskArns);
+        given(awsEcsApi.describeTasks(CLUSTER, taskArns, CREDENTIALS)).willReturn(tasks);
+        given(awsEc2Api.isUsePublicIp()).willReturn(false);
+
+        // when
+        Map<String, String> result = awsEcsClient.getAddresses();
+
+        // then
+        assertEquals(expectedResult, result);
+        verify(awsEc2Api, never()).describeNetworkInterfaces(privateIps, CREDENTIALS);
     }
 
     @Test

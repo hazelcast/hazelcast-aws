@@ -38,6 +38,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -289,5 +290,21 @@ public class AwsEc2ApiTest {
         // then
         assertTrue(exception.getMessage().contains(Integer.toString(errorCode)));
         assertTrue(exception.getMessage().contains(errorMessage));
+    }
+
+    @Test
+    public void publicIpConfiguration() {
+        // default
+        assertFalse(awsEc2Api.isUsePublicIp());
+
+        // given
+        AwsConfig publicIpConfig = AwsConfig.builder().setUsePublicIp(true).build();
+        AwsConfig privateIpConfig = AwsConfig.builder().setUsePublicIp(false).build();
+        AwsEc2Api publicIpApi = new AwsEc2Api(null, publicIpConfig, null, null);
+        AwsEc2Api privateIpApi = new AwsEc2Api(null, privateIpConfig, null, null);
+
+        // then
+        assertTrue(publicIpApi.isUsePublicIp());
+        assertFalse(privateIpApi.isUsePublicIp());
     }
 }

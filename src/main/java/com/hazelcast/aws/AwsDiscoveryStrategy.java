@@ -105,7 +105,7 @@ public class AwsDiscoveryStrategy
                 .setConnectionRetries(getOrDefault(CONNECTION_RETRIES.getDefinition(), DEFAULT_CONNECTION_RETRIES))
                 .setReadTimeoutSeconds(getOrDefault(READ_TIMEOUT_SECONDS.getDefinition(), DEFAULT_READ_TIMEOUT_SECONDS))
                 .setHzPort(new PortRange(getPortRange()))
-                .setUsePublicId(getOrDefault(USE_PUBLIC_IP.getDefinition(), DEFAULT_USE_PUBLIC_IP))
+                .setUsePublicIp(getOrDefault(USE_PUBLIC_IP.getDefinition(), DEFAULT_USE_PUBLIC_IP))
                 .setCluster(getOrNull(CLUSTER))
                 .setFamily(getOrNull(FAMILY))
                 .setServiceName(getOrNull(SERVICE_NAME))

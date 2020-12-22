@@ -66,7 +66,7 @@ class AwsEc2Api {
     }
 
     boolean isUsePublicIp() {
-        return awsConfig.isUsePublicId();
+        return awsConfig.isUsePublicIp();
     }
 
     private Map<String, String> createAttributesDescribeInstances() {
