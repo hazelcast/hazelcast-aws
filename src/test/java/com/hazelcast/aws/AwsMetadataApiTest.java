@@ -21,6 +21,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -57,6 +59,51 @@ public class AwsMetadataApiTest {
 
         // then
         assertEquals(availabilityZone, result);
+    }
+
+    @Test
+    public void placementGroupEc2() {
+        // given
+        String placementGroup = "placement-group-1";
+        stubFor(get(urlEqualTo("/placement/group-name/"))
+                .willReturn(aResponse().withStatus(200).withBody(placementGroup)));
+
+        // when
+        Optional<String> result = awsMetadataApi.placementGroupEc2();
+
+        // then
+        assertEquals(placementGroup, result.orElse("N/A"));
+    }
+
+    @Test
+    public void partitionPlacementGroupEc2() {
+        // given
+        String partitionNumber = "42";
+        stubFor(get(urlEqualTo("/placement/partition-number/"))
+                .willReturn(aResponse().withStatus(200).withBody(partitionNumber)));
+
+        // when
+        Optional<String> result = awsMetadataApi.placementPartitionNumberEc2();
+
+        // then
+        assertEquals(partitionNumber, result.orElse("N/A"));
+    }
+
+    @Test
+    public void missingPlacementGroupEc2() {
+        // given
+        stubFor(get(urlEqualTo("/placement/group-name/"))
+                .willReturn(aResponse().withStatus(404).withBody("Not found")));
+        stubFor(get(urlEqualTo("/placement/partition-number/"))
+                .willReturn(aResponse().withStatus(404).withBody("Not found")));
+
+        // when
+        Optional<String> placementGroupResult = awsMetadataApi.placementGroupEc2();
+        Optional<String> partitionNumberResult = awsMetadataApi.placementPartitionNumberEc2();
+
+        // then
+        assertEquals(Optional.empty(), placementGroupResult);
+        assertEquals(Optional.empty(), partitionNumberResult);
     }
 
     @Test

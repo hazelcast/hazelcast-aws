@@ -318,9 +318,28 @@ The plugin works correctly on the AWS Elastic Beanstalk environment. While deplo
 * IAM instance profile contains IAM role which has `ec2:DescribeInstances` permission (or your Hazelcast configuration contains `access-key` and `secret-key`)
 * Deployment policy is `Rolling` (instead of the default `All at once` which may cause the whole Hazelcast members to restart at the same time and therefore lose data)
 
-## Zone Aware
+## High Availability
 
-Hazelcast AWS Discovery plugin supports Hazelcast Zone Aware feature for both EC2 and ECS. When using `ZONE_AWARE` configuration, backups are created in the other Availability Zone.
+By default, Hazelcast distributes partition replicas (backups) randomly and equally among the cluster members, assuming
+all the members in a cluster are identical. However, this is not safe in terms of availability when a partition and its
+replicas are stored on the same rack, using the same network or power source, etc. To deal with that, Hazelcast offers
+partition groups each is a logical grouping of members. If there is enough number of partition groups, a partition
+itself and its backup(s) are not stored within the same group. This way Hazelcast guarantees that a possible failure
+affecting more than one member at a time will not cause data loss. The details of partition groups can be found on the
+documentation: 
+[Partition Group Configuration](https://docs.hazelcast.org/docs/latest/manual/html-single/#partition-group-configuration)
+
+In addition to two built-in grouping options `ZONE_AWARE` and `PLACEMENT_AWARE`, you can customize the formation of
+these groups based on the network interfaces of members. See more details on custom groups on the documentation:
+[Custom Partition Groups](https://docs.hazelcast.org/docs/latest/manual/html-single/#custom).
+
+
+### Zone Aware
+
+If `ZONE_AWARE` partition group is enabled, the backup(s) of a partition will be in a different availability zone
+other than the partition's residing zone. If no other partition group is found in other zones, the backup(s) will
+be stored in the same zone as the partition itself. Hazelcast AWS Discovery plugin supports ZONE_AWARE feature for
+both EC2 and ECS.
 
 #### XML Configuration
 
@@ -345,8 +364,89 @@ config.getPartitionGroupConfig()
     .setGroupType(MemberGroupType.ZONE_AWARE);
 ```
 
-***NOTE:*** *When using the `ZONE_AWARE` partition grouping, a cluster spanning multiple Availability Zones (AZ) should have an equal number of members in each AZ. Otherwise, it will result in uneven partition distribution among the members.*
+***NOTE:*** *When using the `ZONE_AWARE` partition grouping, a cluster spanning multiple Availability Zones (AZ)
+should have an equal number of members in each AZ. Otherwise, it will result in uneven partition distribution among
+the members.*
 
+### Placement Aware
+
+If EC2 instances belong to an [AWS Placement Group](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html),
+then Hazelcast can form partition groups based on the placement groups of the instances. The backup(s) of a partition
+will be in a different placement group other than the partition's placement group. The strategy ensures availability
+especially for the clusters formed within a single availability zone. `PLACEMENT_AWARE` is not supported for ECS.
+
+#### Partition Placement Group (PPG)
+
+If EC2 instances belong to a PPG, then Hazelcast members will be grouped by the partitions of the PPG. For instance,
+the Hazelcast members in the first partition of a PPG named `ppg` will belong to the partition group of `ppg@1`,
+and those in the second partition will belong to `ppg@2` and so on. Furthermore, these groups will be specific to each
+availability zone. That is, they are formed with zone names as well: `us-east-1-ppg@1`, `us-east-2-ppg@1`, etc. Hence,
+if a PPG spans multiple availability zones then PLACEMENT_AWARE can still form partition groups.   
+ 
+PPG ensures low latency between the members in the same partition of a placement group and also provides availability by
+storing replicas in other partitions of the placement. As long as the partitions of a PPG contain an equal number of
+instances, it will be good practice for Hazelcast clusters formed within a single zone.
+
+#### Spread Placement Group (SPG)
+
+SPG ensures availability by placing each instance in a group on a distinct rack. This way, it ensures availability
+within a single zone. If a Hazelcast cluster is deployed with the default partition group strategy - which assumes each
+member as a separate group, then this will be an appropriate configuration for the scenario where all instances belong to
+a single SPG. If PLACEMENT_AWARE is enabled for a cluster under an SPG named `spg`, this will end up with a single 
+partition group where all members belong to the same group (e.g. `us-east-1-spg`) - which will also have the same
+logic as the default strategy. 
+
+Forming a Hazelcast cluster within a single zone using the default partition group strategy and the instances in an SPG
+will be good practice. However, SPG has a limitation of having at most 7 instances per zone. If you need more than 7
+instances within a zone and want to ensure availability as much as possible, then consider using PPG. Another alternative
+could be using more than one SPG. However, this action needs to be taken with care. Because two instances from different
+SPGs can share the same rack - although they belong to different partition groups.
+
+#### Cluster Placement Group (CPG)
+
+CPG ensures low latency by packing instances close together inside an availability zone. If you favor latency over
+availability, then CPG will serve your purpose. When deploying a Hazelcast cluster to the instances of a single CPG,
+partition group strategy should not be a concern as you favor latency. Even if you enable PLACEMENT_AWARE for the instances
+of a CFG named `cpg`, this will end up with a single partition group where all members belong to the same group 
+(e.g. `us-east-1-cpg`) - which will also have the same logic as the default strategy. 
+
+If you use more than one CPG - say `cpg1` and `cpg2`, for the instances within the same zone, the PLACEMENT_AWARE strategy 
+will group the instances as `us-east-1-cpg1` and `us-east-1-cpg2`. This is somehow reasonable in terms of availability.
+However, it might not be guaranteed that `cpg1` and `cpg2` won't share the same rack. Thus, PPG would fit better in this
+case. If you use more than one CPG from different zones, this time ZONE_AWARE would be a better alternative to 
+PLACEMENT_AWARE as it will pack all the instances within a single zone into the same partition group.
+
+#### XML Configuration
+
+```xml
+<partition-group enabled="true" group-type="PLACEMENT_AWARE" />
+```
+
+#### YAML Configuration
+
+```yaml
+hazelcast:
+  partition-group:
+    enabled: true
+    group-type: PLACEMENT_AWARE
+```
+
+#### Java-based Configuration
+
+```java
+config.getPartitionGroupConfig()
+    .setEnabled(true)
+    .setGroupType(MemberGroupType.PLACEMENT_AWARE);
+```
+
+***NOTE:*** *When using the `PLACEMENT_AWARE` partition grouping, a cluster spanning multiple Placement Groups (PG)
+should have an equal number of members in each PG (and in each partition if the placement group is PPG). Otherwise,
+it will result in uneven partition distribution among the members.*
+
+***NOTE:*** *When using the `PLACEMENT_AWARE` with Cluster Placement Groups or Spread Placement Groups, remember 
+that there will be only one partition group per placement group. So, favor Partition Placement Groups with Hazelcast
+clusters formed within a single zone. If you use other placement groups with `PLACEMENT_AWARE` set up your placements
+with care to have reasonable partition groups.*
 
 ## Autoscaling
 

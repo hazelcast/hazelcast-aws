@@ -17,6 +17,10 @@ package com.hazelcast.aws;
 
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
+
+import java.util.Optional;
 
 import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
 
@@ -28,6 +32,7 @@ import static com.hazelcast.aws.AwsRequestUtils.createRestClient;
  * @see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html">ECS Task Metadata</a>
  */
 class AwsMetadataApi {
+    private static final ILogger LOGGER = Logger.getLogger(AwsMetadataApi.class);
     private static final String EC2_METADATA_ENDPOINT = "http://169.254.169.254/latest/meta-data";
     private static final String ECS_IAM_ROLE_METADATA_ENDPOINT = "http://169.254.170.2" + System.getenv(
         "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
@@ -61,6 +66,26 @@ class AwsMetadataApi {
     String availabilityZoneEc2() {
         String uri = ec2MetadataEndpoint.concat("/placement/availability-zone/");
         return createRestClient(uri, awsConfig).get();
+    }
+
+    Optional<String> placementGroupEc2() {
+        String uri = ec2MetadataEndpoint.concat("/placement/group-name/");
+        try {
+            return Optional.of(createRestClient(uri, awsConfig).withRetries(3).get());
+        } catch (Exception e) {
+            LOGGER.finest("Could not resolve a placement group for the instance.");
+            return Optional.empty();
+        }
+    }
+
+    Optional<String> placementPartitionNumberEc2() {
+        String uri = ec2MetadataEndpoint.concat("/placement/partition-number/");
+        try {
+            return Optional.of(createRestClient(uri, awsConfig).withRetries(3).get());
+        } catch (Exception e) {
+            LOGGER.finest("Could not resolve a partition number for the instance.");
+            return Optional.empty();
+        }
     }
 
     String defaultIamRoleEc2() {
