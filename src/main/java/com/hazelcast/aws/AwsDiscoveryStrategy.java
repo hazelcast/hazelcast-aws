@@ -148,7 +148,7 @@ public class AwsDiscoveryStrategy
      * <p>
      * If the placement group is Cluster Placement Group or Spread Placement Group, then returns
      * the group name. If it is Partition Placement Group, then returns the group name with the
-     * partition number prefixed by '@' appended.
+     * partition number prefixed by {@code '@'} appended.
      * <p>
      * When forming partition groups, this name should be combined with zone name. Otherwise
      * two resources in different zones but in the same placement group will be assumed as
