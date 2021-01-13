@@ -333,10 +333,9 @@ these groups based on the network interfaces of members. See more details on cus
 
 ### Zone Aware
 
-If `ZONE_AWARE` partition group is enabled, the backup(s) of a partition will be in a different availability zone
-other than the partition's residing zone. If no other partition group is found in other zones, the backup(s) will
-be stored in the same zone as the partition itself. Hazelcast AWS Discovery plugin supports ZONE_AWARE feature for
-both EC2 and ECS.
+If `ZONE_AWARE` partition group is enabled, the backup(s) of a partition is always stored in a different availability
+zone - as long as there exists at least one member in a different zone. Hazelcast AWS Discovery plugin supports
+ZONE_AWARE feature for both EC2 and ECS.
 
 #### XML Configuration
 
@@ -377,8 +376,8 @@ especially for the clusters formed within a single availability zone. `PLACEMENT
 If EC2 instances belong to a PPG, then Hazelcast members will be grouped by the partitions of the PPG. For instance,
 the Hazelcast members in the first partition of a PPG named `ppg` will belong to the partition group of `ppg@1`,
 and those in the second partition will belong to `ppg@2` and so on. Furthermore, these groups will be specific to each
-availability zone. That is, they are formed with zone names as well: `us-east-1-ppg@1`, `us-east-2-ppg@1`, etc. Hence,
-if a PPG spans multiple availability zones then PLACEMENT_AWARE can still form partition groups.   
+availability zone. That is, they are formed with zone names as well: `us-east-1-ppg@1`, `us-east-2-ppg@1`, and the like.
+However, if a Hazelcast cluster spans multiple availability zones then you should consider using `ZONE_AWARE`.
  
 PPG ensures low latency between the members in the same partition of a placement group and also provides availability by
 storing replicas in other partitions of the placement. As long as the partitions of a PPG contain an equal number of
