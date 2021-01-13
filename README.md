@@ -320,12 +320,9 @@ The plugin works correctly on the AWS Elastic Beanstalk environment. While deplo
 
 ## High Availability
 
-By default, Hazelcast distributes partition replicas (backups) randomly and equally among the cluster members, assuming
-all the members in a cluster are identical. However, this is not safe in terms of availability when a partition and its
-replicas are stored on the same rack, using the same network or power source, etc. To deal with that, Hazelcast offers
-partition groups each is a logical grouping of members. If there is enough number of partition groups, a partition
-itself and its backup(s) are not stored within the same group. This way Hazelcast guarantees that a possible failure
-affecting more than one member at a time will not cause data loss. The details of partition groups can be found on the
+By default, Hazelcast distributes partition replicas (backups) randomly and equally among cluster members. However, this is not safe in terms of high availability when a partition and its replicas are stored on the same rack, using the same network, or power source. To deal with that, Hazelcast offers logical partition grouping, so that a partition
+itself and its backup(s) would not be stored within the same group. This way Hazelcast guarantees that a possible failure
+affecting more than one member at a time will not cause data loss. The details of partition groups can be found in the
 documentation: 
 [Partition Group Configuration](https://docs.hazelcast.org/docs/latest/manual/html-single/#partition-group-configuration)
 
@@ -389,18 +386,9 @@ instances, it will be good practice for Hazelcast clusters formed within a singl
 
 #### Spread Placement Group (SPG)
 
-SPG ensures availability by placing each instance in a group on a distinct rack. This way, it ensures availability
-within a single zone. If a Hazelcast cluster is deployed with the default partition group strategy - which assumes each
-member as a separate group, then this will be an appropriate configuration for the scenario where all instances belong to
-a single SPG. If PLACEMENT_AWARE is enabled for a cluster under an SPG named `spg`, this will end up with a single 
-partition group where all members belong to the same group (e.g. `us-east-1-spg`) - which will also have the same
-logic as the default strategy. 
+SPG ensures high availability in a single zone by placing each instance in a group on a distinct rack. It provides better latency than multi-zone deployment, but worse than Cluster Placement Group. SPG is limited to 7 instances, so if you need a bigger Hazelcast cluster, you should use PPG instead.
 
-Forming a Hazelcast cluster within a single zone using the default partition group strategy and the instances in an SPG
-will be good practice. However, SPG has a limitation of having at most 7 instances per zone. If you need more than 7
-instances within a zone and want to ensure availability as much as possible, then consider using PPG. Another alternative
-could be using more than one SPG. However, this action needs to be taken with care. Because two instances from different
-SPGs can share the same rack - although they belong to different partition groups.
+Note: In the case of SPG, using `PLACEMENT_AWARE` has no effect, so can leave the default Hazelcast Partition Group configuration.
 
 #### Cluster Placement Group (CPG)
 
