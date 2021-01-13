@@ -64,7 +64,7 @@ public class AwsDiscoveryStrategy
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_READ_TIMEOUT_SECONDS = 10;
 
-    // TODO: To be replaced with PartitionGroupMetaData.PARTITION_GROUP_PLACEMENT
+    // Corresponds to PartitionGroupMetaData.PARTITION_GROUP_PLACEMENT
     static final String PARTITION_GROUP_PLACEMENT = "hazelcast.partition.group.placement";
 
     private final AwsClient awsClient;
