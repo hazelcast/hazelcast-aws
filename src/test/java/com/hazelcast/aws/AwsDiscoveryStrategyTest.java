@@ -49,7 +49,7 @@ public class AwsDiscoveryStrategyTest {
     // Group name pattern for placement groups
     private static final String PG_NAME_PATTERN = "%s-%s";
     // Group name pattern for partition placement group
-    private static final String PPG_NAME_PATTERN = PG_NAME_PATTERN.concat("@%s");
+    private static final String PPG_NAME_PATTERN = PG_NAME_PATTERN.concat("-%s");
 
     @Mock
     private AwsClient awsClient;

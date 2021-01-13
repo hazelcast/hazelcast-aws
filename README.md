@@ -350,9 +350,9 @@ PPG contain an equal number of instances, it will be good practice for Hazelcast
 
 If EC2 instances belong to a PPG and `PLACEMENT_AWARE` partition group is enabled, then Hazelcast members will be grouped
 by the partitions of the PPG. For instance, the Hazelcast members in the first partition of a PPG named `ppg` will belong
-to the partition group of `ppg@1`, and those in the second partition will belong to `ppg@2` and so on. Furthermore, these
-groups will be specific to each availability zone. That is, they are formed with zone names as well: `us-east-1-ppg@1`,
-`us-east-2-ppg@1`, and the like. However, if a Hazelcast cluster spans multiple availability zones then you should
+to the partition group of `ppg-1`, and those in the second partition will belong to `ppg-2` and so on. Furthermore, these
+groups will be specific to each availability zone. That is, they are formed with zone names as well: `us-east-1-ppg-1`,
+`us-east-2-ppg-1`, and the like. However, if a Hazelcast cluster spans multiple availability zones then you should
 consider using `ZONE_AWARE`.
 
 ### Cluster Placement Group Deployments

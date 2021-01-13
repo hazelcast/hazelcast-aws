@@ -148,7 +148,7 @@ public class AwsDiscoveryStrategy
      * <p>
      * If the placement group is Cluster Placement Group or Spread Placement Group, then returns
      * the group name. If it is Partition Placement Group, then returns the group name with the
-     * partition number prefixed by {@code '@'} appended.
+     * partition number prefixed by '-' appended.
      * <p>
      * When forming partition groups, this name should be combined with zone name. Otherwise
      * two resources in different zones but in the same placement group will be assumed as
@@ -165,7 +165,7 @@ public class AwsDiscoveryStrategy
             return Optional.empty();
         }
         StringBuilder result = new StringBuilder(placementGroup.get());
-        awsClient.getPlacementPartitionNumber().ifPresent(ppn -> result.append('@').append(ppn));
+        awsClient.getPlacementPartitionNumber().ifPresent(ppn -> result.append('-').append(ppn));
         LOGGER.info(String.format("Placement group found: '%s'", result.toString()));
         return Optional.of(result.toString());
     }
