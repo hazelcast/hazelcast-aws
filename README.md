@@ -334,12 +334,34 @@ these groups based on the network interfaces of members. See more details on cus
 ### Multi-Zone Deployments
 
 If `ZONE_AWARE` partition group is enabled, the backup(s) of a partition is always stored in a different availability
-zone - as long as there exists at least one member in a different zone. Hazelcast AWS Discovery plugin supports
-ZONE_AWARE feature for both EC2 and ECS.
+zone. Hazelcast AWS Discovery plugin supports ZONE_AWARE feature for both EC2 and ECS.
 
 ***NOTE:*** *When using the `ZONE_AWARE` partition grouping, a cluster spanning multiple Availability Zones (AZ)
 should have an equal number of members in each AZ. Otherwise, it will result in uneven partition distribution among
 the members.*
+
+#### XML Configuration
+
+```xml
+<partition-group enabled="true" group-type="ZONE_AWARE" />
+```
+
+#### YAML Configuration
+
+```yaml
+hazelcast:
+  partition-group:
+    enabled: true
+    group-type: ZONE_AWARE
+```
+
+#### Java-based Configuration
+
+```java
+config.getPartitionGroupConfig()
+    .setEnabled(true)
+    .setGroupType(MemberGroupType.ZONE_AWARE);
+```
 
 ### Partition Placement Group Deployments
 
@@ -374,13 +396,13 @@ limited to 7 instances, so if you need a larger Hazelcast cluster within a singl
 ***NOTE:*** *In the case of SPG, using `PLACEMENT_AWARE` has no effect, so can use the default Hazelcast partition group
 strategy.*
 
-### XML Configuration
+#### XML Configuration
 
 ```xml
-<partition-group enabled="true" group-type="ZONE_AWARE" />
+<partition-group enabled="true" group-type="PLACEMENT_AWARE" />
 ```
 
-### YAML Configuration
+#### YAML Configuration
 
 ```yaml
 hazelcast:
@@ -389,7 +411,7 @@ hazelcast:
     group-type: PLACEMENT_AWARE
 ```
 
-### Java-based Configuration
+#### Java-based Configuration
 
 ```java
 config.getPartitionGroupConfig()
