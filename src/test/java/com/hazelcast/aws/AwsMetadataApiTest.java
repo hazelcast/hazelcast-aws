@@ -24,16 +24,24 @@ import org.junit.Test;
 import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.moreThan;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class AwsMetadataApiTest {
+
+    private final String GROUP_NAME_URL = "/placement/group-name/";
+    private final String PARTITION_NO_URL = "/placement/partition-number/";
+    private final int RETRY_COUNT = 3;
 
     private AwsMetadataApi awsMetadataApi;
 
@@ -42,7 +50,7 @@ public class AwsMetadataApiTest {
 
     @Before
     public void setUp() {
-        AwsConfig awsConfig = AwsConfig.builder().build();
+        AwsConfig awsConfig = AwsConfig.builder().setConnectionRetries(RETRY_COUNT).build();
         String endpoint = String.format("http://localhost:%s", wireMockRule.port());
         awsMetadataApi = new AwsMetadataApi(endpoint, endpoint, endpoint, awsConfig);
     }
@@ -65,7 +73,7 @@ public class AwsMetadataApiTest {
     public void placementGroupEc2() {
         // given
         String placementGroup = "placement-group-1";
-        stubFor(get(urlEqualTo("/placement/group-name/"))
+        stubFor(get(urlEqualTo(GROUP_NAME_URL))
                 .willReturn(aResponse().withStatus(200).withBody(placementGroup)));
 
         // when
@@ -73,13 +81,14 @@ public class AwsMetadataApiTest {
 
         // then
         assertEquals(placementGroup, result.orElse("N/A"));
+        verify(exactly(1), getRequestedFor(urlEqualTo(GROUP_NAME_URL)));
     }
 
     @Test
     public void partitionPlacementGroupEc2() {
         // given
         String partitionNumber = "42";
-        stubFor(get(urlEqualTo("/placement/partition-number/"))
+        stubFor(get(urlEqualTo(PARTITION_NO_URL))
                 .willReturn(aResponse().withStatus(200).withBody(partitionNumber)));
 
         // when
@@ -87,14 +96,15 @@ public class AwsMetadataApiTest {
 
         // then
         assertEquals(partitionNumber, result.orElse("N/A"));
+        verify(exactly(1), getRequestedFor(urlEqualTo(PARTITION_NO_URL)));
     }
 
     @Test
     public void missingPlacementGroupEc2() {
         // given
-        stubFor(get(urlEqualTo("/placement/group-name/"))
+        stubFor(get(urlEqualTo(GROUP_NAME_URL))
                 .willReturn(aResponse().withStatus(404).withBody("Not found")));
-        stubFor(get(urlEqualTo("/placement/partition-number/"))
+        stubFor(get(urlEqualTo(PARTITION_NO_URL))
                 .willReturn(aResponse().withStatus(404).withBody("Not found")));
 
         // when
@@ -104,6 +114,22 @@ public class AwsMetadataApiTest {
         // then
         assertEquals(Optional.empty(), placementGroupResult);
         assertEquals(Optional.empty(), partitionNumberResult);
+        verify(exactly(1), getRequestedFor(urlEqualTo(GROUP_NAME_URL)));
+        verify(exactly(1), getRequestedFor(urlEqualTo(PARTITION_NO_URL)));
+    }
+
+    @Test
+    public void failToFetchPlacementGroupEc2() {
+        // given
+        stubFor(get(urlEqualTo(GROUP_NAME_URL))
+                .willReturn(aResponse().withStatus(500).withBody("Service Unavailable")));
+
+        // when
+        Optional<String> placementGroupResult = awsMetadataApi.placementGroupEc2();
+
+        // then
+        assertEquals(Optional.empty(), placementGroupResult);
+        verify(moreThan(RETRY_COUNT), getRequestedFor(urlEqualTo(GROUP_NAME_URL)));
     }
 
     @Test
@@ -211,5 +237,6 @@ public class AwsMetadataApiTest {
         // then
         assertTrue(exception.getMessage().contains(Integer.toString(errorCode)));
         assertTrue(exception.getMessage().contains(errorMessage));
+        verify(moreThan(RETRY_COUNT), getRequestedFor(urlMatching("/.*")));
     }
 }
