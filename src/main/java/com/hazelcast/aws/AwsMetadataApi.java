@@ -106,8 +106,7 @@ class AwsMetadataApi {
             LOGGER.fine(String.format("No %s information is found.", loggedName));
             return Optional.empty();
         } else {
-            throw new RuntimeException(String.format("Unexpected response code: %d"
-                    + " which must be handled by the rest client.", responseCode));
+            throw new RuntimeException(String.format("Unexpected response code: %d", responseCode));
         }
     }
 
