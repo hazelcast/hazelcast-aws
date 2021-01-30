@@ -30,8 +30,6 @@ final class AwsConfig {
     private final String region;
     private final String hostHeader;
     private final String securityGroupName;
-    private final String tagKey;
-    private final String tagValue;
     private final Tags tags;
     private final int connectionTimeoutSeconds;
     private final int connectionRetries;
@@ -56,8 +54,6 @@ final class AwsConfig {
         this.iamRole = iamRole;
         this.hostHeader = hostHeader;
         this.securityGroupName = securityGroupName;
-        this.tagKey = tagKey;
-        this.tagValue = tagValue;
         this.tags = Tags.from(tagKey, tagValue);
         this.connectionTimeoutSeconds = connectionTimeoutSeconds;
         this.connectionRetries = connectionRetries;
@@ -130,14 +126,6 @@ final class AwsConfig {
         return securityGroupName;
     }
 
-    String getTagKey() {
-        return tagKey;
-    }
-
-    String getTagValue() {
-        return tagValue;
-    }
-
     Tags getTags() {
         return tags;
     }
@@ -179,8 +167,6 @@ final class AwsConfig {
             + ", region='" + region + '\''
             + ", hostHeader='" + hostHeader + '\''
             + ", securityGroupName='" + securityGroupName + '\''
-            + ", tagKey='" + tagKey + '\''
-            + ", tagValue='" + tagValue + '\''
             + ", tags='" + tags + '\''
             + ", hzPort=" + hzPort
             + ", cluster='" + cluster + '\''
