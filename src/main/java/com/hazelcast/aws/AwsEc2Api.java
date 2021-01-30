@@ -15,6 +15,7 @@
 
 package com.hazelcast.aws;
 
+import com.hazelcast.aws.TagFilters.TagFilter;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.w3c.dom.Node;
@@ -74,14 +75,8 @@ class AwsEc2Api {
 
     private Map<String, String> filterAttributesDescribeInstances() {
         Filter filter = new Filter();
-        if (isNotEmpty(awsConfig.getTagKey())) {
-            if (isNotEmpty(awsConfig.getTagValue())) {
-                filter.add("tag:" + awsConfig.getTagKey(), awsConfig.getTagValue());
-            } else {
-                filter.add("tag-key", awsConfig.getTagKey());
-            }
-        } else if (isNotEmpty(awsConfig.getTagValue())) {
-            filter.add("tag-value", awsConfig.getTagValue());
+        for (TagFilter tagFilter : TagFilters.from(awsConfig.getTags())) {
+            filter.add(tagFilter.getName(), tagFilter.getValue());
         }
 
         if (isNotEmpty(awsConfig.getSecurityGroupName())) {

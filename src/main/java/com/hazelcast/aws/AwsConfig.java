@@ -32,6 +32,7 @@ final class AwsConfig {
     private final String securityGroupName;
     private final String tagKey;
     private final String tagValue;
+    private final Tags tags;
     private final int connectionTimeoutSeconds;
     private final int connectionRetries;
     private final int readTimeoutSeconds;
@@ -57,6 +58,7 @@ final class AwsConfig {
         this.securityGroupName = securityGroupName;
         this.tagKey = tagKey;
         this.tagValue = tagValue;
+        this.tags = Tags.from(tagKey, tagValue);
         this.connectionTimeoutSeconds = connectionTimeoutSeconds;
         this.connectionRetries = connectionRetries;
         this.readTimeoutSeconds = readTimeoutSeconds;
@@ -93,7 +95,7 @@ final class AwsConfig {
     }
 
     private boolean anyOfEc2PropertiesConfigured() {
-        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || isNotEmpty(tagKey) || isNotEmpty(tagValue);
+        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || tags.hasTags();
     }
 
     private boolean anyOfEcsPropertiesConfigured() {
@@ -136,6 +138,10 @@ final class AwsConfig {
         return tagValue;
     }
 
+    Tags getTags() {
+        return tags;
+    }
+
     int getConnectionTimeoutSeconds() {
         return connectionTimeoutSeconds;
     }
@@ -175,6 +181,7 @@ final class AwsConfig {
             + ", securityGroupName='" + securityGroupName + '\''
             + ", tagKey='" + tagKey + '\''
             + ", tagValue='" + tagValue + '\''
+            + ", tags='" + tags + '\''
             + ", hzPort=" + hzPort
             + ", cluster='" + cluster + '\''
             + ", family='" + family + '\''

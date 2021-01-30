@@ -149,8 +149,8 @@ final class AwsClientConfigurator {
 
     private static void logEc2Environment(AwsConfig awsConfig, String region) {
         Map<String, String> filters = new HashMap<>();
-        filters.put("tag-key", awsConfig.getTagKey());
-        filters.put("tag-value", awsConfig.getTagValue());
+        filters.put("tag-key", awsConfig.getTags().getKeys());
+        filters.put("tag-value", awsConfig.getTags().getValues());
         filters.put("security-group-name", awsConfig.getSecurityGroupName());
         filters.put("hz-port", awsConfig.getHzPort().toString());
 
