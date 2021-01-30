@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 
 public class TagFiltersTest {
     @Test
-    public void keyOnly() {
+    public void keyOnlyFilter() {
         // given
         Tags tags = Tags.from("KeyA", null);
 
@@ -39,7 +39,7 @@ public class TagFiltersTest {
     }
 
     @Test
-    public void valueOnly() {
+    public void valueOnlyFilter() {
         // given
         Tags tags = Tags.from(null, "ValueA");
 
@@ -53,7 +53,7 @@ public class TagFiltersTest {
     }
 
     @Test
-    public void keyAndValue() {
+    public void keyAndValueFilter() {
         // given
         Tags tags = Tags.from("KeyA", "ValueA");
 
