@@ -37,7 +37,9 @@ final class TagFilters {
                 values.add(new TagFilter("tag-key", tag.getKey()));
                 continue;
             }
-            values.add(new TagFilter("tag-value", tag.getValue()));
+            if (isNotEmpty(tag.getValue())) {
+                values.add(new TagFilter("tag-value", tag.getValue()));
+            }
         }
         return values;
     }
