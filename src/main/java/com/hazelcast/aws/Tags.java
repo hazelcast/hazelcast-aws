@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 
 import static com.hazelcast.aws.StringUtils.isEmpty;
 
+/**
+ * Container for configuration tags ({@code tag-key} and {@code tag-value}).
+ */
 final class Tags implements Iterable<Tags.Tag> {
     private static final String SEPARATOR = ",";
     private final Collection<Tag> tags = new ArrayList<>();
@@ -33,6 +36,15 @@ final class Tags implements Iterable<Tags.Tag> {
         this.tags.addAll(tags);
     }
 
+    /**
+     * Factory method that creates {@link Tags}.
+     *
+     * @param key   tag key. Supports multiple tag keys if separated by commas (e.g. {@code "TagKeyA,TagKeyB"}).
+     * @param value tag value. Supports multiple tag values if separated by commas
+     *              (e.g. {@code "TagValueA,TagValueB"}).
+     *
+     * @return      created {@link Tags}.
+     */
     static Tags from(String key, String value) {
         Iterator<String> keys = splitValue(key).iterator();
         Iterator<String> values = splitValue(value).iterator();

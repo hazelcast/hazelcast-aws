@@ -26,6 +26,16 @@ final class TagFilters {
     private TagFilters() {
     }
 
+    /**
+     * Converts the {@link Tags} into {@link Collection} of {@link TagFilter}. The {@link TagFilter#getName()} and
+     * {@link TagFilter#getValue()} follows AWS API recommendations for filtering EC2 instances using tags.
+     *
+     * @param tags the {@link Tags} to convert.
+     *
+     * @return the {@link Collection} of {@link TagFilter}.
+     * @see <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html#API_DescribeInstances_RequestParameters">
+     *     EC2 Describe Instances - Request Parameters</a>
+     */
     static Collection<TagFilter> from(Tags tags) {
         Collection<TagFilter> values = new ArrayList<>();
         for (Tag tag : tags) {
