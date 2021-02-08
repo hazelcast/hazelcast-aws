@@ -75,8 +75,12 @@ final class Tags implements Iterable<Tags.Tag> {
         return new ArrayList<>(tags).iterator();
     }
 
-    boolean hasTags() {
-        return !tags.isEmpty();
+    @Override
+    public String toString() {
+        return "Tags{" +
+                "tagKey='" + getKeys() + '\''
+                + ", tagValue='" + getValues() + '\''
+                + '}';
     }
 
     String getKeys() {
@@ -93,12 +97,8 @@ final class Tags implements Iterable<Tags.Tag> {
                 .collect(Collectors.joining(SEPARATOR));
     }
 
-    @Override
-    public String toString() {
-        return "Tags{" +
-                "tagKey='" + getKeys() + '\''
-                + ", tagValue='" + getValues() + '\''
-                + '}';
+    boolean hasTags() {
+        return !tags.isEmpty();
     }
 
     static class Tag {
