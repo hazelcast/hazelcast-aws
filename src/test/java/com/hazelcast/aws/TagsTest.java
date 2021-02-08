@@ -109,12 +109,29 @@ public class TagsTest {
     }
 
     @Test
-    public void noTags() {
-        // when
-        assertFalse(Tags.from(null, null).hasTags());
+    public void emptyTagKeyAndValue() {
+        // given
+        String tagKey = "";
+        String tagValue = "";
 
-        // and
-        assertFalse(Tags.from("", "").hasTags());
+        // when
+        Tags tags = Tags.from(tagKey, tagValue);
+
+        // then
+        assertFalse(tags.hasTags());
+    }
+
+    @Test
+    public void noTagKeyAndValue() {
+        // given
+        String tagKey = null;
+        String tagValue = null;
+
+        // when
+        Tags tags = Tags.from(tagKey, tagValue);
+
+        // then
+        assertFalse(tags.hasTags());
     }
 
     @Test
