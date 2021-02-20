@@ -15,7 +15,6 @@
 
 package com.hazelcast.aws;
 
-import com.hazelcast.aws.TagFilters.TagFilter;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.w3c.dom.Node;
@@ -75,8 +74,8 @@ class AwsEc2Api {
 
     private Map<String, String> filterAttributesDescribeInstances() {
         Filter filter = new Filter();
-        for (TagFilter tagFilter : TagFilters.from(awsConfig.getTags())) {
-            filter.add(tagFilter.getName(), tagFilter.getValue());
+        for (Tag tag : awsConfig.getTags()) {
+            addTagFilter(filter, tag);
         }
 
         if (isNotEmpty(awsConfig.getSecurityGroupName())) {
@@ -85,6 +84,27 @@ class AwsEc2Api {
 
         filter.add("instance-state-name", "running");
         return filter.getFilterAttributes();
+    }
+
+    /**
+     * Adds filter entry to {@link Filter} base on provided {@link Tag}. Follows AWS API recommendations for
+     * filtering EC2 instances using tags.
+     *
+     * @see <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html#API_DescribeInstances_RequestParameters">
+     *     EC2 Describe Instances - Request Parameters</a>
+     */
+    private void addTagFilter(Filter filter, Tag tag) {
+        if (isNotEmpty(tag.getKey()) && isNotEmpty(tag.getValue())) {
+            filter.add("tag:" + tag.getKey(), tag.getValue());
+            return;
+        }
+        if (isNotEmpty(tag.getKey())) {
+            filter.add("tag-key", tag.getKey());
+            return;
+        }
+        if (isNotEmpty(tag.getValue())) {
+            filter.add("tag-value", tag.getValue());
+        }
     }
 
     private static Map<String, String> parseDescribeInstances(String xmlResponse) {

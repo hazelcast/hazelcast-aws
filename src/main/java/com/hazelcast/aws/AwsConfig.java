@@ -17,6 +17,12 @@ package com.hazelcast.aws;
 
 import com.hazelcast.config.InvalidConfigurationException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import static com.hazelcast.aws.StringUtils.isEmpty;
 import static com.hazelcast.aws.StringUtils.isNotEmpty;
 
@@ -30,7 +36,7 @@ final class AwsConfig {
     private final String region;
     private final String hostHeader;
     private final String securityGroupName;
-    private final Tags tags;
+    private final List<Tag> tags;
     private final int connectionTimeoutSeconds;
     private final int connectionRetries;
     private final int readTimeoutSeconds;
@@ -54,7 +60,7 @@ final class AwsConfig {
         this.iamRole = iamRole;
         this.hostHeader = hostHeader;
         this.securityGroupName = securityGroupName;
-        this.tags = Tags.from(tagKey, tagValue);
+        this.tags = createTags(tagKey, tagValue);
         this.connectionTimeoutSeconds = connectionTimeoutSeconds;
         this.connectionRetries = connectionRetries;
         this.readTimeoutSeconds = readTimeoutSeconds;
@@ -64,6 +70,37 @@ final class AwsConfig {
         this.serviceName = serviceName;
 
         validateConfig();
+    }
+
+    /**
+     * Creates tag key and value pairs represented by {@link Tag}.
+     *
+     * @param tagKeys   single or multiple tag keys separated by commas (e.g. {@code "TagKeyA,TagKeyB"}).
+     * @param tagValues single or multiple tag values separated by commas (e.g. {@code "TagValueA,TagValueB"}).
+     */
+    private List<Tag> createTags(String tagKeys, String tagValues) {
+        Iterator<String> keys = splitValue(tagKeys).iterator();
+        Iterator<String> values = splitValue(tagValues).iterator();
+
+        List<Tag> tags = new ArrayList<>();
+
+        while (keys.hasNext() || values.hasNext()) {
+            if (keys.hasNext() && values.hasNext()) {
+                tags.add(new Tag(keys.next(), values.next()));
+                continue;
+            }
+            if (keys.hasNext()) {
+                tags.add(new Tag(keys.next(), null));
+                continue;
+            }
+            tags.add(new Tag(null, values.next()));
+        }
+
+        return tags;
+    }
+
+    private static List<String> splitValue(String value) {
+        return isEmpty(value) ? Collections.emptyList() : Arrays.asList(value.split(","));
     }
 
     private void validateConfig() {
@@ -91,7 +128,7 @@ final class AwsConfig {
     }
 
     private boolean anyOfEc2PropertiesConfigured() {
-        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || tags.hasTags();
+        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || CollectionUtils.isNotEmpty(tags);
     }
 
     private boolean anyOfEcsPropertiesConfigured() {
@@ -126,7 +163,7 @@ final class AwsConfig {
         return securityGroupName;
     }
 
-    Tags getTags() {
+    List<Tag> getTags() {
         return tags;
     }
 
