@@ -128,7 +128,11 @@ final class AwsConfig {
     }
 
     private boolean anyOfEc2PropertiesConfigured() {
-        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || CollectionUtils.isNotEmpty(tags);
+        return isNotEmpty(iamRole) || isNotEmpty(securityGroupName) || hasTags(tags);
+    }
+
+    private boolean hasTags(List<Tag> tags) {
+        return tags != null && !tags.isEmpty();
     }
 
     private boolean anyOfEcsPropertiesConfigured() {
