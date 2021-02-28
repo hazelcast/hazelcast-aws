@@ -96,13 +96,9 @@ class AwsEc2Api {
     private void addTagFilter(Filter filter, Tag tag) {
         if (isNotEmpty(tag.getKey()) && isNotEmpty(tag.getValue())) {
             filter.add("tag:" + tag.getKey(), tag.getValue());
-            return;
-        }
-        if (isNotEmpty(tag.getKey())) {
+        } else if (isNotEmpty(tag.getKey())) {
             filter.add("tag-key", tag.getKey());
-            return;
-        }
-        if (isNotEmpty(tag.getValue())) {
+        } else if (isNotEmpty(tag.getValue())) {
             filter.add("tag-value", tag.getValue());
         }
     }

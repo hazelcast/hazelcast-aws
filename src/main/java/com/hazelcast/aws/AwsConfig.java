@@ -87,13 +87,11 @@ final class AwsConfig {
         while (keys.hasNext() || values.hasNext()) {
             if (keys.hasNext() && values.hasNext()) {
                 tags.add(new Tag(keys.next(), values.next()));
-                continue;
-            }
-            if (keys.hasNext()) {
+            } else if (keys.hasNext()) {
                 tags.add(new Tag(keys.next(), null));
-                continue;
+            } else {
+                tags.add(new Tag(null, values.next()));
             }
-            tags.add(new Tag(null, values.next()));
         }
 
         return tags;
