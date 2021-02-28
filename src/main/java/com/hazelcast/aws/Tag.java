@@ -1,5 +1,8 @@
 package com.hazelcast.aws;
 
+/**
+ * Represents tag key and value pair. Used to narrow the members returned by the discovery mechanism.
+ */
 class Tag {
     private final String key;
     private final String value;
