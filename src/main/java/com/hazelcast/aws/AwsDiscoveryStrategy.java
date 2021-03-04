@@ -208,9 +208,10 @@ public class AwsDiscoveryStrategy
         return Collections.emptyList();
     }
 
-    private static void logResult(Map<String, String> addresses) {
-        if (addresses.isEmpty()) {
+    private void logResult(Map<String, String> addresses) {
+        if (addresses.isEmpty() && !isKnownExceptionAlreadyLogged) {
             LOGGER.warning("No IP addresses found! Starting standalone.");
+            isKnownExceptionAlreadyLogged = true;
         }
 
         LOGGER.fine(String.format("Found the following (private => public) addresses: %s", addresses));
