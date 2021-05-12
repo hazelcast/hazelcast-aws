@@ -114,8 +114,6 @@ public class AwsDiscoveryStrategyFactory
                 return uuid.startsWith("ec2") || uuid.startsWith("EC2");
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-
             }
         }
         return false;
