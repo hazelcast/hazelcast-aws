@@ -31,6 +31,7 @@
         <hazelcast.version>4.2</hazelcast.version>
 
         <junit.version>4.13.2</junit.version>
+        <apache.commons.version>3.12.0</apache.commons.version>
         <mockito.version>1.10.19</mockito.version>
         <log4j.version>1.2.17</log4j.version>
         <wiremock.version>2.27.2</wiremock.version>
@@ -227,6 +228,11 @@
             <scope>test</scope>
             <version>${hazelcast.version}</version>
             <classifier>tests</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache.commons.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
