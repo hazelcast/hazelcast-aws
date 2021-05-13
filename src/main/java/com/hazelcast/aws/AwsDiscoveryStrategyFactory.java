@@ -36,8 +36,6 @@ import java.util.Map;
 import java.lang.Runtime;
 import java.lang.Process;
 
-import org.apache.commons.lang3.*;
-
 /**
  * Factory class which returns {@link AwsDiscoveryStrategy} to Discovery SPI
  */
@@ -99,7 +97,8 @@ public class AwsDiscoveryStrategyFactory
     }
 
     private static boolean uuidWithEc2PrefixWindows(){
-        if(SystemUtils.IS_OS_WINDOWS){
+        String OS = System.getProperty("os.name").toLowerCase();
+        if(OS.indexOf("win") >= 0){
             try{
                 String getUuidCommand = "wmic path win32_computersystemproduct get uuid";
                 StringBuffer output = new StringBuffer();
