@@ -165,6 +165,12 @@ clientConfig.getNetworkConfig().getAwsConfig()
       .setProperty("use-public-ip", "true");
 ```
 
+#### Windows EC2 Hazelcast Member Discovery
+
+In order to enable EC2 Hazelcast Member Discovery in Windows servers, in addition to the above, the following system property must be set to true in your server:
+
+```com.hazelcast.aws.windows.enabled="true""```
+
 ## ECS/Fargate Configuration
 
 The plugin works both for **Hazelcast Member Discovery** (forming Hazelcast cluster) and **Hazelcast Client Discovery**.
