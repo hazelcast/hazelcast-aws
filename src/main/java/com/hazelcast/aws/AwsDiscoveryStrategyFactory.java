@@ -36,12 +36,15 @@ import java.util.Map;
 import java.lang.Runtime;
 import java.lang.Process;
 
+
+
 /**
  * Factory class which returns {@link AwsDiscoveryStrategy} to Discovery SPI
  */
 public class AwsDiscoveryStrategyFactory
         implements DiscoveryStrategyFactory {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategyFactory.class);
+    private static final boolean IS_WINDOWS = Boolean.parseBoolean(System.getProperty("com.hazelcast.aws.windows.enabled","false"));
 
     @Override
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
@@ -84,7 +87,10 @@ public class AwsDiscoveryStrategyFactory
     }
 
     private static boolean isRunningOnEc2() {
-        return (uuidWithEc2Prefix() || uuidWithEc2PrefixWindows()) && instanceIdentityExists() && iamRoleAttached();
+        if(IS_WINDOWS){
+            return uuidWithEc2PrefixWindows() && instanceIdentityExists() && iamRoleAttached();
+        }
+        return uuidWithEc2Prefix() && instanceIdentityExists() && iamRoleAttached();
     }
 
     private static boolean uuidWithEc2Prefix() {
