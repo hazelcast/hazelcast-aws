@@ -169,7 +169,7 @@ clientConfig.getNetworkConfig().getAwsConfig()
 
 In order to enable EC2 Hazelcast Member Discovery in Windows servers, in addition to the above, the following system property must be set to true in your server:
 
-```com.hazelcast.aws.windows.enabled="true""```
+```com.hazelcast.autodetection.iswindows="true"```
 
 ## ECS/Fargate Configuration
 

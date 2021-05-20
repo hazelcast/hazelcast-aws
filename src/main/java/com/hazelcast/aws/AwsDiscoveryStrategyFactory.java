@@ -44,7 +44,7 @@ import java.lang.Process;
 public class AwsDiscoveryStrategyFactory
         implements DiscoveryStrategyFactory {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategyFactory.class);
-    private static final boolean IS_WINDOWS = Boolean.parseBoolean(System.getProperty("com.hazelcast.aws.windows.enabled","false"));
+    private static final boolean IS_WINDOWS = Boolean.parseBoolean(System.getProperty("com.hazelcast.autodetection.iswindows","false"));
 
     @Override
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
