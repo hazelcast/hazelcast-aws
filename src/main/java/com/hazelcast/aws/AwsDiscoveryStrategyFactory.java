@@ -27,10 +27,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.lang.Runtime;
+import java.lang.Process;
+
+
 
 /**
  * Factory class which returns {@link AwsDiscoveryStrategy} to Discovery SPI
@@ -38,6 +44,7 @@ import java.util.Map;
 public class AwsDiscoveryStrategyFactory
         implements DiscoveryStrategyFactory {
     private static final ILogger LOGGER = Logger.getLogger(AwsDiscoveryStrategyFactory.class);
+    private static final boolean IS_WINDOWS = Boolean.parseBoolean(System.getProperty("com.hazelcast.autodetection.iswindows","false"));
 
     @Override
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
@@ -80,6 +87,9 @@ public class AwsDiscoveryStrategyFactory
     }
 
     private static boolean isRunningOnEc2() {
+        if(IS_WINDOWS){
+            return uuidWithEc2PrefixWindows() && instanceIdentityExists() && iamRoleAttached();
+        }
         return uuidWithEc2Prefix() && instanceIdentityExists() && iamRoleAttached();
     }
 
@@ -88,6 +98,28 @@ public class AwsDiscoveryStrategyFactory
         if (new File(uuidPath).exists()) {
             String uuid = readFileContents(uuidPath);
             return uuid.startsWith("ec2") || uuid.startsWith("EC2");
+        }
+        return false;
+    }
+
+    private static boolean uuidWithEc2PrefixWindows(){
+        String OS = System.getProperty("os.name").toLowerCase();
+        if(OS.indexOf("win") >= 0){
+            try{
+                String getUuidCommand = "wmic path win32_computersystemproduct get uuid";
+                StringBuffer output = new StringBuffer();
+                Process SerNumProcess = Runtime.getRuntime().exec(getUuidCommand);
+                BufferedReader sNumReader = new BufferedReader(new InputStreamReader(SerNumProcess.getInputStream()));
+                String line = "";
+                while ((line = sNumReader.readLine()) != null) {
+                    output.append(line + "\n");
+                }
+                String uuid=output.toString().substring(output.indexOf("\n"), output.length()).trim();
+
+                return uuid.startsWith("ec2") || uuid.startsWith("EC2");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }

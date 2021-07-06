@@ -5,7 +5,7 @@ This repository contains a plugin which provides the automatic Hazelcast member 
 ## Requirements
 
 * Hazelcast 3.6+
-* Linux Kernel 3.19+ (TCP connections may get stuck when used with older Kernel versions, resulting in undefined timeouts)
+* Linux Kernel 3.19+ (TCP connections may get stuck when used with older Kernel versions, resulting in undefined timeouts) or Windows Server 2016+
 * Versions compatibility:
   * hazelcast-aws 3+ is compatible with hazelcast 4+
   * hazelcast-aws 2.4 is compatible with hazelcast 3.12.x
@@ -164,6 +164,12 @@ clientConfig.getNetworkConfig().getAwsConfig()
       .setProperty("tag-value", "my-ec2-instance-tag-value")
       .setProperty("use-public-ip", "true");
 ```
+
+#### Windows EC2 Hazelcast Member Discovery
+
+In order to enable EC2 Hazelcast Member Discovery in Windows servers, in addition to the above, the following system property must be set to true in your server:
+
+```com.hazelcast.autodetection.iswindows="true"```
 
 ## ECS/Fargate Configuration
 
