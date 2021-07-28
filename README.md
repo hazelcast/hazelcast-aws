@@ -1,3 +1,5 @@
+#### **DEPRECATED:** `hazelcast-aws` plugin has been merged with [`hazelcast`](https://github.com/hazelcast/hazelcast)!
+
 # Hazelcast Discovery Plugin for AWS
 
 This repository contains a plugin which provides the automatic Hazelcast member discovery in the Amazon Web Services Platform.
