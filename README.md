@@ -1,5 +1,5 @@
 #### **DEPRECATED:** `hazelcast-aws` plugin has been merged with [`hazelcast`](https://github.com/hazelcast/hazelcast)!
-Since version `5.0` `hazelcast` includes `hazelcast-aws` and does not require additional dependency. For details about running Hazelcast on AWS consider the [documentation](https://docs.hazelcast.com/hazelcast/5.0-SNAPSHOT/deploy/deploying-on-aws.html).
+Since version `5.0` `hazelcast` includes `hazelcast-aws` and does not require additional dependency. For details about running Hazelcast on AWS consider the [documentation](https://docs.hazelcast.com/hazelcast/latest/deploy/deploying-on-aws).
 
 # Hazelcast Discovery Plugin for AWS
 
